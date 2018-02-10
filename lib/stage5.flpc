@@ -1,0 +1,63 @@
+
+load("flpc_parsed.pkl")
+print_indent <- fun[indent]:
+  i = indent
+  repeat_if:
+    printspace()
+    i = `i - 1
+
+pprint <- fun[indent self]:
+  error("Dummy_function")
+
+print_child <- fun[indent child]:
+      if is_instance(child node_class):
+        pprint(indent + 2 child)
+      else:
+        if is_str(child):
+          if str_len(child) > 0:
+            print_indent(indent + 2)
+            print("str_'")
+            printraw(child)
+            print("'")
+            printeol()
+
+pprint <- fun[indent self]:
+  if string_equal(self . name "exprsp"):
+    pprint(indent self . children . get(0))
+    return_no_value2()
+  bad = False
+  if is_instance(self . children resizable_class):
+    if self . children . len == 2:
+      child = self . children . get(1)
+      if is_str(child):
+        if str_len(`child) == 0:
+          bad = `bad + 1
+      else:
+        drop1(`child)
+      child = self . children . get(0)
+      if is_str(child):
+        if str_len(`child) == 0:
+          bad = `bad + 1
+  if string_equal(self . name "exprs"):
+    if bad:
+      pprint(indent self . children . get(0))
+      return(None())
+  if string_equal(self . name "suite"):
+    if bad:
+      pprint(indent self . children . get(1))
+      return(None())
+  print_indent(indent)
+  printraw(self . name)
+  printeol()
+  children = self . children
+  if not(is_instance(self . children resizable_class)):
+    print_child(indent children)
+  else:
+    l = children . len
+    i = l
+    repeat_if:
+      print_child(indent children . get(l - i))
+      i = `i - 1
+
+pprint(0 output)
+# tprint(output)

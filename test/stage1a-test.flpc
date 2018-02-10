@@ -1,0 +1,24 @@
+boot_obj_test <- fun[]:
+  print(boot_obj . str())
+  obj2 = boot_obj . instance()
+  print(obj2 . str())
+
+boot_array_test <- fun[]:
+  a1 = boot_array_class . instance(4)
+  print(a1 . get(0))
+  a1 . set(0 2)
+  print(a1 . get(0))
+  a1 . print()
+
+boot_dict_test <- fun[]:
+  d1 = boot_dict_class . instance(5)
+  d1 . set("a" "foo")
+  d1 . set("b" "bar")
+  d1 . print()
+  print(d1 . get("b"))
+  print(d1 . len)
+  print(d1 . keys . len)
+
+boot_obj_test()
+boot_array_test()
+boot_dict_test()

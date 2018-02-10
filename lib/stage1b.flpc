@@ -1,0 +1,99 @@
+# Need the meaning of getattr to change too! Not too sure how.
+obj <- class[]:
+  attrib <- fun[name receiver searcher]:
+    error("Dummy_function_should_not_be_called")
+
+  attrib <- func[name receiver searcher]:
+    # print("Obj_looking_up_")
+    # print(name)
+    # searcher.attr . get(name)
+    func = boot_dict.get(name memory.get(searcher - 2))
+    # Need the quoted version of return_if!
+    if func == None():
+      return(obj.attrib(name searcher . parent receiver))
+    return(func)
+
+  instance <- fun[self]:
+    attr = boot_dict_class . instance(20)
+    attr . set("parent" self)
+    attr . set("attr" attr)
+    new_obj = self . parent . instance()
+    memory.set(attr new_obj - 2)
+    return(new_obj)
+
+  set_attr <- fun[key value self]:
+    return(self . attr . set(key value))
+
+# Ended up copying obj.attrib everywhere...
+# Should probably do it the other way around.
+obj_getattr <- fun[name self]:
+  return(obj.attrib(name self self))
+
+# Manual init
+null_newobj.instance <- fun[attr]:
+  memory.append(attr)
+  memory.append(obj.attrib)
+  memory.append(names.get("]"))
+  return(Pointer(memory.len() - 1))
+
+null_attr = boot_dict_class . instance(1)
+null_attr . set("instance" null_newobj.instance)
+null_newobj <- null_newobj.instance(`null_attr)
+
+attr = boot_dict_class . instance(10)
+attr . set("parent" null_newobj)
+attr . set("instance" obj.instance)
+attr . set("set_attr" obj.set_attr)
+attr . set("attr" attr)
+obj_class <- null_newobj.instance(`attr)
+
+dict <- class[]:
+  instance <- fun[length self]:
+    keys = boot_array_class . instance"(length)
+    values = boot_array_class . instance(length)
+    new_obj = self . parent . instance()
+    attr = new_obj . attr
+    attr . set("parent" self)
+    attr . set("len" 0)
+    attr . set("keys" keys)
+    attr . set("values" values)
+    return(new_obj)
+
+  get <- fun[key self]:
+    index = boot_array.string_index(key self . keys)
+    return_if(index == None() None())
+    return(boot_array.get(index self . values))
+
+  set <- fun[key value self]:
+    l = self . len
+    boot_array.set(l key self . keys)
+    boot_array.set(l value self . values)
+    self . increase()
+
+  increase <- fun[self]:
+    self . set_attr("len" self . len + 1)
+
+names <- boot_dict_class . instance(1000)
+
+convert_names <- fun[]:
+  end = functions.end()
+  index = names.get + 5
+  repeat:
+    # return_no_value only pops 1 stack frame!
+    if index > end:
+      return(None())
+    names . set(memory.get(index) memory.get(index + 3))
+    index = `index + 7
+    # print(names . len)
+
+# convert_names()
+# print(names . len)
+
+# Problem: Can't (recursively) call pick: for anything in here
+# Going to work even less well if this is an obj_dict.
+# Also, picks that call lookup should cache their value.
+names.get <- fun[name]:
+  value = names . get(name)
+  if value == None():
+    error("lookup_error")
+  return(value)

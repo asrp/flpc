@@ -1,0 +1,103 @@
+
+rule.name <- fun[]:
+    return(and([[or([[apply('letter')] [exactly('_')]])] [quantified([or([[apply('letter')] [apply('digit')] [exactly('_')]])] '*')]]))
+
+rule.expr <- fun[]:
+    return(or([[apply('apply')] [apply('exactly')] [apply('token')] [apply('parenthesis')] [apply('output')]]))
+
+rule.exactly <- fun[]:
+    return(and([[token("'")] [out([quantified([or([[apply('escaped_char')] [and([[negation([exactly("'")])] [apply('anything')]])]])] '*')])] [token("'")]]))
+
+rule.token <- fun[]:
+    return(and([[token('"')] [out([quantified([or([[apply('escaped_char')] [and([[negation([exactly('"')])] [apply('anything')]])]])] '*')])] [token('"')]]))
+
+rule.escaped_char <- fun[]:
+    output = and([[exactly('\\')] [out([or([[exactly('n')] [exactly('r')] [exactly('t')] [exactly('b')] [exactly('f')] [exactly('"')] [exactly("'")] [exactly('\\')]])])]])
+    if is_instance(output MatchError_class):
+      return(output)
+    if string_equal(output "t"):
+      return("\t")
+    if string_equal(output "n"):
+      return("\n")
+    if string_equal(output "r"):
+      return("\r")
+    if string_equal(output "\\"):
+      return("\\\\")
+    if string_equal(output "'"):
+      return("'")
+    if string_equal(output '"'):
+      return('"')
+    error("Unknown_escaped_char")
+
+rule.apply <- fun[]:
+    return(and([[quantified([or([[exactly('\t')] [exactly("\s")]])] '*')] [out([apply('name')])]]))
+
+rule.parenthesis <- fun[]:
+    return(and([[token('(')] [out([apply('or')])] [token(')')]]))
+
+rule.output <- fun[]:
+    return(and([[token('{')] [out([apply('or')])] [token('}')]]))
+
+rule.not <- fun[]:
+    return(or([[and([[token('~')] [out([bound([apply('expr')] 'negation')])]])] [apply('expr')]]))
+
+rule.quantified <- fun[]:
+    return(and([[apply('not')] [quantified([or([[exactly('*')] [exactly('+')] [exactly('?')]])] '?')]]))
+
+rule.bound <- fun[]:
+    return(and([[apply('quantified')] [quantified([and([[exactly('=')] [out([apply('name')])]])] '?')]]))
+
+rule.and <- fun[]:
+    return(quantified([apply('bound')] '*'))
+
+rule.or <- fun[]:
+    return(and([[apply('and')] [quantified([and([[token('|')] [out([apply('and')])]])] '*')]]))
+
+rule.rule <- fun[]:
+    return(and([[apply('spaces')] [out([and([[bound([apply('name')] 'rule_name')] [bound([quantified([exactly('!')] '?')] 'flags')] [bound([apply('and')] 'args')] [and([[token('=')] [out([apply('or')])]])]])])]]))
+
+rule.grammar <- fun[]:
+    return(and([[out([quantified([apply('rule')] '*')])] [apply('spaces')]]))
+
+rule.comment <- fun[]:
+    return(and([[exactly('#')] [quantified([and([[negation([exactly('\n')])] [apply('anything')]])] '*')]]))
+
+rule.hspace <- fun[]:
+    return(or([[exactly("\s")] [exactly('\t')] [apply('comment')]]))
+
+rule.indentation <- fun[]:
+    return(and([[quantified([and([[quantified([apply('hspace')] '*')] [or([[and([[exactly('\r')] [exactly('\n')]])] [exactly('\r')] [exactly('\n')]])]])] '*')] [quantified([apply('hspace')] '+')]]))
+
+rule.space <- fun[]:
+    return(or([[exactly('\n')] [exactly('\r')] [apply('hspace')]]))
+
+rule.spaces <- fun[]:
+    return(quantified([apply('space')] '*'))
+boot_dict.set("name" rule.name rules)
+boot_dict.set("expr" rule.expr rules)
+boot_dict.set("exactly" rule.exactly rules)
+boot_dict.set("token" rule.token rules)
+boot_dict.set("escaped_char" rule.escaped_char rules)
+boot_dict.set("apply" rule.apply rules)
+boot_dict.set("parenthesis" rule.parenthesis rules)
+boot_dict.set("output" rule.output rules)
+boot_dict.set("not" rule.not rules)
+boot_dict.set("quantified" rule.quantified rules)
+boot_dict.set("bound" rule.bound rules)
+boot_dict.set("and" rule.and rules)
+boot_dict.set("or" rule.or rules)
+boot_dict.set("rule" rule.rule rules)
+boot_dict.set("grammar" rule.grammar rules)
+boot_dict.set("comment" rule.comment rules)
+boot_dict.set("hspace" rule.hspace rules)
+boot_dict.set("indentation" rule.indentation rules)
+boot_dict.set("space" rule.space rules)
+boot_dict.set("spaces" rule.spaces rules)
+boot_dict.set("letter" rule.letter rules)
+boot_dict.set("digit" rule.digit rules)
+boot_dict.set("anything" rule.anything rules)
+flagged . append("exactly")
+flagged . append("token")
+flagged . append("escaped_char")
+flagged . append("apply")
+flagged . append("output")

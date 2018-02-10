@@ -1,0 +1,42 @@
+resizable_test <- fun[]:
+  a1 = resizable_class . instance(4)
+  print(a1 . get(0))
+  a1 . set(0 2)
+  print(a1 . get(0))
+  a1 . print()
+  a2 = resizable_class . instance(1)
+  a2 . append(1)
+  a2 . append(2)
+  a2 . append(3)
+  a2 . append(4)
+  a2 . append(5)
+  a2 . append(6)
+  a2 . print()
+  print(a2 . len)
+  a2 . array . print()
+
+node_test <- fun[]:
+  print("Running_node_test")
+  printeol()
+  a1 = resizable_class . instance(3)
+  a1 . set(1 2)
+
+  n1 = node_class . instance("test" a1)
+  n1 . print()
+  print(n1 . get(0))
+  print(n1 . get(1))
+
+input_test <- fun[]:
+  inp = Input_class . instance("grammar/rules.grammar")
+  print(inp . next())
+  printeol()
+  print(inp . next())
+  printeol()
+  print(inp . next())
+  printeol()
+  print(inp . next())
+  printeol()
+
+resizable_test()
+node_test()
+input_test()

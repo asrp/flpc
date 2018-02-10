@@ -1,0 +1,5 @@
+output = apply("grammar")
+output . print()
+print("Writing_stage4.flpc")
+printeol()
+to_flpc2_grammar(output)

@@ -1,0 +1,51 @@
+match_test <- fun[]:
+  print(token("hello"))
+  saved = source . position()
+  print(saved)
+  print(token("world"))
+  source . position_set(saved)
+  print(token("world"))
+  print(or([[token("hello")] [token("hi")]]))
+  out([token("world")]) . print()
+
+match_test2 <- fun[]:
+  and([[token("hello")] [token("world")]]) . print()
+  and([[token("hi")] [token("world2")]]) . print()
+  and([[token("hi")] [token("world")]]) . print()
+  bound([quantified([token("foo")] "+")] "bound_test") . print()
+  quantified([token("foo")] "+") . print()
+
+match_test3 <- fun[]:
+  negation([token("hello")]) . print()
+  print(negation([token("world")]))
+
+test_rule <- fun[]:
+  return(and([[token("hello")] [token("world")]]))
+
+match_test4 <- fun[]:
+  apply("test_rule") . print()
+
+match_test5 <- fun[]:
+  print(between("a" "z"))
+
+match_test5 <- fun[]:
+  print(between("a" "z"))
+
+match_test6 <- fun[]:
+  rule.name() . print()
+
+resize_extend_test <- fun[]:
+  r1 = resizable_class . instance(0)
+  r2 = resizable_class . instance(0)
+  r3 = resizable_class . instance(0)
+  r1 . append(1)
+  r1 . append(2)
+  r2 . append(3)
+  r2 . append(4)
+  r1 . print()
+  r2 . print()
+  r1 . extend(r2)
+  r1 . print()
+
+resize_extend_test()
+match_test6()

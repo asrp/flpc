@@ -1,0 +1,85 @@
+
+load("stage2.pkl")
+
+prefix <- "rule."
+
+to_flpc2 <- fun[root]:
+  error("Dummy_function_should_not_be_called")
+
+to_flpc2 <- fun[root]:
+    # print(root . type)
+    if not(is_instance(root node_class)):
+        printrepr(root)
+        return_no_value2()
+    name = root . name
+    if string_equal(name "quantifier"):
+        return_no_value2(to_flpc2(root . get(0)))
+    if string_equal(name "inline"):
+        return_no_value2(to_flpc2(root . get(0)))
+    if string_equal(name "rule"):
+        print(prefix)
+        tprint(root . get(0) . get(0))
+        print("_<-_fun[]:\n____return(")
+        to_flpc2(root . get(3))
+        print(")")
+        return_no_value2()
+
+    if string_equal(name "output"):
+        print("out")
+    else:
+        printraw(name)
+    print("(")
+    if string_equal(name "and"):
+        print("[")
+    if string_equal(name "or"):
+        print("[")
+    l = root . len
+    i = l
+    repeat_if:
+        child = root . get(l - i)
+        bracket = 0
+        if not(is_instance(child node_class)):
+            bracket = `bracket + 1
+        else:
+            if string_equal(child . name "quantifier"):
+                bracket = `bracket + 1
+            if string_equal(child . name "inline"):
+                bracket = `bracket + 1
+        if not(bracket):
+            print("[")
+        bracket child = s21()
+        to_flpc2(`child)
+        if not(`bracket):
+            print("]")
+        i = `i - 1
+        if i:
+            print("_")
+    if string_equal(name "and"):
+        print("]")
+    if string_equal(name "or"):
+        print("]")
+    print(")")
+
+to_flpc2_grammar <- fun[root]:
+    l = root . len
+    i = l
+    repeat_if:
+        # Should exclude letter and digits
+        to_flpc2(root . get(l - i))
+        printeol()
+        printeol()
+        i = `i - 1
+
+    l = root . len
+    i = l
+    repeat_if:
+        child = root . get(l - i)
+        print('boot\udict.set("')
+        tprint(child . get(0) . get(0))
+        print('"_')
+        print(prefix)
+        tprint(child . get(0) . get(0))
+        print('_rules)')
+        printeol()
+        drop1(`child)
+        i = `i - 1

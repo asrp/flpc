@@ -1,0 +1,11 @@
+
+load("flpc_grammar.pkl")
+memory.set(Input("lib/stage1.flpc") source_index)
+# names.set("source" Input("lib/stage1.flpc"))
+# rules . print()
+memoizer.reset()
+print("Running_flpc_grammar")
+printeol()
+output = apply("grammar")
+output . print()
+save("flpc_parsed.pkl")

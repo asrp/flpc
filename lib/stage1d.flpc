@@ -1,0 +1,276 @@
+MatchError <- class[]:
+  instance <- fun[message self]:
+    new_obj = minobj.instance(boot_obj)
+    # parent, attrib, message
+    memory.set(self new_obj - 2)
+    memory.set(message new_obj)
+    memory.append(names.get("]"))
+    return(new_obj)
+
+  print <- fun[self]:
+    print("Match_error:")
+    print(memory.get(`self))
+
+  attrib <- fun[name receiver searcher]:
+    if lookup_print:
+      print("MatchError_looking_up_")
+      print(name)
+      printeol()
+    return_if(string_equal(name "instance") MatchError.instance)
+    return_if(string_equal(name "print")    MatchError.print)
+    return_if(string_equal(name "type")     "MatchError")
+    # Class method
+    # return_if(string_equal(name "is_instance") MatchError.is_instance)
+    return(instance_attrib(name receiver searcher))
+
+MatchError_class <- boot_obj . subclass(MatchError.attrib)
+MatchError <- closure(MatchError_class . instance MatchError_class)
+
+exactly <- fun[char]:
+  input_char = source . next_char()
+  if input_char == None():
+    return(MatchError("End_of_file"))
+  if not(string_equal(char input_char)):
+    return(MatchError("Not_exactly"))
+  return(`input_char)
+
+between <- fun[start end]:
+  input_char = source . next_char()
+  if input_char == None():
+    return(MatchError("End_of_file"))
+  if not(char_between(start end input_char)):
+    return(MatchError("Not_between"))
+  return(`input_char)
+
+token <- fun[char]:
+  input_char = source . next()
+  if input_char == None():
+    return(MatchError("End_of_file"))
+  if not(string_equal(char input_char)):
+    return(MatchError("Not_exactly"))
+  return(`input_char)
+
+next_child <- fun[children]:
+  if memory.get(children) == end_of_func:
+    return_two(0 0)
+  return_two(children + 2 memory.get(children + 1))
+
+or <- fun[children]:
+  saved = source . position()
+  saved children = s21()
+  children child = next_child(`children)
+  repeat_if:
+    output = call(`child)
+    if not(is_instance(output MatchError_class)):
+      return(`output)
+    drop1(`output)
+    source . position_set(saved)
+    children child = next_child(`children)
+  return(MatchError("No_OR_child_matches"))
+
+out <- fun[child]:
+  output = call(`child)
+  if is_instance(output MatchError_class):
+    return(`output)
+  # Should wrap in resizable? Otherwise, it could be an str with no .print
+  return(node("out" output))
+
+is_output <- fun[output]:
+  if is_instance(output node_class):
+    return(string_equal(output . name "out"))
+  return(False)
+
+# Need to preserve pos! Maybe not so important for strings?
+make_string <- fun[outputs]:
+  if is_instance(outputs resizable_class):
+    length = outputs . len
+    if length == 0:
+      # empty_string()
+      return(outputs)
+    output = outputs . get(0)
+    if is_str(output):
+      if str_len(output) == 1:
+        return(str_join(outputs . array + 1 length))
+    if length == 1:
+      return(output)
+  else:
+    if is_instance(outputs node_class):
+      if is_str(outputs . children):
+        return(outputs . children)
+  return(outputs)
+
+and <- fun[init_children]:
+  saved = source . position()
+  outputs = resizable(0)
+  output_mode = False
+  children = init_children
+  children child = next_child(`children)
+  repeat_if:
+    output = call(`child)
+    if is_instance(output MatchError_class):
+      source . position_set(saved)
+      return(MatchError("And_match_failed"))
+    # debugger()
+    if output_mode:
+      if is_output(output):
+        outputs . append_array(output . children)
+      drop1(`output)
+    else:
+      if is_output(output):
+        outputs = resizable(0)
+        outputs . append_array(output . children)
+        output_mode = True
+        outputs output_mode children = s4127()
+      else:
+        # Maybe need an extra case depending on if its a node or resizable.
+        outputs . append_array(output)
+        # Should really be a swap (s21) above.
+        drop1(`output)
+    children child = next_child(`children)
+  # node("And" outputs)
+  return(make_string(outputs))
+
+get_bounds <- fun[quantifier]:
+  if string_equal(quantifier "*"):
+    return_two(0 c.infinity())
+  if string_equal(quantifier "+"):
+    return_two(1 c.infinity())
+  if string_equal(quantifier "?"):
+    return_two(0 1)
+  error("Unknown_quantifier")
+
+quantified <- fun[child quantifier]:
+  lower upper = get_bounds(`quantifier)
+  outputs = resizable(0)
+  start_saved = source . position()
+  count = 0
+  repeat:
+    saved = source . position()
+    output = call(child)
+    if is_instance(output MatchError_class):
+      if count < lower:
+        source . position_set(start_saved)
+        return(MatchError("Quantified_undermatch"))
+      source . position_set(saved)
+      return(make_string(outputs))
+    outputs . append_array(`output)
+    drop1(`saved)
+    count = `count + 1
+    if count == upper:
+      return(make_string(outputs))
+
+negation <- fun[child]:
+  saved = source . position()
+  saved child = s21()
+  output = call(`child)
+  source . position_set(saved)
+  if is_instance(output MatchError_class):
+    return(None())
+  return(MatchError("Negation_is_true"))
+
+bound <- fun[child name]:
+  output = call(child)
+  if is_instance(output MatchError_class):
+    return(output)
+  return(node(name output))
+
+flagged <- resizable(0)
+
+should_make_node <- fun[output]:
+  if is_instance(output resizable_class):
+    return(output . len > 1)
+  return(False)
+
+# Should search here instead of globals
+rules <- boot_dict(100)
+#rules <- cheat_dict()
+
+# Unused until later
+indentation <- resizable(0)
+nest <- boot_array(1)
+nest . set(0 0)
+
+# Reverse the names of _apply and apply to toggle memoizer.
+
+_apply <- fun[name]:
+  error("Dummy")
+
+apply_print <- False
+
+_apply <- fun[name]:
+  nesting = nest . get(0)
+  if apply_print:
+    i = nesting
+    repeat_if:
+      printspace()
+      i = `i - 1
+    print(name)
+    printspace()
+    tprint(source . position())
+    printeol()
+  nest . set(0 nesting + 1)
+  output = call(boot_dict.get(name rules))
+  # output = call(_cheat_dict.get(name rules))
+  nest . set(0 nesting)
+  if apply_print:
+    i = nesting
+    repeat_if:
+      printspace()
+      i = `i - 1
+    print(name)
+    printspace()
+    tprint(source . position())
+    print("_->_")
+    tprint(output)
+    printeol()
+  if string_equal(name "statement"):
+    i = nesting
+    repeat_if:
+      printspace()
+      i = `i - 1
+    print(name)
+    print("_->_")
+    tprint(output)
+    printeol()
+  if is_instance(output MatchError_class):
+    return(output)
+  if should_make_node(output):
+    print("Making_node_")
+    printraw(name)
+    printeol()
+    return(node(name output))
+  if flagged . string_index(name) == None():
+    return(output)
+  return(node(name output))
+
+# push: foo apply
+apply <- fun[name]:
+  mem_out new_pos memoized = memoizer.get(name source . position() indentation)
+  if `memoized:
+    source . position_set(`new_pos)
+    return(`mem_out)
+  else:
+    saved = source . position()
+    output = _apply(name)
+    memoizer.set(name saved indentation output source . position())
+    return(`output)
+
+rule.anything <- fun[]:
+  char = source . next_char()
+  if char == None():
+    return(MatchError("End_of_file"))
+  return(`char)
+
+rule.letter <- fun[]:
+  return(or([[between("a" "z")] [between("A" "Z")]]))
+
+rule.digit <- fun[]:
+  return(between("0" "9"))
+
+rule.name <- fun[]:
+  return(and([[or([[apply("rule.letter")] [exactly("_")]])] [quantified([or([[apply("rule.letter")] [apply("rule.digit")] [exactly("_")]])] "*")]]))
+
+source_index = functions.end() + 5
+# source <- Input("grammar/boot.grammar")
+source <- Input("grammar/flpc.grammar")
+# source <- Input("grammar/test.grammar")

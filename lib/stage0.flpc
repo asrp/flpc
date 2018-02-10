@@ -1,0 +1,49 @@
+
+F' [ input.next_token functions.add ] input.next_token bind: functions.add 'F
+
+# Should overwrite position too!
+rebind_colon <- fun[func]:
+  location = names.get(input.next_token())
+  memory.set(names.get("]") location + 1)
+  # Need to invert check order when writing forth...
+  memory.set() #`func `location
+
+pushn_colon <- fun[]:
+  return(input.next_token())
+
+ps <- inline[]:
+  print_state()
+
+# Need to not drop other values upon return. Should be an inline?
+# but inline still drops (only it does so in the outer function).
+# I guess a forth debugger doesn't make much sense in the current
+# model. So maybe dropping isn't too bad.
+debugger_inner <- fun[]:
+  repeat:
+    print("(dbg)_")
+    name = stdin.next_token()
+    # In all cases, should also remove name from stack
+    if string_equal(name "s"):
+      return(None())
+    if string_equal(name "n"):
+      return(call_stack.len() - 4)
+    if string_equal(name "r"):
+      return(call_stack.len() - 5)
+    if string_equal(name "c"):
+      return(0)
+    if string_equal(name "i"):
+      # Should drop name but can't due to future string_equal tests!
+      # Need continue or elif. Have to manually drop1 for the moment...
+      print_state()
+    if string_equal(name "l"):
+      # TODO
+      print_state()
+    if not(string_equal(name "i")):
+      print("Running_")
+      print(name)
+      # Needs a clean stack before running!
+      call(names.get(`name))
+
+debugger <- fun[]:
+  print_state()
+  debugger_waitlen_set(debugger_inner())

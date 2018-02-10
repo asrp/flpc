@@ -1,0 +1,67 @@
+indentation . append(0)
+
+rule.SAME_INDENT <- fun[]:
+    saved = source . position()
+    s = make_string(apply('hspaces'))
+    if indentation . top() == str_len(s):
+        return(None())
+    source . position_set(saved)
+    return(MatchError("Different_indent"))
+
+rule.DEDENT <- fun[]:
+    indentation . pop()
+    return(None())
+
+rule.INDENT <- fun[]:
+    saved = source . position()
+    if is_instance(apply('NEWLINE') MatchError_class):
+        source . position_set(saved)
+        return(MatchError("Missing_newline_before_indent"))
+    s = make_string(apply('hspaces'))
+    source . position_set(saved)
+    indentation . append(str_len(s))
+    return(None())
+
+rule.void <- fun[]:
+    return(None())
+
+# Need new token function anyways
+token <- fun[s]:
+    saved = source . position()
+    drop1(apply("spaces"))
+    if is_alpha(s):
+        output = apply("NAME")
+        if is_instance(output node_class):
+            # output . children
+            output = make_string(memory.get(`output + 1))
+    else:
+        output = source . startswith(s)
+        if output == None():
+            return(MatchError("Not_token_or_EOF"))
+        return(`output)
+    if is_instance(output MatchError_class):
+        return(output)
+    if output == None():
+        return(MatchError("End_of_file"))
+    if not(string_equal(output s)):
+        return(MatchError("Not_exactly_token"))
+    return(output)
+
+# names.set doesn't work well with pick: caching.
+
+# Need rebind:, but this isn't a function!
+# So rebind will do something random.
+# rules <- boot_dict(100)
+# Reset the keys and values array instead.
+memory.set(boot_array(100) rules + 1)
+memory.set(boot_array(100) rules + 2)
+
+#names.set("rules" boot_dict(100))
+#names.set("rules" cheat_dict())
+boot_dict.set("letter" rule.letter rules)
+boot_dict.set("digit" rule.digit rules)
+boot_dict.set("anything" rule.anything rules)
+boot_dict.set("INDENT" rule.INDENT rules)
+boot_dict.set("DEDENT" rule.DEDENT rules)
+boot_dict.set("void" rule.void rules)
+boot_dict.set("SAME_INDENT" rule.SAME_INDENT rules)

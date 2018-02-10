@@ -1,0 +1,38 @@
+obj_test <- fun[]:
+  attr = obj_class . attr
+  null_attr = null_newobj - 2
+  print(attr . keys . len)
+  # Problem: calls not run because of current compiler limitations
+  print(null_attr . len)
+  print(attr . len)
+  print(attr . keys)
+  print(attr . values)
+  print(attr . keys . len)
+  print(attr . values . len)
+  print(null_attr . keys . len)
+  print(null_attr . values . len)
+  obj1 = obj_class . instance()
+  obj1 . attr . print()
+
+int_test <- fun[]:
+  i = 10
+  print(i)
+
+dict_test2 <- fun[]:
+  dict_class = obj_class . instance()
+  attr = dict_class . attr
+  # Recycling probably doesn't work because of caching...
+  attr . set("get" dict.get)
+  attr . set("set" dict.set)
+  attr . set("increase" dict.increase)
+  attr . set("instance" dict.instance)
+
+  d2 = dict_class . instance(4)
+  d2 . set("a" "b")
+  d2 . set("abc" "def")
+  # d2 . print()
+  print(d2 . get("abc"))
+
+obj_test()
+int_test()
+dict_test2()

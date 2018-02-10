@@ -1,0 +1,56 @@
+
+"Unnamed"
+drop1()
+
+lookup_error <- fun[]:
+  error("lookup_error")
+
+functions.append <- fun[value]:
+  memory.set(`value functions.end())
+  functions.end.increase()
+
+# Need to make this hyperstatic again later on
+# Slightly less ugly hack. Still depend on a memory reset for functions.append.
+functions.add <- inline[]:
+  F' push: pick1 functions.append
+     push: push: functions.append functions.append
+     push: string_equal functions.append
+     push: push: functions.append functions.append
+     push: return_if functions.append
+     push: lookup_error functions.append
+     push: ] functions.append
+     functions.end.decrease functions.end.decrease 'F
+
+# right_bracket <- 93
+write_loop <- fun[]:
+  pointer = Pointer(memory.len())
+  repeat:
+    token = input.next_token()
+    mempos_append(names.get(token))
+    if string_equal(token "push:"):
+      memory.append(input.next_token())
+    if string_equal(token "attr:"):
+      memory.append(input.next_token())
+    if string_equal(token "attr_call:"):
+      memory.append(input.next_token())
+    if string_equal(token "pushi:"):
+      memory.append(input.next_token())
+    if string_equal(token "pushf:"):
+      mempos_append(names.get(input.next_token()))
+    if string_equal(token "check:"):
+      memory.append(input.next_token())
+    if string_equal(token "assign:"):
+      memory.append(input.next_token())
+    if string_equal(token "pick:"):
+      memory.append(input.next_token())
+    if string_equal(`token "]"):
+      return(`pointer)
+
+# Doesn't work well with any semantic...removed
+run <- inline[name]:
+  call(names.get(`name))
+
+input_loop2 <- fun[]:
+  repeat:
+    # Too many issues when calling run instead...
+    call(names.get(input.next_token()))

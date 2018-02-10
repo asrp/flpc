@@ -1,0 +1,229 @@
+resizable <- class[]:
+  instance <- fun[length self]:
+    _array = boot_array.instance(length + length + 3 boot_array_class)
+    new_obj = minobj.instance(boot_obj)
+    # parent, attrib, len, array
+    memory.set(self new_obj - 2)
+    memory.set(length new_obj)
+    memory.append(_array)
+    memory.append(names.get("]"))
+    return(new_obj)
+
+  get <- fun[key self]:
+    return(boot_array.get(key memory.get(self + 1)))
+
+  set <- fun[key value self]:
+    boot_array.set(key value memory.get(self + 1))
+
+  string_index <- fun[name self]:
+    return(boot_array.string_index(name memory.get(self + 1)))
+
+  double <- fun[self]:
+    length = memory.get(self)
+    new_array = boot_array.instance(length + length + 3 boot_array_class)
+    boot_array.copy_to(new_array memory.get(self + 1))
+    memory.set(new_array self + 1)
+
+  reset <- fun[self]:
+    length = memory.get(self)
+    new_array = boot_array.instance(length boot_array_class)
+    memory.set(new_array self + 1)
+
+  increase <- fun[self]:
+    memory.set(memory.get(self) + 1 self)
+
+  max_len <- fun[self]:
+    # self . array . len
+    return(memory.get(memory.get(self + 1)))
+
+  append <- fun[value self]:
+    if not(memory.get(self) < resizable.max_len(self)):
+      resizable.double(self)
+    resizable.set(memory.get(self) value self)
+    resizable.increase(self)
+
+  extend <- fun[other self]:
+    l = other . len
+    i = l
+    repeat_if:
+      resizable.append(resizable.get(l - i other) self)
+      i = `i - 1
+
+  append_array <- fun[value self]:
+    if value == None():
+      return_no_value2()
+    # tprint(value)
+    # if is_instance(node_class value):
+    #   value = value . children
+    # Should test iterability instead
+    if is_instance(value resizable_class):
+      # Could be quoted with a better check system
+      resizable.extend(value self)
+    else:
+      resizable.append(value self)
+
+  pop <- fun[self]:
+    memory.set(memory.get(self) - 1 self)
+    return(resizable.get(memory.get(self) self))
+
+  top <- fun[self]:
+    return(resizable.get(memory.get(self) - 1 self))
+
+  print <- fun[self]:
+    print("{_")
+    l = memory.get(self)
+    i = l
+    repeat_if:
+      tprint(resizable.get(l - i self))
+      printspace()
+      i = `i - 1
+    print("}")
+    # printeol()
+
+  attrib <- fun[name receiver searcher]:
+    if lookup_print:
+      print("Resizable_looking_up_")
+      print(name)
+      printeol()
+    return_if(string_equal(name "get")      resizable.get)
+    return_if(string_equal(name "set")      resizable.set)
+    return_if(string_equal(name "string_index") resizable.string_index)
+    return_if(string_equal(name "instance") resizable.instance)
+    return_if(string_equal(name "print")    resizable.print)
+    return_if(string_equal(name "append")   resizable.append)
+    return_if(string_equal(name "extend")   resizable.extend)
+    return_if(string_equal(name "append_array") resizable.append_array)
+    return_if(string_equal(name "double")   resizable.double)
+    return_if(string_equal(name "reset")    resizable.reset)
+    return_if(string_equal(name "increase") resizable.increase)
+    return_if(string_equal(name "pop")      resizable.pop)
+    return_if(string_equal(name "top")      resizable.top)
+    return_if(string_equal(name "max_len")  resizable.max_len)
+    return_if(string_equal(name "len")      memory.get(receiver))
+    return_if(string_equal(name "array")    memory.get(receiver + 1))
+    return_if(string_equal(name "type")     "resizable")
+    return(instance_attrib(name receiver searcher))
+
+resizable_class <- boot_obj . subclass(resizable.attrib)
+resizable <- closure(resizable_class . instance resizable_class)
+
+node <- class[]:
+  instance <- fun[name children self]:
+    new_obj = minobj.instance(boot_obj)
+    # parent, attrib, name, children
+    memory.set(self new_obj - 2)
+    memory.set(name new_obj)
+    memory.append(children)
+    memory.append(names.get("]"))
+    return(`new_obj)
+
+  get <- fun[key self]:
+    children = memory.get(self + 1)
+    if is_instance(children resizable_class):
+      return(resizable.get(key children))
+    else:
+      if key == 0:
+        return(children)
+      error("Out_of_bound_index")
+
+  print <- fun[self]:
+    printraw(memory.get(self))
+    print("{")
+    tprint(memory.get(self + 1))
+    print("}")
+
+  len <- fun[self]:
+    children = memory.get(self + 1)
+    if is_instance(children resizable_class):
+      return(memory.get(children))
+    else:
+      return(1)
+
+  name_set <- fun[new_name self]:
+    memory.set(new_name receiver)
+
+  attrib <- fun[name receiver searcher]:
+    if lookup_print:
+      print("Node_looking_up_")
+      print(name)
+      printeol()
+    return_if(string_equal(name "get")      node.get)
+    return_if(string_equal(name "instance") node.instance)
+    return_if(string_equal(name "print")    node.print)
+    # Is @property really this easy?
+    return_if(string_equal(name "len")      node.len(receiver))
+    return_if(string_equal(name "name")     memory.get(receiver))
+    return_if(string_equal(name "children") memory.get(receiver + 1))
+    return_if(string_equal(name "type")     "node")
+    return(instance_attrib(name receiver searcher))
+
+node_class <- boot_obj . subclass(node.attrib)
+node <- closure(node_class . instance node_class)
+
+Input <- class[]:
+  instance <- fun[filename self]:
+    new_obj = minobj.instance(boot_obj)
+    # parent, attrib, file (descriptor), position
+    memory.set(self new_obj - 2)
+    memory.set(file.open(filename) new_obj)
+    memory.append(0)
+    memory.append(names.get("]"))
+    return(new_obj)
+
+  next <- fun[self]:
+    return(fd_next_token(memory.get(self)))
+
+  next_char <- fun[self]:
+    return(fd_next_char(memory.get(self)))
+
+  startswith <- fun[s self]:
+    return(fd_startswith(s memory.get(self)))
+
+  position <- fun[self]:
+    return(fd_position(memory.get(`self)))
+
+  position_set <- fun[value self]:
+    fd_position_set(memory.get(`self) value)
+
+  ended <- fun[self]:
+    return(fd_ended(memory.get(`self)))
+
+  attrib <- fun[name receiver searcher]:
+    if lookup_print:
+      print("Input_looking_up_")
+      print(name)
+      printeol()
+    return_if(string_equal(name "instance") Input.instance)
+    return_if(string_equal(name "ended")    Input.ended)
+    return_if(string_equal(name "next")     Input.next)
+    return_if(string_equal(name "next_char")  Input.next_char)
+    return_if(string_equal(name "startswith") Input.startswith)
+    return_if(string_equal(name "position") Input.position)
+    return_if(string_equal(name "position_set") Input.position_set)
+    return_if(string_equal(name "file")     memory.get(receiver))
+    return_if(string_equal(name "type")     "Input")
+    return(instance_attrib(name receiver searcher))
+
+Input_class <- boot_obj . subclass(Input.attrib)
+Input <- closure(Input_class . instance Input_class)
+
+cheat_dict <- class[]:
+  instance <- fun[self]:
+    new_obj = minobj.instance(boot_obj)
+    memory.set(self new_obj - 2)
+    memory.set(_cheat_dict.new() new_obj)
+    memory.append(names.get("]"))
+    return(new_obj)
+
+  attrib <- fun[name receiver searcher]:
+    if lookup_print:
+      print("CheatDict_looking_up_")
+      print(name)
+      printeol()
+    return_if(string_equal(name "instance") cheat_dict.instance)
+    return_if(string_equal(name "get")      _cheat_dict.get)
+    return_if(string_equal(name "set")      _cheat_dict.set)
+    return(instance_attrib(name receiver searcher))
+
+cheat_dict_class <- boot_obj . subclass(cheat_dict.attrib)
+cheat_dict <- closure(cheat_dict_class . instance cheat_dict_class)

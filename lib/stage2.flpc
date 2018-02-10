@@ -1,0 +1,9 @@
+
+memoizer.reset()
+print("Running_grammar")
+printeol()
+# Still can't run both even with memoizer_reset
+#output = apply("grammar")
+#output . print()
+save("stage2.pkl")
+

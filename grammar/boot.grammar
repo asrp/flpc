@@ -1,0 +1,24 @@
+name = (letter | '_') (letter | digit | '_')*
+expr = apply | exactly | token | parenthesis | output
+
+exactly! = "'" {(escaped_char | ~'\'' anything)*} "'"
+token! = "\"" {(escaped_char | ~'"' anything)*} "\""
+escaped_char! = '\\' {'n'|'r'|'t'|'b'|'f'|'"'|'\''|'\\'}
+apply! = ('\t'|' ')* {name}
+parenthesis = "(" {or} ")"
+output! = "{" {or} "}"
+
+not = "~" {expr=negation} | expr
+quantified = not ('*' | '+' | '?')?
+bound = quantified ('=' {name})?
+and = bound*
+or = and ("|" {and})*
+
+rule = spaces {name=rule_name '!'?=flags and=args ("=" {or})}
+grammar = {rule*} spaces
+
+comment = '#' (~'\n' anything)*
+hspace = ' ' | '\t' | comment
+indentation = (hspace* ('\r' '\n' | '\r' | '\n'))* hspace+
+space = '\n' | '\r' | hspace
+spaces = space*
