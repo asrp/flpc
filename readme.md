@@ -96,7 +96,7 @@ To run tests (in `test/`), compile up to the needed test and append the test.
 
 See Bootstrapping Sequence to get an idea of combinations that may work.
 
-## Bootstrapping sequnce
+## Bootstrapping sequence
 
 Almost everything is modifiable at runtime using `rebind:` including the loop for reading input, compiling functions, looking up names and `rebind:` itself!
 
@@ -105,7 +105,7 @@ This is a long list but the size of each file is relatively small.
 - **boot.flpc**: Preloaded into memory (instead of at runtime) by reading the file `init_memory.dat` (a text file despite the name). Contains the REPL and compilation loop. `init_memory.dat` also contains `names.get` which implicitly represents the function names dictionnary.
 - **stage0.flpc**: Defines `bind:`, `rebind:` and the debugger.
 - **stage1a.flpc**: Basic object system (`boot_obj`, `boot_array`, `boot_dict`)
-- **stage1b.flpc**: Object system (abandonned and unused for now; run but is too slow without some kind of caching)
+- **stage1b.flpc**: Object system (abandoned and unused for now; run but is too slow without some kind of caching)
 - **stage1c.flpc**: More objects `resizable` arrays, `node` and `Input` for reading files (unfortunately all in the style of the basic object system instead of the intended one from stage1b)
 - **stage1d.flpc**: Semantics for nodes of a grammars
 - **grammar.flpc**: Rules of a grammar parsing grammar
@@ -120,9 +120,9 @@ This is a long list but the size of each file is relatively small.
 
 Its not clear what should go first, both as the next thing to write *and* the next thing to run in the boot sequence. (In fact, maybe the current boot sequence should be reordered).
 
-- **Flpc AST to FlpcForth compiler.** This is the most obvious as it would remove the need for `compiler.py` (so the only remaing source file in the project that is not Flpc would be `flpc.c`). However, competing with that are
+- **Flpc AST to FlpcForth compiler.** This is the most obvious as it would remove the need for `compiler.py` (so the only remaining source file in the project that is not Flpc would be `flpc.c`). However, competing with that are
 - **Garbage collection.** If the concatenation of all `stage1*.flpc` files are compiled, it takes up millions of memory cells. A number of those could be reclaimed.
-- **Caching mechanism.** This woud let us use the actual intended object system (hopefully its fast enough!) and replaces `names.get` with the method of an actual dictionnary (as in `stage1b.flpc`). Binding and rebinding would be much easier and we can maybe also replace the memoizer.
+- **Caching mechanism.** This woud let us use the actual intended object system (hopefully its fast enough!) and replaces `names.get` with the method of an actual dictionary (as in `stage1b.flpc`). Binding and rebinding would be much easier and we can maybe also replace the memoizer.
 - **Modules.** We can't keep adding new features (like syscalls) as primitives. Ideally, they'd be referenced by name in some module system.
 - **Nested FlpcForth parser.** The number of auto-generated functions is pretty high and makes it a bit unreadable. Maybe this should even come right after the debugger (stage0).
 - **Direct Flpc AST interpreter** Maybe with an interpreter, we won't need the compiler (except at the very beginning). Everything can be rebound at runtime anyways.
@@ -161,7 +161,7 @@ Typed print. Prints (and consumes) the top of the data stack. The value is forma
 
 ### mpr
 
-Prints the function-end separated memory with one character representating each cell.
+Prints the function-end separated memory with one character representing each cell.
 
 ### debugging primitives
 
