@@ -1,0 +1,9 @@
+print(is_prime(2))
+print(is_prime(4))
+print(is_prime(5))
+bp()
+# 1013
+print(next_prime(1010))
+# 1733
+print(next_prime(1724))
+bp()

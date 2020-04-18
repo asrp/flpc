@@ -1,0 +1,12 @@
+# init_g("gen/fgen-output2.flpc")
+# compile_file("lib/stage6b.flpc")
+# compile_file("lib/stage6.flpc")
+# compile_file("test/multi_if2.flpc")
+# compile_file("test/simplify_source4.flpc")
+# compile_file("test/compile_source.flpc")
+
+compile_self <- fun[]:
+  filenames = make_resizable("test/self.flpc" "lib/stage6b.flpc" "lib/stage6a.flpc" "lib/flpc_grammar.flpc" "lib/stage3b.flpc" "lib/stage3a.flpc" "lib/stage1d.flpc" "lib/stage1c.flpc" "lib/stage1b3.flpc" "lib/stage1b2.flpc" "lib/stage1b.flpc" "lib/stage1a.flpc" "lib/stage0.flpc" 13)
+  compile_all(filenames "gen/output.f")
+
+compile_self()

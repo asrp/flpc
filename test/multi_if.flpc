@@ -1,0 +1,44 @@
+
+# python compiler.py lib/stage0.flpc lib/multi_if.flpc > precompiled/test.f
+foo <- fun[]:
+  print("foo")
+  printeol()
+
+bar <- fun[]:
+  print("bar")
+  printeol()
+
+baz <- fun[]:
+  print("baz")
+  printeol()
+
+test <- fun[]:
+  # multi-if(foo 1 bar 0 baz 0 3)
+  multi-if(0 baz 0 bar 1 foo)
+
+test()
+
+test2 <- fun[]:
+  x = 4
+  if x < 3:
+    baz()
+  elif x < 4:
+    bar()
+  elif x < 10:
+    foo()
+
+test2()
+
+test3 <- fun[]:
+  x = 2
+  if x < 3:
+    print("baz")
+    printeol()
+  elif x < 4:
+    print("bar")
+    printeol()
+  elif x < 10:
+    print("foo")
+    printeol()
+
+test3()

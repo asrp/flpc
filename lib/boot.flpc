@@ -43,6 +43,8 @@ write_loop <- fun[]:
       memory.append(input.next_token())
     if string_equal(token "pick:"):
       memory.append(input.next_token())
+    if string_equal(token "bind:"):
+      memory.append(input.next_token())
     if string_equal(`token "]"):
       return(`pointer)
 

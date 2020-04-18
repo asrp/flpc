@@ -1,14 +1,23 @@
 // cat flpc.c c_names.c > flpc_all.c; tcc -run -g -DTCC flpc_all.c flpc.f
 // cat flpc.c c_names.c > flpc_all.c; gcc -gdwarf-2 -g3 flpc_all.c -o flpc; gdb ./flpc
+// Alternative:
+// cat flpc.c c_names.c > flpc_all.c; gcc -gdwarf-2 -g3 flpc_all.c -o flpc; gdb ./flpc
 // (gdb) b _error
 // (gdb) b bp
 // (gdb) r flpc.f
 // (gdb) call print_state()
 
+// When adding primitives, regenerate c_names.c and init_memory.dat
+// Edit the hard coded names dict in simulate.py and then run
+// python -i simulate.py d
+
+
 #define LENGTH -1
 #define MEMORY_LENGTH 10000000
 #define STACK_MAXLEN 10000
-#define FILE_BUFFER_SIZE 100000
+#define MAX_NUM_FILES 20
+#define FILE_BUFFER_SIZE 120000
+#define POS_MAP_LENGTH 17000
 // TL: Type bits lengths (least significant x bits indicate types)
 #define TL 2
 #define call_stack_top call_stack[call_stack[LENGTH] - 1]
@@ -18,6 +27,7 @@
 #define Int 0b00
 #define type(x) (x & 0b11)
 #define value(x) (x >> TL)
+// Dangerous if evaluating x has a side effect!
 #define cvalue(x, y) (type((x)) == (y) ? value((x)) : _error("Unexpected type"))
 #define init(C, value) (((value) << TL) + C)
 #define None init(Pointer, -1)
@@ -35,7 +45,7 @@
 #include <assert.h>
 
 char *escape[256] = {NULL};
-char unescape[256] = {NULL};
+char unescape[256] = {};
 
 // Use struct instead? But then its not as easy to use index notation.
 int call_stack_array[STACK_MAXLEN];
@@ -51,9 +61,11 @@ int rules_strings_array[50];
 int *rules_strings;
 int _memoizer[28000][10][50][2];
 
-int memory_array[MEMORY_LENGTH];
+int *memory_array; //memory_array[MEMORY_LENGTH];
 int *memory;
-int positions[MEMORY_LENGTH][4]; // source_index, filename, start, end
+int positions[MEMORY_LENGTH][4]; // start, end, 0, 0 (wanted: source_index, filename)
+int pos_map_array[POS_MAP_LENGTH][4]; // forth_start, filenum, source_start, source_end
+int (*pos_map)[4];
 #ifdef TCC
 int (*primitives[300])(void);
 #else
@@ -72,12 +84,16 @@ int *primitive_names;
 int last_pos[2];
 char boot_source[FILE_BUFFER_SIZE];
 char file_source[FILE_BUFFER_SIZE];
-int filename;
+int num_files;
+char filenames[MAX_NUM_FILES][100];
+char flpc_sources[MAX_NUM_FILES][FILE_BUFFER_SIZE];
+// int filename;
 
 int functions_end, debugger_waitlen, debug_function, debugger_skip, catch_error;
-int run_index, eofunc_index;
+int run_index, eofunc_index, names_get_index;
 int unnamed_string = init(Int, -3);
 FILE *input;
+FILE *outf;
 struct Files {
   int len;
   FILE *files[10];
@@ -121,13 +137,37 @@ void load_all(){
   for(int i=0; i<count; i++){
     fscanf(file, "%s", &input_buffer);
     string_new(input_buffer);}
-  fscanf(file, "%s", &input_buffer); // #functions_end
+  fscanf(file, "%s", &input_buffer); // #indices
   fscanf(file, "%i", &functions_end);
+  fscanf(file, "%i", &names_get_index);
+  fscanf(file, "%i", &run_index);
   fscanf(file, "%s", &input_buffer); // #primitive_names
   fscanf(file, "%i", &primitive_names[LENGTH]);
   for(int i=0; i<count; i++){
     fscanf(file, "%s", &input_buffer);
-    primitive_names[i] = string_new(input_buffer);}}
+    primitive_names[i] = string_new(input_buffer);}
+
+  file = fopen("pos_map.txt", "r");
+  FILE* flpc_fh;
+  char filename[100];
+  fscanf(file, "%i", &num_files);
+  assert(num_files < MAX_NUM_FILES);
+  for(int i=0; i<num_files; i++){
+    fscanf(file, "%s", &filenames[i]);
+    flpc_fh = fopen(filenames[i], "r");
+    fread(&flpc_sources[i], FILE_BUFFER_SIZE, 1, flpc_fh);
+    fclose(flpc_fh);}
+  fscanf(file, "%i", &pos_map[LENGTH][0]);
+  assert(pos_map[LENGTH][0] < POS_MAP_LENGTH);
+  for(int i=0; i<pos_map[LENGTH][0]; i++){
+    fscanf(file, "%i %s %i %i", &pos_map[i][0], &filename, &pos_map[i][2], &pos_map[i][3]);
+    int j;
+    for(j=0; j<num_files; j++){
+      if (strcmp(filename, filenames[j]) == 0) {
+        pos_map[i][1] = j;
+        break;}}
+    if (j == num_files) {_error("Can't find filename");}}
+  printf("last pos_map: %i\n", pos_map[pos_map[LENGTH][0] - 1][0]);}
 
 void append(int* array, int item){
   if (array != memory && array[LENGTH] > 10000) {_error("array LENGTH overwritten!");}
@@ -141,7 +181,7 @@ int pop(int* array){
 
 int ds_pop(){
   if (pop(local_stack) == Sep){
-    _error("Popping empty data stack!\n"); print_state();}
+    _error("Popping empty data stack!\n");}
   return pop(data_stack);}
 
 void ds_append(int item){
@@ -168,35 +208,35 @@ void string_print(int string_index){
   _assert(s1[LENGTH] < 500);
   for (int i=0; i<s1[LENGTH]; i++){
     if (s1[i] == '_') {
-      printf(" ");}
+      fprintf(outf, " ");}
     else if (s1[i] == '\\' && s1[i+1] == 'u') {
-      printf("_"); i++;}
+      fprintf(outf, "_"); i++;}
     else {
-      printf("%c", s1[i]);}}}
+      fprintf(outf, "%c", s1[i]);}}}
 
 void string_print_raw(int string_index){
   char* s1 = cstring(string_index);
   _assert(s1[LENGTH] < 500);
-  printf("%.*s", s1[LENGTH], s1);}
+  fprintf(outf, "%.*s", s1[LENGTH], s1);}
 
 void tprint(int elem){
   if (type(elem) == Pointer){
     if (elem == None) {
-      printf("None");}
+      fprintf(outf, "None");}
     else if (elem == Sep){
-      printf("--Sep--");}
+      fprintf(outf, "--Sep--");}
     else {
-      printf("<mem %i>", value(elem));}}
+      fprintf(outf, "<mem %i>", value(elem));}}
   else if (type(elem) == Primitive){
-    printf("<prim ");
+    fprintf(outf, "<prim ");
     string_print(primitive_names[value(elem)]);
-    printf(">");}
+    fprintf(outf, ">");}
   else if (type(elem) == String){
-    printf("\"");
+    fprintf(outf, "\"");
     string_print_repr(elem);
-    printf("\"");}
+    fprintf(outf, "\"");}
   else {
-    printf("<int %i>", value(elem));}}
+    fprintf(outf, "<int %i>", value(elem));}}
 
 int index_of(int(*func)()){
   //sizeof(primitives)/sizeof(primitives[0])
@@ -275,6 +315,23 @@ int string_equal_s(int str1, char *s2){
 int string_equal() {
   return string_equal_(ds_pop(), ds_pop());}
 
+int string_hash(int str1){
+  assert(type(str1) == String);
+  /*printf("Hashing: ");
+  string_print(str1);
+  printf("\n");*/
+  int h = 5381;
+  int c;
+  char *s = cstring(str1);
+  for (int i=0; i < s[LENGTH]; i++){
+    // Need to leave room for TL so keeping only the lower 29 bits
+    h = (((h << 5) + h) + s[i]) & ((1 << 29) - 1); /* h * 33 + s[i] */}
+  assert(init(Int, h) >= 0);
+  return h;}
+
+int hash(){
+  return init(Int, string_hash(ds_pop()));}
+
 int assign(){
   /*if (local_stack[local_stack[LENGTH]-1] != unnamed_string){
     printf("Can't assign to top of stack\n");}*/
@@ -304,7 +361,7 @@ int pick(){
     else if (local_stack[i] == Sep || i == 0){
       // printf("Not found in locals\n");
       ds_append(name);
-      func_call(init(Pointer, 182));
+      func_call(init(Pointer, names_get_index));
       return NoValue;}
     else if (string_equal_(local_stack[i], name) == True){
       // printf("Returning %i ", i); tprint(data_stack[data_stack[LENGTH] - (local_stack[LENGTH]-1 - i) - 1]);
@@ -383,6 +440,18 @@ int str_join(){
   buffer[cur_len++] = '\0';
   return raw_string_new(buffer);}
 
+int sub_str(){
+  int v1 = ds_pop(); int v2 = ds_pop();
+  int end = cvalue(v1, Int);
+  int start = cvalue(v2, Int);
+  char* s = cstring(ds_pop());
+  char buffer[10000] = "";
+  int cur_len = 0;
+  for (int i=start; i<end; i++){
+    buffer[cur_len++] = s[i];}
+  buffer[cur_len++] = '\0';
+  return raw_string_new(buffer);}
+
 int str_len(){
   int fs = ds_pop();
   // Size zero resizable arrays. Should do something about these.
@@ -392,6 +461,13 @@ int str_len(){
   if (type(fs) != String) {_error("Getting str_len of non-string");}
   char *s = cstring(fs);
   return init(Int, s[LENGTH]);}
+
+int int_to_str(){
+  int x = ds_pop();
+  char buffer[20];
+  sprintf(buffer, "%d", cvalue(x, Int));
+  // itoa(num, buffer, 10);
+  return string_new(buffer);}
 
 int _isspace(char c) {return (c == ' ' || c == '\n' || c == '\r' || c == '\t');}
 int _isalpha(char c) {return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z');}
@@ -414,6 +490,7 @@ int is_str(){
 int is_basic(){
   int elem = ds_pop();
   return init(Int, (type(elem) == String || type(elem) == Int ||
+                    type(elem) == Primitive ||
                     elem == None || elem == NoValue));}
 
 int func_end(){
@@ -519,13 +596,13 @@ int input_next_token() {
   last_pos[0] = ftell(input);
   if (fscanf(input, "%s", input_buffer) == EOF) {
     if (input != stdin) {input = stdin; return input_next_token();}
-    else {printf("EOF reached\n"); exit(0);}} //_error("EOF reached");
+    else {printf("EOF reached. Mem used: %i\n", memory[LENGTH]); exit(0);}} //_error("EOF reached");
   last_pos[1] = ftell(input);
   // printf("*** Read token %.*s\n", last_pos[1] - last_pos[0], file_source + last_pos[0]);
   return string_new(input_buffer);}
 
 int stdin_next_token() {
-  printf("Reading from stdin\n");
+  // printf("Reading from stdin\n");
   if (scanf("%s", input_buffer) == EOF) {_error("EOF reached");}
   return string_new(input_buffer);}
 
@@ -578,10 +655,22 @@ int fd_ended(){
 
 int file_open(){
   char *filename = cstring(ds_pop());
+  char *mode = cstring(ds_pop());
   char buf[50];
+  char mode_buf[3];
   sprintf(buf, "%.*s", filename[LENGTH], filename);
-  files.files[files.len++] = fopen(buf, "r");
+  sprintf(mode_buf, "%.*s", mode[LENGTH], mode);
+  files.files[files.len++] = fopen(buf, mode_buf);
   return init(Int, files.len - 1);}
+
+int set_output(){
+  // Could check for errors and return values depending on that.
+  int file_num = ds_pop();
+  if (file_num == None) {
+    outf = stdout;}
+  else {
+    outf = files.files[value(file_num)];}
+  return NoValue;}
 
 void func_call(int func){
   // printf("Calling %i %i\n", type(func), value(func));
@@ -589,6 +678,7 @@ void func_call(int func){
     append(call_stack, value(func));
     prev_call_stack[call_stack[LENGTH] - 1] = call_stack_top;}
   else if (type(func) == Primitive){
+    assert(func >= 0);
     int output = primitives[value(func)]();
     if (output != NoValue) {ds_append(output);}}}
 
@@ -621,9 +711,9 @@ int print_() {
 int printraw() {
   string_print_raw(ds_pop()); return NoValue;}
 int printrepr() {
-  printf("\""); string_print_repr(ds_pop()); printf("\""); return NoValue;}
-int printspace() {printf(" "); return NoValue;}
-int printeol() {printf("\n"); return NoValue;}
+  fprintf(outf, "\""); string_print_repr(ds_pop()); fprintf(outf, "\""); return NoValue;}
+int printspace() {fprintf(outf, " "); return NoValue;}
+int printeol() {fprintf(outf, "\n"); return NoValue;}
 int print_repr() {tprint(ds_pop()); return NoValue;}
 
 int char_equal(int s, char c){
@@ -672,6 +762,9 @@ void debugger(){
     print_state();
     printf("\n");
     printf("debugger_waitlen %i\n", debugger_waitlen);}*/
+  assert(debugger_waitlen == None || debugger_waitlen == NoValue || debugger_waitlen >= 0);
+  // NoValue means don't ever break
+  // None means always break
   if (debugger_waitlen == None || debugger_waitlen >= call_stack[LENGTH]) {
     if (debugger_skip == True) {
       debugger_skip = False;
@@ -683,11 +776,16 @@ void debugger(){
 
 void main_loop(){
   int func;
+  FILE* prof_file;
+  //prof_file = fopen("profile.txt", "w");
   while(call_stack[LENGTH]){
     /*if (call_stack[LENGTH] == 4){
       print_state();}
     if (call_stack_top == functions_end - 7){
     print_state();}*/
+    /*for (int i=0; i<call_stack[LENGTH]; i++){
+      fprintf(prof_file, "%i ", call_stack[i]);}
+      fprintf(prof_file, "\n");*/
     debugger();
     prev_call_stack[call_stack[LENGTH] - 1] = call_stack_top;
     func = memory[call_stack_top];
@@ -705,9 +803,9 @@ int error(){
   exit(1);}
 
 int _error(char *s){
-  printf(s); printf("\n");
+  printf("%s\n", s);
   exit(1);}
- 
+
 int lookup_error(){
   print_state();
   if (!catch_error) {_error("Lookup_error");}
@@ -750,26 +848,15 @@ int memory_set() {
     _error("Setting index greater than memory length");}
   return NoValue;}
 
-void print_frame(int frame){
+int pos_map_index(int forth_index){
+  for(int i=0; i<pos_map[LENGTH][0]; i++){
+    if (forth_index < pos_map[i][0]) return i - 1;}
+  _error("Position in source not found");}
+
+void print_boot_frame(int frame){
   char *source;
   char *fn;
-    int* pos = positions[frame];
-    if (pos[0] == None || pos[0] < 0){
-      printf("  Unknown position \033[92m");
-      if (frame < 4 || type(frame) != Pointer) {
-        printf("%i", frame);}
-      else {
-        tprint(frame);}
-      printf("\033[0m\n");
-      for (int j=-5; j<5; j++){
-        if (frame+j < 0) continue;
-        if (j == 0) {printf("\033[91m");}
-        tprint(memory[frame+j]);
-        if (j == 0) {printf("\033[0m");}
-        printf(" ");}
-      printf("\n");}
-    else {
-      // printf("%i %i %i\n", pos[0], pos[1]);
+  int* pos = positions[frame];
       if (pos[2]) {source = file_source; fn = input_filename;}
       else {source = boot_source; fn = "<boot>";}
       int prev = 0, first = -1, j, lineno = 0, first_lineno;
@@ -788,26 +875,72 @@ void print_frame(int frame){
       print_slice(source, pos[0], pos[1]);
       printf("\033[0m");
       print_slice(source, pos[1], j);
+      printf("\n"); }
+
+void print_frame(int frame){
+  char *source;
+  char *fn;
+    int* pos = positions[frame];
+    if (pos[0] == None || pos[0] < 0){
+      printf("  Unknown position \033[92m");
+      if (frame < 4 || type(frame) != Pointer) {
+        printf("%i", frame);}
+      else {
+        tprint(frame);}
+      printf("\033[0m\n");
+      for (int j=-5; j<5; j++){
+        if (frame+j < 0) continue;
+        if (j == 0) {printf("\033[91m");}
+        tprint(memory[frame+j]);
+        if (j == 0) {printf("\033[0m");}
+        printf(" ");}
+      printf("\n");}
+    else if (!pos[2]) {
+      print_boot_frame(frame);}
+    else {
+      // printf("%i %i %i\n", pos[0], pos[1], pos[2]);
+      /*if (pos[2]) {source = file_source; fn = input_filename;}
+        else {source = boot_source; fn = "<boot>";}*/
+      int (*fpos)[4] = pos_map + pos_map_index(pos[0] + 1);
+      source = flpc_sources[(*fpos)[1]];
+      fn = filenames[(*fpos)[1]];
+      int prev = 0, first = -1, j, lineno = 0, first_lineno;
+      for (j=0; j<strlen(source); j++){
+        if (source[j] == '\n') {
+          if (j > (*fpos)[2] && first == -1) {first = prev; first_lineno = lineno;}
+          if (j >= (*fpos)[3]) {break;}
+          lineno += 1;
+          prev = j;}}
+      // printf("%i %i ", first, j);
+      printf("  In file \033[92m%s\033[0m line %i function \033[92m(", fn, first_lineno);
+      tprint(memory[frame]);
+      printf(")\033[0m");
+      print_slice(source, first, (*fpos)[2]);
+      printf("\033[91m");
+      print_slice(source, (*fpos)[2], (*fpos)[3]);
+      printf("\033[0m");
+      print_slice(source, (*fpos)[3], j);
       printf("\n"); }}
 
-int print_stack(){
+// start = -1 means print everything
+int print_stack(int start){
   int frame;
   for (int i=0; i<call_stack[LENGTH]; i++){
-    if (i < call_stack[LENGTH] - 10) {continue;}
+    if (start != -1 && i < call_stack[LENGTH] - start) {continue;}
     frame = prev_call_stack[i] ? prev_call_stack[i] : call_stack[i];
     printf("%i", i);
     print_frame(frame);}
   return NoValue;}
 
-int print_state() {
-  printf("call_stack: ");
-  prints(call_stack);
-  printf("next_command: ");
-  tprint(memory[call_stack_top]);
-  printf("\n");
-  printf("data_stack:\n");
-  int i = 0;
+// sep_diff = -1 means print everything
+int print_var_stack(int sep_diff) {
+  //int i = 0;
+  int num_sep = 0;
   for (int j = 0; j < local_stack[LENGTH]; j++){
+    if (local_stack[j] == Sep){num_sep++;}}
+  int max_num_sep = num_sep;
+  //for (int j = 0; j < local_stack[LENGTH]; j++){
+  for (int j = local_stack[LENGTH] - 1; j >= 0; j--){
     if (local_stack[j] != Sep){
       if (local_stack[j] == unnamed_string){
         ;}
@@ -816,21 +949,51 @@ int print_state() {
       else {
         _error("Unknown name!");}// tprint(local_stack[j]); exit(1);}
       printf(": ");
-      tprint(data_stack[i]);
-      printf("\n");
-      i++;}
+      tprint(data_stack[j - num_sep]);
+      printf("\n");}
     else {
-      printf("-----\n");}}
-  printf("\ndebugger_waitlen: %i\n", debugger_waitlen); 
-  printf("debug_function: "); tprint(debug_function); printf("\n");
-  print_stack();
+      num_sep--;
+      if (sep_diff != -1 && max_num_sep - num_sep > sep_diff) break;
+      printf("-----\n");}}}
+
+void print_input_state(){
+  int l = 30;
+  printf("Input: %.*s", l, file_source + (last_pos[0] - l));
+  printf("\033[91m");
+  printf("%.*s", last_pos[1] - last_pos[0], file_source + (last_pos[0]));
+  printf("\033[0m");
+  printf("%.*s\n", l, file_source + (last_pos[1]));
+  printf("input_buffer: ");
+  printf("%s\n", input_buffer);}
+
+int print_state() {
+  // printf("Input: %.*s\n", last_pos[1] - last_pos[0] + 40, file_source + (last_pos[0] - 20));
+  print_input_state();
+  printf("data_stack:\n");
+  print_var_stack(5);
+  print_stack(6);
   printf("\n");
   /*printf("\nnext tokens from input:\n");
   for (int i=0; i<10; i++){
   tprint(input_next_token()); printf(" ");}*/
   return NoValue;}
 
-int ps() {print_state();}
+int print_full_state() {
+  printf("call_stack: ");
+  prints(call_stack);
+  printf("next_command: ");
+  tprint(memory[call_stack_top]);
+  printf("\n");
+
+  printf("\ndebugger_waitlen: %i\n", debugger_waitlen);
+  printf("debug_function: "); tprint(debug_function); printf("\n");
+  print_input_state();
+  printf("data_stack:\n");
+  print_var_stack(-1);
+  print_stack(-1);
+  printf("\n");}
+
+int ps() {print_full_state();}
 int fpointer() {return init(Pointer, value(ds_pop()));}
 
 int not_() {return init(Int, !value(ds_pop()));}
@@ -846,9 +1009,17 @@ int call_stack_top2() {return call_stack[call_stack[LENGTH] - 2];}
 // Should check values are ints?
 int sub() {int v = ds_pop(); return ds_pop() - v;}
 int add() {return ds_pop() + ds_pop();}
+int mod() {int v1 = ds_pop(); int v2 = ds_pop();
+  return init(Int, cvalue(v2, Int) % cvalue(v1, Int));}
+int intdiv() {int v1 = ds_pop(); int v2 = ds_pop();
+  return init(Int, cvalue(v2, Int) / cvalue(v1, Int));}
 int greater() {return init(Int, ds_pop() < ds_pop());}
 int less() {int v1 = ds_pop(); int v2 = ds_pop();
   return init(Int, v1 > v2);}
+int bin_or() {int v1 = ds_pop(); int v2 = ds_pop();
+  return init(Int, cvalue(v2, Int) || cvalue(v1, Int));}
+int bin_and() {int v1 = ds_pop(); int v2 = ds_pop();
+  return init(Int, cvalue(v2, Int) && cvalue(v1, Int));}
 int equal() {return init(Int, ds_pop() == ds_pop());}
 int drop1() {ds_pop(); return NoValue;}
 int s21() {int v1 = ds_pop(); int v2 = ds_pop(); ds_append(v1); return v2;}
@@ -856,8 +1027,31 @@ int s4127() {
   int a = ds_pop(); int b = ds_pop(); ds_pop(); int d = ds_pop();
   ds_pop(); ds_pop();
   ds_append(b); ds_append(a); return d;}
+void shuffle_string(char *s) {
+  int data_stack_copy[10];
+  int ord0 = 48;
+  int len = s[LENGTH];
+  int max = 0;
+  for (int i=0; i<s[LENGTH]; i++){
+    max = s[i] > max ? s[i] : max;}
+  // Need to properly handle unique last element case!
+  // The current version is not correct for, say, s11.
+  if (max == s[s[LENGTH] - 1]) {
+    max -= 1;
+    len -= 1;}
+  max = max - ord0;
+  if (max > 9) {_error("Shuffling index above 9!\n");}
+  for (int i=0; i<max; i++){
+    data_stack_copy[i] = ds_pop();}
+  for (int i=0; i<len; i++){
+    ds_append(data_stack_copy[s[len - 1 - i] - ord0 - 1]);}}
+int shuffle() {
+  shuffle_string(cstring(ds_pop()));
+  return NoValue;}
 int debugger_waitlen_set() {
   debugger_waitlen = value(ds_pop());
+  // Hack for setting None
+  if (debugger_waitlen == -1) {debugger_waitlen = None;}
   debugger_skip = True;
   if (debug_function == None){
     debug_function = memory[call_stack[call_stack[LENGTH]-2] - 1];}
@@ -957,13 +1151,16 @@ void setup_escape(){
   unescape['u'] = '_';}
 
 int main(int argc, char *argv[]) {
+  outf = stdout;
   setup_escape();
   call_stack = call_stack_array + 1;
   prev_call_stack = prev_call_stack_array + 1;
   data_stack = data_stack_array + 1;
   local_stack = local_stack_array + 1;
   rules_strings = rules_strings_array + 1;
+  memory_array = malloc((MEMORY_LENGTH + 1) * sizeof(int));
   memory = memory_array + 1;
+  pos_map = &pos_map_array[1];
   // positions = positions_array + 1;
   primitive_names = primitive_names_array + 1;
   strings = strings_array + 1;
@@ -976,7 +1173,6 @@ int main(int argc, char *argv[]) {
   for(int i=0; i<MEMORY_LENGTH - 1; i++){
     positions[i][0] = None;}
   load_all();
-  run_index = init(Pointer, 72); // Hack!
   eofunc_index = init(Primitive, index_of(func_end)); // Hack!
   catch_error = False;
 
@@ -993,7 +1189,7 @@ int main(int argc, char *argv[]) {
   FILE* boot = fopen("lib/boot.flpc", "r");
   fread(&boot_source, FILE_BUFFER_SIZE, 1, boot);
   fclose(boot);
-  debugger_waitlen = 0; //NoValue;
+  debugger_waitlen = NoValue;
   debug_function = None;
   append(call_stack, 0);
   main_loop();}
@@ -1006,4 +1202,4 @@ void test(){
   prints(primitive_names);
   string_print(primitive_names[0]);
   }
-int (*primitives[])(void) = {zero, pushf, load_state, if_else, call_stack_len, str_join, _cheat_dict_new, is_alpha, newfunc2, save_state, printspace, less, s4127, func_end, memory_set, equal, return_if, not_, return_no_value, mempos_append, print_state, printraw, functions_end_increase, debug_function_set, fd_startswith, str_len, functions_end_decrease, functions_end_, return_no_value2, add, memoizer_get, print_, return4, None_, push, debugger_waitlen_set, lookup_error, bp, file_open, cache_slot, repeat_if, names_set, _cheat_dict_get, newfunc3, check, fpointer, load, c_infinity, newfunc0, fd_position_set, newfunc1, pushi, _cheat_dict_set, two, call, fd_position, drop1, string_equal, greater, input_next_token, printrepr, save, memoizer_set, return_two1, return_two2, functions_end_, fd_ended, return1, return3, return2, fd_next_token, error, memory_len, memory_get, char_between, prm, assign, memoizer_reset, if_, pick, sub, pick1, printeol, one, stdin_next_token, call_stack_top2, repeat, next_token2, fd_next_char, is_basic, func_end, is_str, memory_append, s21};
+int (*primitives[])(void) = {zero, bin_or, load_state, if_else, call_stack_len, str_join, _cheat_dict_new, is_alpha, newfunc2, newfunc3, printspace, less, s4127, func_end, memory_set, equal, return_if, sub_str, not_, return_no_value, mod, mempos_append, print_state, printraw, functions_end_increase, debug_function_set, fd_startswith, str_len, functions_end_decrease, functions_end_, return_no_value2, add, memoizer_get, intdiv, print_, return4, None_, hash, push, debugger_waitlen_set, lookup_error, pushf, bp, bin_and, file_open, cache_slot, repeat_if, names_set, _cheat_dict_get, check, fpointer, load, shuffle, c_infinity, newfunc0, fd_position_set, newfunc1, pushi, _cheat_dict_set, two, call, fd_position, drop1, string_equal, greater, input_next_token, int_to_str, printrepr, save_state, save, memoizer_set, return_two1, return_two2, functions_end_, fd_ended, return1, return3, return2, fd_next_token, error, memory_len, memory_get, char_between, prm, assign, memoizer_reset, if_, pick, sub, pick1, printeol, one, stdin_next_token, call_stack_top2, repeat, next_token2, fd_next_char, is_basic, func_end, is_str, memory_append, s21, set_output};

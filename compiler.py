@@ -34,7 +34,8 @@ def simplify(root):
             output.pos = root[i].pos
     elif root.name == "multi_block_call":
         children = [simplify(child) for child in root]
-        transition = [("if", "else")] #, ("if", "elif"), ("elif", "else"),
+        # transition = [("if", "else")]
+        transition = [("if", "else"), ("if", "elif"), ("elif", "elif"), ("elif", "else")]
         # Everything not listed above is a single block.
         prev = group = None
         groups = []
@@ -51,6 +52,9 @@ def simplify(root):
         out = []
         for group in groups:
             name = "-".join([child.name for child in group])
+            # Ugly hack!
+            if "-elif" in name:
+                name = "multi-if"
             out.append(Node(name, [gc for child in group for gc in child]))
             out[-1].pos = (group[0].pos[0], group[-1].pos[-1])
         if len(out) > 1:
@@ -88,6 +92,8 @@ class FComment:
         self.pos = pos
     def __repr__(self):
         return repr(self.value)
+    def __nonzero__(self):
+        return bool(self.value)
 
 class FCall:
     def __init__(self, s, pos=None):
@@ -95,6 +101,16 @@ class FCall:
         self.pos = pos
     def __repr__(self):
         return self.str
+
+class FStr:
+    def __init__(self, s, pos=None):
+        assert(type(s) == str)
+        self.str = s
+        self.pos = pos
+    def __str__(self):
+        return self.str
+    def __repr__(self):
+        return repr(self.str)
 
 def flatten(lst):
     for elem in lst:
@@ -106,6 +122,7 @@ def flatten(lst):
 
 def to_forth(root):
     if not isinstance(root, Node):
+        bp() # Shouldn't happen anymore either
         return root
     if root.name == "suite":
         return FList([to_forth(child) for child in root], root.pos)
@@ -116,54 +133,60 @@ def to_forth(root):
         children = list(flatten(to_forth(child) for child in root))
         return FComment(children[:-1], root.pos)
     elif root.name == "variable":
-        return FList([FCall("pick:", root.pos), to_forth(root[0][0])], root.pos)
+        return FList([FCall("pick:", root.pos), to_forth(root[0])], root.pos)
     elif root.name == "NAME":
-        return to_forth(root[0])
+        return FStr(root[0], pos=root.pos)
     elif root.name == "name_quote":
-        return FList([FCall("check:", root.pos), to_forth(root[0][0])], root.pos)
+        return FList([FCall("check:", root.pos), to_forth(root[0])], root.pos)
     elif root.name == "STRING":
-        return FList([FCall("push:", root.pos), to_forth(root[0])], root.pos)
+        return FList([FCall("push:", root.pos), FStr(root[0], pos=root.pos)], root.pos)
     elif root.name == "NUMBER":
         if 0 <= int(root[0]) < 3:
-            return to_forth(root[0])
-        return FList([FCall("pushi:", root.pos), to_forth(root[0])], root.pos)
-    elif root.name == "forth":
+            return FStr(root[0], pos=root.pos)
+        return FList([FCall("pushi:", root.pos), FStr(root[0], pos=root.pos)], root.pos)
+    elif root.name == "forth_line":
         return FList([FCall(child[0], child.pos) for child in root], root.pos)
+    elif root.name == "forth":
+        return FList([to_forth(child) for child in root], root.pos)
     elif root.name == "assign":
         output = to_forth(root[1])
         if not isinstance(output, FList):
             output = FList([output], pos=root[1].pos)
         output.append(FList([n for child in reversed(root[0])
                              for n in [FCall("assign:", child.pos),
-                                       to_forth(child[0])]], root[0].pos))
+                                       to_forth(child)]], root[0].pos))
+        return output
+    elif root.name in ["fun", "inline"]:
+        children = list(flatten(to_forth(child) for child in root))
+        assert(len(children) == 2)
+        names = children[0].value if root[0].name == "simple_quote"\
+                else children[0][1::2]
+        if root.name == "fun":
+            decl = FList([FCall("newfunc%s" % len(names), root[0].pos)])
+        else:
+            decl = FList([], root[0].pos)
+        for name in reversed(names):
+            decl.append(FCall("assign:", root[0].pos))
+            decl.append(name)
+        # Could instead replace children[0]?
+        output = FQuote([decl, FList(children[1])], root.pos)
+        if root.name == "fun": # and children[0]:
+            # Doesn't work properly now that we want to preserve lines!
+            # Trying to use flatten but not sure its always right.
+            if str(list(flatten(output[1]))[-1]) not in ["return", "lookup_error"]:
+                output[1].append(FCall("return_no_value",
+                                         pos=(output[1][-1].pos[1],
+                                              output[1][-1].pos[1])))
         return output
     elif root.name == "bind":
         output = to_forth(root[1])
         if not isinstance(output, FList):
             output = FList([output], pos=root[1].pos)
-        if len(root[1]) > 0 and getattr(root[1][0], 'name', None) in ["simple_quote", "quote"]:
-            if root[1].name not in ["inline", "class"]:
-                decl = FList([FCall("newfunc%s" % len(root[1][0][0]), root[0].pos)])
-            else:
-                decl = FList([], root.pos)
-            names = output[0].value if root[1][0].name == "simple_quote"\
-                    else output[0][1::2]
-            for name in reversed(names):
-                decl.append(FCall("assign:", root[1][0].pos))
-                decl.append(name)
-            output[1].insert(0, decl)
-            output.inline = (root[1].name == "inline")
-            if not output.inline and output[0]:
-                if str(output[1][-1]) not in ["return", "lookup_error"]:
-                    output[1].append(FCall("return_no_value"))
-        else:
-            # Forth only body
-            output.inline = True
         output.append(FCall("bind:", root.pos))
         output.append(to_forth(root[0][0]))
         return output
     elif root.name == "comment":
-        children = list(flatten(to_forth(child) for child in root))
+        children = list(flatten(FStr(child, pos=root.pos) for child in root))
         return FComment(children, root.pos)
     elif root.name == ".": # getattr
         if root[1].name == "variable":
@@ -174,7 +197,7 @@ def to_forth(root):
             children = [to_forth(child) for child in root[1]] +\
                        [to_forth(root[0]),
                         FCall("attr_call:", root.pos),
-                        root[1].name]
+                        FStr(root[1].name, root.pos)]
         return FList(list(flatten(children)), root.pos)
     elif root.name == "infix":
         bp() # Shouldn't happen anymore
@@ -182,18 +205,37 @@ def to_forth(root):
         return FList(children + [FCall(root[1][0], root[1].pos)], root.pos)
     elif root.name == "return":
         pass
-    elif root.name in ["fun", "grammar", "exprsp"]:
+    elif root.name == "multi-if":
+        # Should quote conditions
+        # Need to handle else clause
+        # children = list(flatten(to_forth(child) for child in reversed(root)))
+        def wrap(i, child):
+            return Node("quote", child, child.pos) if i % 2 else child
+        children = list(flatten(to_forth(wrap(i, child))
+                        for i, child in enumerate(reversed(root))))
+        return FList(children + [FCall("pushi:", root.pos),
+                                 FStr(str(len(root)/2), pos=root.pos),
+                                 FCall(root.name, root.pos)], root.pos)
+    elif root.name in ["grammar", "exprsp"]:
         children = list(flatten(to_forth(child) for child in root))
         return FList(children)
     children = list(flatten(to_forth(child) for child in root))
     return FList(children + [FCall(root.name, root.pos)], root.pos)
 
-def write_sep(value):
+def write_sep(value, pos=None):
+    global output_stream_pos
     if value != "\n":
-        if g.last_value == "\n" and value != "]":
+        start = output_stream_pos
+        if g.last_value == "\n" and value not in ["return_no_value", "]"]:
             output_stream.write("\n")
             output_stream.write(" " * (g.nesting))
+            output_stream_pos += len("\n" + " " * g.nesting)
+        #if str(value) == "bp":
+        #    bp()
         output_stream.write("%s " % value)
+        output_stream_pos += len("%s " % value)
+        if pos:
+            pos_map[(start, output_stream_pos)] = (filename,) + tuple(pos)
     g.last_value = value
 
 escaped = {repr(x)[1:-1]:x for x in "\t\n\r\\"} #\'\"
@@ -205,17 +247,17 @@ def write_string_body(root, depth):
         for child in root:
             write_string_body(child, depth)
         g.nesting -= 1
-        write_sep("\n")
+        write_sep("\n", pos=root.pos)
     elif isinstance(root, FQuote):
-        write_sep("pushf:")
-        write_sep(root.func_name)
+        write_sep("pushf:", pos=root.pos)
+        write_sep(root.func_name, pos=root.pos)
     elif isinstance(root, FCall):
         if str(root) in ["return", "return_two"]:
-            write_sep("%s%s" % (root, depth))
+            write_sep("%s%s" % (root, depth), pos=root.pos)
         else:
-            write_sep(str(root))
-    elif isinstance(root, str):
-        write_sep(root)
+            write_sep(str(root), pos=root.pos)
+    elif isinstance(root, FStr):
+        write_sep(root.str, pos=root.pos)
     elif isinstance(root, FComment):
         pass
     elif root is None:
@@ -223,12 +265,12 @@ def write_string_body(root, depth):
     else:
         bp()
 
-def write_blocks(root, prefix="", depth=1, nesting=0):
+def write_blocks(root, depth=1, nesting=0):
     # Bad!! And almost unused since reset by write_string_body
     g.nesting = nesting
     if isinstance(root, (FList, FQuote)):
         for child in root:
-            write_blocks(child, prefix, depth + isinstance(child, FQuote), nesting + 1)
+            write_blocks(child, depth + isinstance(child, FQuote), nesting + 1)
         g.nesting = nesting
         write_sep("\n")
     if isinstance(root, FQuote):
@@ -236,14 +278,14 @@ def write_blocks(root, prefix="", depth=1, nesting=0):
             root.func_name = "autogen%s" % g.func_count
             g.func_count += 1
         g.nesting = 0
-        write_sep("[")
+        write_sep("[", pos=root.pos)
         g.nesting = 1
         for child in root:
             write_string_body(child, depth)
-        write_sep("]")
+        write_sep("]", pos=root.pos)
         g.nesting = nesting
         if root.func_name.startswith("autogen"):
-            [write_sep(c) for c in ["bind:", root.func_name, "\n"]]
+            [write_sep(c, pos=root.pos) for c in ["bind:", root.func_name, "\n"]]
 
 def write_suite(root, prefix=""):
     for child in root:
@@ -252,23 +294,25 @@ def write_suite(root, prefix=""):
         if isinstance(child, FList) and len(child) > 1 and str(child[-2]) == "bind:":
             if str(child[-3]) == "class":
                 # Skip FQuote to avoid writing a function
-                write_suite(list(child[-4]), child[-1] + ".")
+                write_suite(list(child[-4]), "%s." % child[-1])
             else:
                 body = child[0] if len(child) == 3 else child[1]
-                if isinstance(body, (str, FCall)):
+                if isinstance(body, (FStr, FCall)):
                     # Also need non-string version
                     write_string_body(child, 0)
                     write_sep("\n")
                     continue
-                assert(len(child) == 4 or len(child) == 5 and str(child[-3]) in ["inline", "func"])
-                body.func_name = (prefix + child[-1]).replace("_colon", ":")
-                write_blocks(body, prefix)
-                [write_sep(c) for c in ["bind:" if body.func_name not in g.written\
-                                        else "rebind:",
-                                        body.func_name, "\n"]]
-
+                # assert(len(child) == 4 or len(child) == 5 and str(child[-3]) in ["inline", "func"])
+                assert(len(child) == 3)
+                body.func_name = (prefix + child[-1].str).replace("_colon", ":")
+                write_blocks(body)
                 if body.func_name not in g.written:
                     g.written.append(body.func_name)
+                    write_sep("bind:", body.pos)
+                else:
+                    write_sep("rebind:", body.pos)
+                write_sep(body.func_name)
+                write_sep("\n")
         elif isinstance(child, FList):
             g.nesting = 0
             write_string_body(child, 0)
@@ -281,6 +325,8 @@ g = Global()
             
 if __name__ == "__main__":
     output_stream = sys.stdout
+    output_stream_pos = 0
+    pos_map = {}
     g.func_count = 0
     g.last_value = ""
     g.nesting = 0
@@ -289,5 +335,13 @@ if __name__ == "__main__":
     t2 = match(t1, boot_grammar.bootstrap + boot_grammar.extra + boot_grammar.diff)
     lang_tree = match(t2, grammar + boot_grammar.extra)
 
+    header = "push: Generated_from_" + "_".join(sys.argv[1:]) + " print"
+    print(header)
+    output_stream_pos += len(header)
     for filename in sys.argv[1:]:
         write_suite(to_forth(simplify(parse(open(filename).read()))))
+    open("pos_map.txt", "w").write("%s %s\n" % (len(sys.argv[1:]), " ".join(sys.argv[1:])) +\
+                                   "%s\n" % len(pos_map) +\
+        "\n".join(" ".join(map(str, (key[0],) + pos_map[key]))
+                  for key in sorted(pos_map.keys())))
+

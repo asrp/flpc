@@ -1,156 +1,154 @@
-
 rule.comment <- fun[]:
-    return(and([[exactly('#')] [quantified([and([[negation([exactly('\n')])] [apply('anything')]])] '*')]]))
-
-rule.hspace <- fun[]:
-    return(or([[exactly("\s")] [exactly('\t')] [apply('comment')]]))
+    return(bound([and([[exactly("#")] [out([quantified([and([[negation([exactly("\n")])] [out([apply("anything")])]])] "*")])]])] "comment"))
 
 rule.space <- fun[]:
-    return(or([[exactly('\n')] [exactly('\r')] [apply('hspace')]]))
+    return(or([[exactly("\n")][exactly("\r")][exactly("\s")] [exactly("\t")]]))
 
 rule.spaces <- fun[]:
-    return(quantified([apply('space')] '*'))
+    return(quantified([apply("space")] "*"))
 
 rule.spacesp <- fun[]:
-    return(quantified([apply('space')] '+'))
+    return(quantified([apply("space")] "+"))
 
 rule.hspaces <- fun[]:
-    return(quantified([or([[exactly("\s")] [exactly('\t')]])] '*'))
+    return(quantified([or([[exactly("\s")] [exactly("\t")]])] "*"))
 
 rule.hspacesp <- fun[]:
-    return(quantified([or([[exactly("\s")] [exactly('\t')]])] '+'))
+    return(quantified([or([[exactly("\s")] [exactly("\t")]])] "+"))
 
 rule.EMPTY_LINE <- fun[]:
-    return(bound([and([[apply('hspaces')] [quantified([apply('comment')] '?')] [or([[exactly('\n')] [exactly('\r')]])]])] 'EMPTY_LINE'))
+    return(bound([and([[apply("hspaces")][quantified([apply("comment")] "?")] [or([[exactly("\n")] [exactly("\r")]])]])] "EMPTY_LINE"))
 
 rule.NUMBER <- fun[]:
-    return(and([[apply('hspaces')] [out([quantified([apply('digit')] '+')])]]))
+    return(and([[apply("hspaces")] [out([and([[quantified([exactly("-")] "?")] [quantified([apply("digit")] "+")]])])]]))
 
 rule.STRING <- fun[]:
-    return(and([[apply('hspaces')] [or([[and([[exactly('"')] [out([quantified([and([[negation([exactly('"')])] [apply('anything')]])] '*')])] [exactly('"')]])] [and([[exactly("'")] [out([quantified([and([[negation([exactly("'")])] [apply('anything')]])] '*')])] [exactly("'")]])]])]]))
+    return(and([[apply("hspaces")] [or([[and([[exactly('"')][out([quantified([and([[negation([exactly('"')])] [apply("anything")]])] "*")])] [exactly('"')]])] [and([[exactly("'")][out([quantified([and([[negation([exactly("'")])] [apply("anything")]])] "*")])] [exactly("'")]])]])]]))
 
 rule.NAME <- fun[]:
-    return(and([[apply('hspaces')] [out([and([[or([[apply('letter')] [exactly('_')]])] [quantified([and([[negation([apply('space')])] [negation([exactly('(')])] [negation([exactly('=')])] [negation([exactly(')')])] [negation([exactly('[')])] [negation([exactly(']')])] [negation([exactly('<')])] [negation([exactly(':')])] [negation([exactly("'")])] [apply('anything')]])] '*')]])])]]))
+    return(and([[apply("hspaces")] [out([and([[or([[apply("letter")] [exactly("_")]])] [quantified([and([[negation([apply("space")])][negation([exactly("(")])][negation([exactly("=")])][negation([exactly(")")])][negation([exactly("[")])][negation([exactly("]")])][negation([exactly("<")])][negation([exactly(":")])][negation([exactly("'")])] [apply("anything")]])] "*")]])])]]))
 
 rule.FORTH_NAME <- fun[]:
-    return(and([[apply('spaces')] [negation([token("'F")])] [out([quantified([and([[negation([apply('space')])] [apply('anything')]])] '*')])]]))
+    return(and([[apply("hspacesp")][negation([token("'F")])] [out([quantified([and([[negation([apply("space")])] [apply("anything")]])] "*")])]]))
 
 rule.bin_op <- fun[]:
-    return(or([[token('+')] [token('-')] [token('==')] [token('<')] [token('>')] [token('.')] [token('in')]]))
+    return(or([[token("+")][token("-")][token("/")][token("==")][token("<")][token(">")][token(".")][token("in")][token("||")] [token("&&")]]))
 
 rule.names <- fun[]:
-    return(quantified([apply('NAME')] '*'))
+    return(quantified([apply("NAME")] "*"))
 
 rule.variable <- fun[]:
-    return(apply('NAME'))
+    return(apply("NAME"))
 
 rule.name_quote <- fun[]:
-    return(and([[token('`')] [out([apply('NAME')])]]))
+    return(and([[token("`")] [out([apply("NAME")])]]))
 
 rule.quote <- fun[]:
-    return(and([[token('[')] [out([apply('suite')])] [token(']')]]))
+    return(and([[token("[")][out([quantified([and([[negation([token("]")])][apply("spaces")] [out([apply("statement")])]])] "+")])] [token("]")]]))
 
 rule.forth <- fun[]:
-    return(and([[token("F'")] [out([quantified([bound([apply('FORTH_NAME')] 'NAME')] '*')])] [token("'F")]]))
+    return(and([[token("F'")][out([and([[apply("forth_line")] [quantified([and([[apply("hspaces")][or([[exactly("\n")] [exactly("\r")]])] [out([apply("forth_line")])]])] "*")]])])][apply("spaces")] [token("'F")]]))
+
+rule.forth_line <- fun[]:
+    return(quantified([bound([apply("FORTH_NAME")] "NAME")] "*"))
 
 rule.simple_quote <- fun[]:
-    return(and([[token('[')] [out([apply('names')])] [token(']')]]))
+    return(and([[token("[")][out([apply("names")])] [token("]")]]))
 
 rule.parenthesis <- fun[]:
-    return(and([[token('(')] [out([apply('expr')])] [token(')')]]))
+    return(and([[token("(")][out([apply("expr")])] [token(")")]]))
 
 rule.func_call <- fun[]:
-    return(and([[out([apply('NAME')])] [exactly('(')] [out([bound([apply('exprs')] 'parameters')])] [token(')')]]))
+    return(and([[out([or([[apply("NAME")] [bound([apply("bin_op")] "NAME")]])])][exactly("(")][out([bound([apply("exprs")] "parameters")])] [token(")")]]))
 
 rule.block_call <- fun[]:
-    return(and([[apply('NAME')] [bound([and([[out([or([[apply('simple_quote')] [apply('non_block')] [apply('void')]])])] [token(':')] [out([bound([apply('suite')] 'quote')])]])] 'parameters')]]))
+    return(and([[apply("NAME")] [bound([and([[out([or([[apply("simple_quote")][apply("non_block")] [apply("void")]])])][token(":")] [out([bound([apply("suite")] "quote")])]])] "parameters")]]))
 
 rule.multi_block_call <- fun[]:
-    return(and([[apply('block_call')] [quantified([and([[apply('NEWLINE')] [apply('SAME_INDENT')] [out([apply('block_call')])]])] '+')]]))
+    return(and([[apply("block_call")] [quantified([and([[quantified([apply("NEWLINE")] "+")][apply("SAME_INDENT")] [out([apply("block_call")])]])] "+")]]))
 
 rule.non_block_non_infix <- fun[]:
-    return(or([[apply('forth')] [apply('func_call')] [apply('name_quote')] [apply('quote')] [apply('parenthesis')] [apply('NUMBER')] [apply('STRING')] [apply('variable')]]))
+    return(or([[apply("forth")][apply("func_call")][apply("name_quote")][apply("quote")][apply("parenthesis")][apply("NUMBER")][apply("STRING")] [apply("variable")]]))
 
 rule.non_block <- fun[]:
-    return(or([[apply('infix')] [apply('non_block_non_infix')]]))
+    return(or([[apply("infix")] [apply("non_block_non_infix")]]))
 
 rule.infix <- fun[]:
-    return(and([[apply('non_block_non_infix')] [quantified([and([[bound([apply('bin_op')] 'op')] [apply('non_block_non_infix')]])] '+')]]))
+    return(and([[apply("non_block_non_infix")] [quantified([and([[bound([apply("bin_op")] "op")] [apply("non_block_non_infix")]])] "+")]]))
 
 rule.non_infix <- fun[]:
-    return(or([[apply('block_call')] [apply('non_block_non_infix')]]))
+    return(or([[apply("block_call")] [apply("non_block_non_infix")]]))
 
 rule.expr <- fun[]:
-    return(or([[apply('infix')] [apply('non_infix')]]))
+    return(or([[apply("infix")] [apply("non_infix")]]))
 
 rule.exprs <- fun[]:
-    return(or([[and([[apply('expr')] [quantified([and([[apply('spacesp')] [out([apply('expr')])]])] '*')]])] [apply('void')]]))
+    return(or([[and([[apply("expr")] [quantified([and([[apply("spacesp")] [out([apply("expr")])]])] "*")]])] [apply("void")]]))
 
 rule.exprsp <- fun[]:
-    return(and([[apply('expr')] [quantified([and([[apply('hspacesp')] [out([apply('expr')])]])] '*')]]))
+    return(and([[apply("expr")] [quantified([and([[apply("hspacesp")] [out([apply("expr")])]])] "*")]]))
 
 rule.assign <- fun[]:
-    return(and([[or([[and([[out([apply('names')])] [token('=')] [apply('space')]])] [apply('void')]])] [apply('exprsp')]]))
+    return(and([[or([[and([[out([apply("names")])][token("=")] [apply("space")]])] [apply("void")]])] [apply("exprsp")]]))
 
 rule.bind <- fun[]:
-    return(and([[out([apply('names')])] [token('<-')] [out([apply('exprsp')])]]))
+    return(and([[out([apply("names")])][token("<-")] [out([apply("exprsp")])]]))
 
 rule.statement <- fun[]:
-    return(or([[apply('multi_block_call')] [apply('bind')] [apply('assign')]]))
+    return(or([[apply("multi_block_call")][apply("bind")] [apply("assign")]]))
 
 rule.suite <- fun[]:
-    return(or([[and([[apply('INDENT')] [quantified([and([[quantified([apply('NEWLINE')] '+')] [apply('SAME_INDENT')] [apply('statement')]])] '+')] [apply('DEDENT')]])] [apply('statement')]]))
+    return(or([[and([[apply("INDENT")][quantified([and([[quantified([apply("NEWLINE")] "+")][apply("SAME_INDENT")] [apply("statement")]])] "+")] [apply("DEDENT")]])] [apply("statement")]]))
 
-# Manually changed from out()!
 rule.NEWLINE <- fun[]:
-    return(or([[and([[apply('hspaces')] [or([[exactly('\n')] [exactly('\r')]])] [out(None)]])] [apply('COMMENT_LINE')]]))
+    return(or([[and([[apply("hspaces")][or([[exactly("\n")] [exactly("\r")]])] [out(None)]])] [apply("COMMENT_LINE")]]))
 
 rule.COMMENT_LINE <- fun[]:
-    return(and([[apply('hspaces')] [out([apply('comment')])] [apply('hspaces')] [or([[exactly('\n')] [exactly('\r')]])]]))
+    return(and([[apply("hspaces")][out([apply("comment")])][apply("hspaces")] [or([[exactly("\n")] [exactly("\r")]])]]))
 
 rule.grammar <- fun[]:
-    return(apply('suite'))
+    return(or([[bound([quantified([and([[quantified([apply("NEWLINE")] "*")][apply("SAME_INDENT")][apply("statement")] [or([[quantified([apply("NEWLINE")] "+")] [negation([apply("anything")])]])]])] "+")] "suite")] [apply("statement")]]))
 
-boot_dict.set("comment" rule.comment rules)
-boot_dict.set("hspace" rule.hspace rules)
-boot_dict.set("space" rule.space rules)
-boot_dict.set("spaces" rule.spaces rules)
-boot_dict.set("spacesp" rule.spacesp rules)
-boot_dict.set("hspaces" rule.hspaces rules)
-boot_dict.set("hspacesp" rule.hspacesp rules)
-boot_dict.set("EMPTY_LINE" rule.EMPTY_LINE rules)
-boot_dict.set("NUMBER" rule.NUMBER rules)
-boot_dict.set("STRING" rule.STRING rules)
-boot_dict.set("NAME" rule.NAME rules)
-boot_dict.set("FORTH_NAME" rule.FORTH_NAME rules)
-boot_dict.set("bin_op" rule.bin_op rules)
-boot_dict.set("names" rule.names rules)
-boot_dict.set("variable" rule.variable rules)
-boot_dict.set("name_quote" rule.name_quote rules)
-boot_dict.set("quote" rule.quote rules)
-boot_dict.set("forth" rule.forth rules)
-boot_dict.set("simple_quote" rule.simple_quote rules)
-boot_dict.set("parenthesis" rule.parenthesis rules)
-boot_dict.set("func_call" rule.func_call rules)
-boot_dict.set("block_call" rule.block_call rules)
-boot_dict.set("multi_block_call" rule.multi_block_call rules)
-boot_dict.set("non_block_non_infix" rule.non_block_non_infix rules)
-boot_dict.set("non_block" rule.non_block rules)
-boot_dict.set("infix" rule.infix rules)
-boot_dict.set("non_infix" rule.non_infix rules)
-boot_dict.set("expr" rule.expr rules)
-boot_dict.set("exprs" rule.exprs rules)
-boot_dict.set("exprsp" rule.exprsp rules)
-boot_dict.set("assign" rule.assign rules)
-boot_dict.set("bind" rule.bind rules)
-boot_dict.set("statement" rule.statement rules)
-boot_dict.set("suite" rule.suite rules)
-boot_dict.set("NEWLINE" rule.NEWLINE rules)
-boot_dict.set("COMMENT_LINE" rule.COMMENT_LINE rules)
-boot_dict.set("grammar" rule.grammar rules)
-boot_dict.set("letter" rule.letter rules)
-boot_dict.set("digit" rule.digit rules)
-boot_dict.set("anything" rule.anything rules)
+hashtable.set("comment" rule.comment rules)
+hashtable.set("space" rule.space rules)
+hashtable.set("spaces" rule.spaces rules)
+hashtable.set("spacesp" rule.spacesp rules)
+hashtable.set("hspaces" rule.hspaces rules)
+hashtable.set("hspacesp" rule.hspacesp rules)
+hashtable.set("EMPTY_LINE" rule.EMPTY_LINE rules)
+hashtable.set("NUMBER" rule.NUMBER rules)
+hashtable.set("STRING" rule.STRING rules)
+hashtable.set("NAME" rule.NAME rules)
+hashtable.set("FORTH_NAME" rule.FORTH_NAME rules)
+hashtable.set("bin_op" rule.bin_op rules)
+hashtable.set("names" rule.names rules)
+hashtable.set("variable" rule.variable rules)
+hashtable.set("name_quote" rule.name_quote rules)
+hashtable.set("quote" rule.quote rules)
+hashtable.set("forth" rule.forth rules)
+hashtable.set("forth_line" rule.forth_line rules)
+hashtable.set("simple_quote" rule.simple_quote rules)
+hashtable.set("parenthesis" rule.parenthesis rules)
+hashtable.set("func_call" rule.func_call rules)
+hashtable.set("block_call" rule.block_call rules)
+hashtable.set("multi_block_call" rule.multi_block_call rules)
+hashtable.set("non_block_non_infix" rule.non_block_non_infix rules)
+hashtable.set("non_block" rule.non_block rules)
+hashtable.set("infix" rule.infix rules)
+hashtable.set("non_infix" rule.non_infix rules)
+hashtable.set("expr" rule.expr rules)
+hashtable.set("exprs" rule.exprs rules)
+hashtable.set("exprsp" rule.exprsp rules)
+hashtable.set("assign" rule.assign rules)
+hashtable.set("bind" rule.bind rules)
+hashtable.set("statement" rule.statement rules)
+hashtable.set("suite" rule.suite rules)
+hashtable.set("NEWLINE" rule.NEWLINE rules)
+hashtable.set("COMMENT_LINE" rule.COMMENT_LINE rules)
+hashtable.set("grammar" rule.grammar rules)
+hashtable.set("letter" rule.letter rules)
+hashtable.set("digit" rule.digit rules)
+hashtable.set("anything" rule.anything rules)
 flagged . append("EMPTY_LINE")
 flagged . append("NUMBER")
 flagged . append("STRING")
@@ -162,5 +160,3 @@ flagged . append("quote")
 flagged . append("simple_quote")
 flagged . append("bind")
 memoizer.reset()
-
-save("flpc_grammar.pkl")

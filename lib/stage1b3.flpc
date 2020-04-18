@@ -1,0 +1,108 @@
+# Was hashattr.flpc
+func_len <- fun[func]:
+  index = func
+  repeat:
+    if memory.get(index) == end_of_func:
+      return(index - func)
+    index = `index + 1
+
+read_to_return_if <- fun[index]:
+  repeat:
+    index = `index + 1
+    if memory.get(index) == return_if:
+      return(`index)
+
+add_attrib <- fun[attrib attrib_hash]:
+  len = func_len(attrib)
+  end = attrib + len - 16
+  index = attrib + 12
+  repeat:
+    # return_no_value only pops 1 stack frame!
+    if index > end:
+      return(None())
+    tprint(memory.get(index + 3))
+    print("_")
+    tprint(memory.get(index + 6))
+    printeol()
+    if attrib_hash . get(memory.get(index + 3)) == None():
+      attrib_hash . set(memory.get(index + 3) index + 5)
+    index = read_to_return_if(`index + 5)
+    index = `index + 1
+
+obj_total_len <- fun[obj]:
+  nullobj_cached = nullobj
+  nullobj_cached obj = s21()
+  len = func_len(obj . attrib_raw)
+  repeat:
+    if obj == nullobj_cached:
+      print("Total_len:_")
+      print(len)
+      printeol()
+      return(len)
+    len = `len + func_len(obj . attrib_raw)
+    parent = obj . parent
+    obj len = shuffle("214")
+
+convert_attr <- fun[obj]:
+  nullobj_cached = nullobj
+  nullobj_cached obj = s21()
+  len = obj_total_len(obj)
+  # Twice len / 8. Should possibly subtract 12 from len first.
+  attrib_hash = hashtable(`len)
+  # add_attrib(attrib)
+  repeat:
+    if obj == nullobj_cached:
+      return(attrib_hash)
+    # Stupid hack because we can't return nothing inside a loop yet.
+    attrib_hash = add_attrib(obj . attrib_raw attrib_hash)
+    parent = obj . parent
+    obj attrib_hash = shuffle("315")
+
+# Need boot_array.attrib to take new vars (newfunc3) 
+# but not return because we're using the old function body as a jumptable!
+# Almost equivalent is:
+# boot_array.attrib <- fun[name receiver searcher]:
+#   call(True hashtable.get(name array_hash))
+
+# Don't have lexical scoping yet I don't think.
+F' [ newfunc3 assign: searcher assign: receiver assign: name
+     pick: True ] bind: hash_header 'F
+
+print("obj_total_len_")
+print(boot_array.attrib)
+printeol()
+print(boot_array_class . attrib_raw)
+printeol()
+print(boot_obj . attrib)
+printeol()
+print(boot_array_class . parent . attrib_raw)
+printeol()
+print(nullobj)
+printeol()
+print(boot_array_class . parent . parent)
+printeol()
+print(boot_array_class)
+print(boot_array_class . parent)
+print(boot_array_class . parent . parent)
+printeol()
+print("total_len_is_")
+print(obj_total_len(boot_array_class))
+printeol()
+
+hashtable.hash <- convert_attr(hashtable_class)
+# Not real inline since "hash_header" calls newfunc3
+hashtable.attrib <- inline[]:
+  hash_header()
+  call(hashtable.get(name hashtable.hash))
+
+boot_array.hash <- convert_attr(boot_array_class)
+# Not real inline since "hash_header" calls newfunc3
+boot_array.attrib <- inline[]:
+  hash_header()
+  call(hashtable.get(name boot_array.hash))
+
+boot_dict.hash <- convert_attr(boot_dict_class)
+# Not real inline since "hash_header" calls newfunc3
+boot_dict.attrib <- inline[]:
+  hash_header()
+  call(hashtable.get(name boot_dict.hash))

@@ -86,9 +86,11 @@ Recompile `.f` files with
 
 The existing precompiled files were created with
 
-    python compiler.py lib/stage{0,1{a,b,c,d}}.flpc lib/grammar.flpc lib/stage{2,3{a,b}}.flpc lib/flpc_grammar.flpc lib/stage{4,5}.flpc > precompiled/flpc-all.f
-    python compiler.py lib/stage{0,1{a,c,d},3{a,b}}.flpc lib/flpc_grammar.flpc lib/stage{4,5}.flpc > precompiled/flpc-partial.f
-    python compiler.py lib/stage{0,1{a,c,d}}.flpc lib/grammar.flpc lib/stage{2,3a}.flpc test/stage3-test.flpc > precompiled/flpc-gen.f
+    python compiler.py lib/stage{0,1{a,b,b2,b3,c,d}}.flpc lib/grammar.flpc lib/stage{2,3{a,b}}.flpc lib/flpc_grammar.flpc lib/stage{4,5,6a,6b}.flpc > precompiled/flpc-all.f
+    python compiler.py lib/stage{0,1{a,b,b2,b3,c,d},3{a,b}}.flpc lib/flpc_grammar.flpc lib/stage{4,5}.flpc > precompiled/flpc-partial.f
+    python compiler.py lib/stage{0,1{a,b,b2,b3,c,d}}.flpc lib/grammar.flpc lib/stage{2,3a}.flpc test/stage3-test.flpc > precompiled/flpc-gen.f
+    python compiler.py lib/stage{0,1{a,b,b2,b3,c,d},3{a,b}}.flpc lib/flpc_grammar.flpc lib/stage6{a,b}.flpc > precompiled/compiler.f
+    python compiler.py lib/stage{0,1{a,b,b2,b3,c,d},3{a,b}}.flpc lib/flpc_grammar.flpc lib/stage6{a,b}.flpc test/self.flpc > precompiled/self.f
 
 To run tests (in `test/`), compile up to the needed test and append the test.
 
@@ -102,12 +104,15 @@ Almost everything is modifiable at runtime using `rebind:` including the loop fo
 
 This is a long list but the size of each file is relatively small.
 
-- **boot.flpc**: Preloaded into memory (instead of at runtime) by reading the file `init_memory.dat` (a text file despite the name). Contains the REPL and compilation loop. `init_memory.dat` also contains `names.get` which implicitly represents the function names dictionnary.
+- **boot.flpc**: Preloaded into memory (instead of at runtime) by reading the file `init_memory.dat` (a text file despite the name). Contains the REPL and compilation loop. `init_memory.dat` also contains `names.get` which implicitly represents the function names dictionary.
 - **stage0.flpc**: Defines `bind:`, `rebind:` and the debugger.
 - **stage1a.flpc**: Basic object system (`boot_obj`, `boot_array`, `boot_dict`)
-- **stage1b.flpc**: Object system (abandoned and unused for now; run but is too slow without some kind of caching)
-- **stage1c.flpc**: More objects `resizable` arrays, `node` and `Input` for reading files (unfortunately all in the style of the basic object system instead of the intended one from stage1b)
-- **stage1d.flpc**: Semantics for nodes of a grammars
+- **objects.flpc** (was `stage1b.flpc`): Object system (abandoned and unused for now; runs but is too slow without some kind of caching)
+- **stage1b.flpc**: Hashtable class
+- **stage1b2.flpc**: Replace function name resolution `names.get` with hashtable lookups. Rewire existing name map.
+- **stage1b3.flpc**: Replace class attribute lookup `obj . attrib` with hashtable lookups. Rewire existing `attrib`s.
+- **stage1c.flpc**: More objects: `resizable` arrays, `node` and `Input` for reading files (unfortunately all in the style of the basic object system instead of the intended one from stage1b)
+- **stage1d.flpc**: Semantics for nodes of a grammar
 - **grammar.flpc**: Rules of a grammar parsing grammar
 - **stage2.flpc**: Use the grammar parsing grammar to parse flpc.grammar into a grammar tree
 - **stage3a.flpc**: Generate FlpcPython from the grammar tree in stage2. Can generate the content of `flpc_grammar.flpc` (by adding the content of `stage1-test.flpc`).
@@ -115,12 +120,14 @@ This is a long list but the size of each file is relatively small.
 - **flpc_grammar.flpc**: Rules of a FlpcPython parsing grammar.
 - **stage4.flpc**: Parses a FlpcPython source file (by default `stage1.flpc`; change the hard-coded value for a different file) into its Abstract Syntax Tree.
 - **stage5.flpc**: Pretty-prints the AST from stage4.
+- **stage6a.flpc**: Missing language features for implementing `compiler.py`: loops, list comprehension, string manipulation, some classes.
+- **stage6b.flpc**: Rest of the compiler. More or less a direct translation of `compiler.py` to FLPC.
 
 ## What's next?
 
 Its not clear what should go first, both as the next thing to write *and* the next thing to run in the boot sequence. (In fact, maybe the current boot sequence should be reordered).
 
-- **Flpc AST to FlpcForth compiler.** This is the most obvious as it would remove the need for `compiler.py` (so the only remaining source file in the project that is not Flpc would be `flpc.c`). However, competing with that are
+- **Flpc AST to FlpcForth compiler. COMPLETE** This is the most obvious as it would remove the need for `compiler.py` (so the only remaining source file in the project that is not Flpc would be `flpc.c`). However, competing with that are
 - **Garbage collection.** If the concatenation of all `stage1*.flpc` files are compiled, it takes up millions of memory cells. A number of those could be reclaimed.
 - **Caching mechanism.** This woud let us use the actual intended object system (hopefully its fast enough!) and replaces `names.get` with the method of an actual dictionary (as in `stage1b.flpc`). Binding and rebinding would be much easier and we can maybe also replace the memoizer.
 - **Modules.** We can't keep adding new features (like syscalls) as primitives. Ideally, they'd be referenced by name in some module system.
@@ -128,7 +135,7 @@ Its not clear what should go first, both as the next thing to write *and* the ne
 - **Direct Flpc AST interpreter** Maybe with an interpreter, we won't need the compiler (except at the very beginning). Everything can be rebound at runtime anyways.
 - **Foreign function interface** We probably don't want to reimplement everything (at least, not at first). Is there some language we can connect to and just use its functions as primitives?
 
-# Debugging
+## Debugging
 
 Hopefully these will also help with determining what some of the undocumented functions do with just some trial.
 
@@ -136,7 +143,7 @@ Hopefully these will also help with determining what some of the undocumented fu
 
 `ps` or `printstate` prints the formatted debug stack, formatted call_stack and next command.
 
-[Example here]
+![Example stack trace](stack.png)
 
 Each element of the data stack is printed as `<name>: <value>`, except for separators which are shown as `-----` (five dashes).
 
@@ -178,13 +185,15 @@ Prints the function-end separated memory with one character representing each ce
 The end of the C source contains a complete list (starting from `int (*primitives[])(void) = ...`)
 
 - Integer and arithmetic operations `+ - * 0 1 pushi:`
+- Boolean operations `|| &&`
 - Memory and stack access `memory.set memory.get memory.append push: pushf: functions_end functions_end.increase`
-- Stack shuffling and naming `assign: pick: check: pick1 s21 newfuncX returnX return_no_valueX`
+- Stack shuffling and naming `assign: pick: check: pick1 s21 shuffle: newfuncX returnX return_no_valueX`
 - Very basic branch and loop `if if-else repeat repeat_if return_if`
 - Display and debugging `print print_state mpr`
 - stdin reading `input.next_token next_token2`
 - File read [1] `file_open fd_*`
-- String manipulation (*) `is_str is_alpha string_equal char_between`
+- File write `set_output`
+- String manipulation (*) `is_str is_alpha string_equal char_between str_join sub_str int_to_str`
 - Memoizer helper [2] `memoizer_get memoizer_set memoizer_reset`
 
 [1] Should be in a module. But there's no module system yet.

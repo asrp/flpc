@@ -1,27 +1,29 @@
 comment = ('#' {(~'\n' {anything})*})=comment
-space = '\n' | '\r' | hspace
+space = '\n' | '\r' | ' ' | '\t'
 spaces = space*
 spacesp = space+
 hspaces = (' ' | '\t')*
 hspacesp = (' ' | '\t')+
 EMPTY_LINE! = (hspaces comment? ('\n' | '\r'))=EMPTY_LINE
 
-NUMBER! = hspaces {digit+}
+NUMBER! = hspaces {'-'? digit+}
 STRING! = hspaces ('"' {(~'"' anything)*} '"' | '\'' {(~'\'' anything)*} '\'')
 NAME! = hspaces {(letter | '_') (~space ~'(' ~'=' ~')' ~'[' ~']' ~'<' ~':' ~'\'' anything)*}
-FORTH_NAME = spaces ~"'F" {(~space anything)*}
-bin_op = "+" | "-" | "==" | "<" | ">" | "." | "in"
+FORTH_NAME = hspacesp ~"'F" {(~space anything)*}
+bin_op = "+" | "-" | "/" | "==" | "<" | ">" | "." | "in" | "||" | "&&"
 
 names! = NAME*
 variable! = NAME
 name_quote! = "`" {NAME}
 quote! = "[" {(~"]" spaces {statement})+} "]"
-forth = "F'" {(FORTH_NAME=NAME)*} "'F"
+# Each line has to start with non-zero whitespace
+forth! = "F'" {forth_line (hspaces ('\n' | '\r') {forth_line})*} spaces "'F"
+forth_line = (FORTH_NAME=NAME)*
 simple_quote! = "[" {names} "]"
 parenthesis = "(" {expr} ")"
 func_call = {NAME | bin_op=NAME} '(' {exprs=parameters} ")"
 block_call = NAME ({simple_quote | non_block | void} ":" {suite=quote})=parameters
-multi_block_call = block_call (NEWLINE SAME_INDENT {block_call})+
+multi_block_call = block_call (NEWLINE+ SAME_INDENT {block_call})+
 non_block_non_infix = forth | func_call | name_quote | quote
           | parenthesis | NUMBER | STRING | variable
 non_block = infix | non_block_non_infix
@@ -34,7 +36,7 @@ assign = ({names} "=" space | void) exprsp
 bind! = {names} "<-" {exprsp}
 
 statement = multi_block_call | bind | assign
-# Need to not consuming "trailing" newlines because they are intended as multi-block separators.
+# Need to not consume "trailing" newlines because they are intended as multi-block separators.
 suite = INDENT (NEWLINE+ SAME_INDENT statement)+ DEDENT
       | statement
 NEWLINE = hspaces ('\n' | '\r') {} | COMMENT_LINE

@@ -1,0 +1,74 @@
+
+# TODO: Use real parsed inputs on small files.
+# source <- Input("test/simplify_source2.flpc")
+source <- Input("test/compile_source.flpc")
+# source <- Input("test/multi_if2.flpc")
+# source <- Input("lib/stage1b3.flpc")
+memoizer.reset()
+printeol()
+print("Running_flpc_grammar")
+printeol()
+parsed <- apply("grammar")
+# parsed . print()
+
+simplify_test <- fun[]:
+  # Node("func_call", [Node("name", "hello"), Node("name", "world")
+  children = resizable(0)
+  children . append(node("name" "hello"))
+  children . append(node("name" "world"))
+  children . append(node("EMPTY_LINE" "foo"))
+  #children . append("world")
+  root = node("suite" children)
+  print("Simplify_test")
+  printeol()
+  print("Input:_")
+  tprint(root)
+  printeol()
+  simplified = simplify(root)
+  print("Simplified:_")
+  simplified . print()
+  return(simplified)
+
+simplify_test()
+
+to_forth_test <- fun[root]:
+  print("to_forth_test")
+  printeol()
+  print("Input:_")
+  tprint(root)
+  printeol()
+  simplified = simplify(root)
+  print("Simplified:_")
+  simplified . print()
+  printeol()
+  # Why doesn't this work when compiled? Get a lookup error.
+  forthed = to_forth(simplified)
+  # forthed = simplified
+  printeol()
+  print("ToForth:_")
+  forthed . print()
+
+# to_forth_test(parsed)
+
+write_test <- fun[root]:
+  print("write_test")
+  printeol()
+  print("Input:_")
+  tprint(root)
+  printeol()
+  simplified = simplify(root)
+  print("Simplified:_")
+  simplified . print()
+  printeol()
+  # Why doesn't this work when compiled? Get a lookup error.
+  forthed = to_forth(simplified)
+  # forthed = simplified
+  printeol()
+  print("ToForth:_")
+  forthed . print()
+  printeol()
+  printeol()
+  init_g()
+  write_suite(forthed None())
+
+write_test(parsed)

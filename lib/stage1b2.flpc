@@ -1,0 +1,26 @@
+names <- hashtable(2131)
+F' [ pushf: names ] bind: names2 'F
+
+convert_names <- fun[]:
+  end = functions.end()
+  index = names.get + 5
+  repeat:
+    # return_no_value only pops 1 stack frame!
+    if index > end:
+      return(None())
+    names . set(memory.get(index) memory.get(index + 3))
+    index = `index + 7
+
+names.get <- fun[name]:
+  value = hashtable.get(`name names2())
+  if value == None():
+    error("lookup_error")
+  return(value)
+
+new.bind <- fun[value]:
+  hashtable.set(input.next_token() value names2())
+
+convert_names()
+hashtable.set("bind:" hashtable.get("new.bind" names2()) names2())
+F' push: bind:     names2 hashtable.get rebind: bind:
+   push: names.get names2 hashtable.get rebind: names.get 'F

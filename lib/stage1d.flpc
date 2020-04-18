@@ -182,7 +182,7 @@ should_make_node <- fun[output]:
   return(False)
 
 # Should search here instead of globals
-rules <- boot_dict(100)
+rules <- hashtable(223)
 #rules <- cheat_dict()
 
 # Unused until later
@@ -209,7 +209,7 @@ _apply <- fun[name]:
     tprint(source . position())
     printeol()
   nest . set(0 nesting + 1)
-  output = call(boot_dict.get(name rules))
+  output = call(hashtable.get(name rules))
   # output = call(_cheat_dict.get(name rules))
   nest . set(0 nesting)
   if apply_print:

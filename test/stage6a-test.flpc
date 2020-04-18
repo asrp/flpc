@@ -1,0 +1,38 @@
+make_resizable_test <- fun[]:
+  dprint("make_resizable:_" make_resizable("second" "first" 2))
+
+make_resizable_test()
+
+str_cat_test <- fun[]:
+  out = str_cat("world" "hello" 2)
+  dprint("str_cat_out:_" out)
+  dprint("str_cat_out2:_" str_cat("three_" "two_" "one_" 3))
+
+str_cat_test()
+
+flist_test <- fun[]:
+  output = make_resizable(1 2 3 3)
+  dprint("Output:_" output)
+  dprint("is_FList_class:_" is_instance(output FList_class))
+  dprint("output.get(1):_" output . get(1))
+  change_class(output FList_class)
+  # debugger()
+  dprint("output_after_change:_" output)
+  dprint("is_FList_class:_" is_instance(output FList_class))
+  dprint("output.get(1):_" output . get(1))
+
+flist_test()
+
+flatten_test <- fun[]:
+  input = make_resizable(make_resizable(1 2 2) make_resizable(3 4 5 3) make_resizable(6 1) 3)
+  dprint("Input:_" input)
+  output = flatten(input resizable_class)
+  dprint("Output:_" output)
+
+flatten_test()
+
+fquote_test <- fun[]:
+  fq = FQuote("hello" make_resizable(1 2 3 3))
+  dprint("fq:_" fq)
+
+fquote_test()

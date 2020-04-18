@@ -47,3 +47,19 @@ debugger_inner <- fun[]:
 debugger <- fun[]:
   print_state()
   debugger_waitlen_set(debugger_inner())
+
+multi-if <- inline[i]:
+  repeat_if:
+    i = `i - 1
+    i block cond = shuffle("231")
+    if call(`cond):
+      block i = s21()
+      repeat_if:
+        # Drop next pair of cond and block
+        block i = shuffle("125")
+        i = `i - 1
+      call(`block)
+      # Exit repeat_if
+      i = 0
+    else:
+      drop1(`block)

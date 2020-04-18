@@ -1,0 +1,19 @@
+
+file_test <- fun[]:
+  f = file.open("r" "test/file.flpc")
+  value = fd_next_token(f)
+  tprint(value)
+
+file_test()
+
+file_write_test <- fun[]:
+  f = file.open("w" "test/write-out")
+  set_output(f)
+  print("hello_world")
+  printeol()
+  set_output(None())
+  print("hi_world")
+  printeol()
+  # cat test/write-out to see output
+
+file_write_test()

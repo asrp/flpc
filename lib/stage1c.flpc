@@ -70,14 +70,15 @@ resizable <- class[]:
     return(resizable.get(memory.get(self) - 1 self))
 
   print <- fun[self]:
-    print("{_")
+    print("[")
     l = memory.get(self)
     i = l
     repeat_if:
       tprint(resizable.get(l - i self))
-      printspace()
+      if i > 1:
+        printspace()
       i = `i - 1
-    print("}")
+    print("]")
     # printeol()
 
   attrib <- fun[name receiver searcher]:
@@ -106,6 +107,12 @@ resizable <- class[]:
 
 resizable_class <- boot_obj . subclass(resizable.attrib)
 resizable <- closure(resizable_class . instance resizable_class)
+
+resizable.hash <- convert_attr(resizable_class)
+# Not real inline since "hash_header" calls newfunc3
+resizable.attrib <- inline[]:
+  hash_header()
+  call(hashtable.get(name resizable.hash))
 
 node <- class[]:
   instance <- fun[name children self]:
@@ -139,8 +146,11 @@ node <- class[]:
     else:
       return(1)
 
-  name_set <- fun[new_name self]:
-    memory.set(new_name receiver)
+  set_name <- fun[new_name self]:
+    memory.set(new_name self)
+
+  set_children <- fun[new_children self]:
+    memory.set(new_children self + 1)
 
   attrib <- fun[name receiver searcher]:
     if lookup_print:
@@ -150,6 +160,8 @@ node <- class[]:
     return_if(string_equal(name "get")      node.get)
     return_if(string_equal(name "instance") node.instance)
     return_if(string_equal(name "print")    node.print)
+    return_if(string_equal(name "set_name") node.set_name)
+    return_if(string_equal(name "set_children") node.set_children)
     # Is @property really this easy?
     return_if(string_equal(name "len")      node.len(receiver))
     return_if(string_equal(name "name")     memory.get(receiver))
@@ -160,12 +172,18 @@ node <- class[]:
 node_class <- boot_obj . subclass(node.attrib)
 node <- closure(node_class . instance node_class)
 
+node.hash <- convert_attr(node_class)
+# Not real inline since "hash_header" calls newfunc3
+node.attrib <- inline[]:
+  hash_header()
+  call(hashtable.get(name node.hash))
+
 Input <- class[]:
   instance <- fun[filename self]:
     new_obj = minobj.instance(boot_obj)
     # parent, attrib, file (descriptor), position
     memory.set(self new_obj - 2)
-    memory.set(file.open(filename) new_obj)
+    memory.set(file.open("r" filename) new_obj)
     memory.append(0)
     memory.append(names.get("]"))
     return(new_obj)
@@ -206,6 +224,12 @@ Input <- class[]:
 
 Input_class <- boot_obj . subclass(Input.attrib)
 Input <- closure(Input_class . instance Input_class)
+
+Input.hash <- convert_attr(Input_class)
+# Not real inline since "hash_header" calls newfunc3
+Input.attrib <- inline[]:
+  hash_header()
+  call(hashtable.get(name Input.hash))
 
 cheat_dict <- class[]:
   instance <- fun[self]:

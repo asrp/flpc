@@ -16,9 +16,15 @@ to_flpc2 <- fun[root]:
         return_no_value2(to_flpc2(root . get(0)))
     if string_equal(name "inline"):
         return_no_value2(to_flpc2(root . get(0)))
+    if string_equal(name "exactly") && is_instance(root . get(0) node_class):
+        if not(string_equal(root . get(0) . name "escaped_char")):
+            tprint(root . get(0))
+            error("Unexpected_child_of_exactly._Was_expecting_a_escaped_chart.")
+        # printrepr(to_flpc2(root . get(0) . get(0)))
+        return_no_value2(to_flpc2(node(root . name root . get(0) . get(0))))
     if string_equal(name "rule"):
         print(prefix)
-        tprint(root . get(0) . get(0))
+        printraw(root . get(0) . get(0))
         print("_<-_fun[]:\n____return(")
         to_flpc2(root . get(3))
         print(")")
@@ -74,11 +80,11 @@ to_flpc2_grammar <- fun[root]:
     i = l
     repeat_if:
         child = root . get(l - i)
-        print('boot\udict.set("')
-        tprint(child . get(0) . get(0))
+        print('hashtable.set("')
+        printraw(child . get(0) . get(0))
         print('"_')
         print(prefix)
-        tprint(child . get(0) . get(0))
+        printraw(child . get(0) . get(0))
         print('_rules)')
         printeol()
         drop1(`child)

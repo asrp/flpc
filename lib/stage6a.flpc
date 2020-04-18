@@ -1,0 +1,172 @@
+
+lazy_and <- inline[cond2_thunk cond1]:
+  if `cond1:
+    cond = call(`cond2_thunk)
+  else:
+    drop1(`cond2_thunk)
+    cond = False
+
+debugger2 <- inline[]:
+  drop1(1)
+  #print("debug")
+  #printeol()
+
+dprint <- fun[title value]:
+  print(title)
+  tprint(value)
+  printeol()
+
+# Not really an inline but needs access to outer scope!
+# Problem is params are already named.
+# I guess we can instead shuffle them?
+simple_for <- inline[]: # end start block
+  block end index = shuffle("231")
+  cond = index < end
+  repeat_if:
+    drop1(`cond)
+    call(block)
+    # block needs to include a shuffl back to normal
+    index = `index + 1
+    cond = index < end
+  drop1(`index)
+  drop1(`end)
+  drop1(`block)
+
+make_resizable <- inline[]: # num
+  new_resizable = resizable(0)
+  new_resizable num = s21()
+  simple_for(`num 0 inline[]: # index
+    new_resizable block end index elem = shuffle("51234")
+    new_resizable . append(`elem))
+  shuffle("12") # return(new_resizable>)
+
+str_cat <- inline[]:
+  # make_resizable(*args)
+  arr = make_resizable()
+  joined = str_join(arr . array + 1 arr . len)
+  # return joined
+  shuffle("13")
+
+for_in <- inline[]: # iterable block2
+  iterable block2 = shuffle("12")
+  simple_for(iterable . len 0 inline[]: # index
+    elem = iterable . get(index)
+    call(block2))
+  drop1(`block2)
+  drop1(`iterable)
+
+list_comp <- inline[]: # block3 iterable
+  block3 iterable = shuffle("12")
+  list_comp_out = resizable(0)
+  for_in(iterable inline[]: # elem
+    list_comp_out . append(call(block3))
+    drop1(`elem))
+  # Leaving list_comp_out unnamed so the calling function can name this
+  shuffle("14")
+
+list_comp_cond <- inline[]: # block3 iterable condition
+  block3 iterable condition = shuffle("123")
+  list_comp_out = resizable(0)
+  for_in(iterable inline[]: # elem
+    if call(condition):
+      list_comp_out . append(call(block3))
+    drop1(`elem))
+  # Leaving list_comp_out unnamed so the calling function can name this
+  shuffle("14")
+
+
+flist <- class[]:
+  foo <- fun[bar]:
+    return(1)
+
+  attrib <- fun[name receiver searcher]:
+    if lookup_print:
+      print("FList_looking_up_")
+      print(name)
+      printeol()
+    return_if(string_equal(name "pos")      0)
+    return(instance_attrib(name receiver searcher))
+
+# FList_class <- resizable . subclass(flist.attrib)
+FList_class <- boot_obj . subclass(resizable.attrib)
+FList <- closure(FList_class . instance FList_class)
+
+#FList.hash <- convert_attr(FList_class)
+# Not real inline since "hash_header" calls newfunc3
+#FList.attrib <- inline[]:
+#  hash_header()
+#  call(hashtable.get(name FList.hash))
+
+# FQuote_class <- boot_obj . subclass(resizable.attrib)
+# FQuote <- closure(FQuote_class . instance FQuote_class)
+
+# Confused. This works for lookups but need to not have the -1 for is_instance to work.
+change_class <- fun[obj new_class]:
+  memory.set(`new_class obj - 2)
+
+extend <- fun[in_list out_list]:
+  for_in(in_list inline[]: # elem
+    out_list . append(`elem))
+
+flatten <- fun[in_list class]:
+  out_list = resizable(0)
+  for_in(in_list inline[]: # elem
+    if is_instance(elem class):
+      extend(`elem out_list)
+    else:
+      out_list . append(`elem))
+  return(`out_list)
+
+forthe <- class[]:
+  print <- fun[self]:
+    tprint(memory.get(self + 1))
+
+  attrib <- fun[name receiver searcher]:
+    if lookup_print:
+      print("Forthe_looking_up_")
+      print(name)
+      printeol()
+    return_if(string_equal(name "get")      node.get)
+    return_if(string_equal(name "instance") node.instance)
+    return_if(string_equal(name "print")    forthe.print)
+    return_if(string_equal(name "len")      node.len(receiver))
+    return_if(string_equal(name "name")     memory.get(receiver))
+    return_if(string_equal(name "value")    memory.get(receiver + 1))
+    return_if(string_equal(name "type")     "forthe")
+    return(instance_attrib(name receiver searcher))
+
+forthe_class <- boot_obj . subclass(forthe.attrib)
+forthe <- closure(forthe_class . instance forthe_class)
+
+# Hack where name == "_" means not yet set!
+FQuote <- class[]:
+  set_name <- fun[new_name self]:
+    memory.set(new_name self)
+
+  attrib <- fun[name receiver searcher]:
+    if lookup_print:
+      print("FQuote_looking_up_")
+      print(name)
+      printeol()
+    return_if(string_equal(name "get")      node.get)
+    return_if(string_equal(name "instance") node.instance)
+    return_if(string_equal(name "print")    node.print)
+    return_if(string_equal(name "set_name") FQuote.set_name)
+    return_if(string_equal(name "len")      node.len(receiver))
+    return_if(string_equal(name "name")     memory.get(receiver))
+    return_if(string_equal(name "value")    memory.get(receiver + 1))
+    return_if(string_equal(name "type")     "FQuote")
+    return(instance_attrib(name receiver searcher))
+
+FQuote_class <- boot_obj . subclass(FQuote.attrib)
+FQuote <- closure(FQuote_class . instance FQuote_class)
+
+FQuote.hash <- convert_attr(FQuote_class)
+# Not real inline since "hash_header" calls newfunc3
+FQuote.attrib <- inline[]:
+  hash_header()
+  call(hashtable.get(name FQuote.hash))
+
+to_flist <- fun[array]:
+  change_class(array FList_class)
+  return(`array)

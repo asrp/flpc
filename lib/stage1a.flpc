@@ -1,4 +1,6 @@
 
+# Looks more like partial evaluation than closure.
+# Evaluates one param.
 # closure <- fun[method self]:
 #  # push: self push: method
 #  return(Pointer(memory.len() - 4))
@@ -67,7 +69,7 @@ minobj <- class[]:
       print("Boot_looking_up_")
       print(name)
       printeol()
-    return_if(string_equal(name "attrib_raw") receiver - 1)
+    return_if(string_equal(name "attrib_raw") memory.get(receiver - 1))
     return_if(string_equal(name "attrib")   minobj.attrib)
     return_if(string_equal(name "instance") minobj.instance)
     return_if(string_equal(name "subclass") subclass)
@@ -86,7 +88,11 @@ tprint <- fun[value]:
   if is_basic(value):
     print(value)
   else:
-    value . print()
+    if value < obj_boundary:
+      print(value)
+    else:
+      # Should just print the pointer if "value . print" isn't defined...
+      value . print()
 
 boot_array <- class[]:
   # Parent at -2, attrib at -1
@@ -131,6 +137,32 @@ boot_array <- class[]:
         return(`i)
     return(None())
 
+  hash_index <- fun[key i self]:
+    self i = s21()
+    repeat:
+      i = `i - 1
+      # Need default value here, which is probably 0?
+      if(boot_array.get(i self) == 0):
+        return(None())
+      if string_equal(key boot_array.get(i self)):
+        return(`i)
+      if i == 0:
+        drop1()
+        # self . len()
+        i = memory.get(self)
+
+  none_index <- fun[i self]:
+    self i = s21()
+    repeat:
+      i = `i - 1
+      # Need default value here, which is probably 0?
+      if(boot_array.get(i self) == 0):
+        return(`i)
+      if i == 0:
+        drop1()
+        # self . len()
+        i = memory.get(self)
+
   copy_to <- fun[other self]:
     i = memory.get(self)
     repeat_if:
@@ -148,6 +180,8 @@ boot_array <- class[]:
     return_if(string_equal(name "instance") boot_array.instance)
     return_if(string_equal(name "print")    boot_array.print)
     return_if(string_equal(name "string_index") boot_array.string_index)
+    return_if(string_equal(name "hash_index") boot_array.hash_index)
+    return_if(string_equal(name "none_index") boot_array.none_index)
     return_if(string_equal(name "copy_to")  boot_array.copy_to)
     return_if(string_equal(name "len")      memory.get(receiver))
     return_if(string_equal(name "type")     "boot_array")
@@ -222,3 +256,5 @@ is_instance <- fun[other class]:
   # self.parent == class
   # class doesn't need to be duplicated here!
   return(`class == memory.get(other - 2))
+
+obj_boundary <- Pointer(memory.len())
