@@ -1,103 +1,98 @@
+bootg.rules.name <- fun[]:
+    return(and([[or([[apply("letter")] [exactly("_")]])] [quantified([or([[apply("letter")] [apply("digit")] [exactly("_")]])] "*")]]))
 
-rule.name <- fun[]:
-    return(and([[or([[apply('letter')] [exactly('_')]])] [quantified([or([[apply('letter')] [apply('digit')] [exactly('_')]])] '*')]]))
+bootg.rules.expr <- fun[]:
+    return(or([[apply("apply")] [apply("exactly")] [apply("token")] [apply("parenthesis")] [apply("output")]]))
 
-rule.expr <- fun[]:
-    return(or([[apply('apply')] [apply('exactly')] [apply('token')] [apply('parenthesis')] [apply('output')]]))
+bootg.rules.exactly <- fun[]:
+    return(and([[token("'")] [out([quantified([or([[apply("escaped_char")] [and([[negation([exactly("'")])] [apply("anything")]])]])] "*")])] [token("'")]]))
 
-rule.exactly <- fun[]:
-    return(and([[token("'")] [out([quantified([or([[apply('escaped_char')] [and([[negation([exactly("'")])] [apply('anything')]])]])] '*')])] [token("'")]]))
+bootg.rules.token <- fun[]:
+    return(and([[token("\q")] [out([quantified([or([[apply("escaped_char")] [and([[negation([exactly("\q")])] [apply("anything")]])]])] "*")])] [token("\q")]]))
 
-rule.token <- fun[]:
-    return(and([[token('"')] [out([quantified([or([[apply('escaped_char')] [and([[negation([exactly('"')])] [apply('anything')]])]])] '*')])] [token('"')]]))
+bootg.rules.escaped_char <- fun[]:
+    return(and([[exactly("\\")] [out([or([[exactly("n")] [exactly("r")] [exactly("t")] [exactly("b")] [exactly("f")] [exactly("\q")] [exactly("'")] [exactly("\\")]])])]]))
 
-rule.escaped_char <- fun[]:
-    output = and([[exactly('\\')] [out([or([[exactly('n')] [exactly('r')] [exactly('t')] [exactly('b')] [exactly('f')] [exactly('"')] [exactly("'")] [exactly('\\')]])])]])
-    if is_instance(output MatchError_class):
-      return(output)
-    if string_equal(output "t"):
-      return("\t")
-    if string_equal(output "n"):
-      return("\n")
-    if string_equal(output "r"):
-      return("\r")
-    if string_equal(output "\\"):
-      return("\\\\")
-    if string_equal(output "'"):
-      return("'")
-    if string_equal(output '"'):
-      return('"')
-    error("Unknown_escaped_char")
+bootg.rules.apply <- fun[]:
+    return(and([[quantified([or([[exactly("\t")] [exactly("\s")]])] "*")] [out([apply("name")])]]))
 
-rule.apply <- fun[]:
-    return(and([[quantified([or([[exactly('\t')] [exactly("\s")]])] '*')] [out([apply('name')])]]))
+bootg.rules.parenthesis <- fun[]:
+    return(and([[token("(")] [out([apply("or")])] [token(")")]]))
 
-rule.parenthesis <- fun[]:
-    return(and([[token('(')] [out([apply('or')])] [token(')')]]))
+bootg.rules.output <- fun[]:
+    return(and([[token("{")] [out([apply("or")])] [token("}")]]))
 
-rule.output <- fun[]:
-    return(and([[token('{')] [out([apply('or')])] [token('}')]]))
+bootg.rules.not <- fun[]:
+    return(or([[and([[token("~")] [out([bound([apply("expr")] "negation")])]])] [apply("expr")]]))
 
-rule.not <- fun[]:
-    return(or([[and([[token('~')] [out([bound([apply('expr')] 'negation')])]])] [apply('expr')]]))
+bootg.rules.quantified <- fun[]:
+    return(and([[apply("not")] [quantified([or([[exactly("*")] [exactly("+")] [exactly("?")]])] "?")]]))
 
-rule.quantified <- fun[]:
-    return(and([[apply('not')] [quantified([or([[exactly('*')] [exactly('+')] [exactly('?')]])] '?')]]))
+bootg.rules.bound <- fun[]:
+    return(and([[apply("quantified")] [quantified([and([[exactly("=")] [out([apply("name")])]])] "?")]]))
 
-rule.bound <- fun[]:
-    return(and([[apply('quantified')] [quantified([and([[exactly('=')] [out([apply('name')])]])] '?')]]))
+bootg.rules.and <- fun[]:
+    return(quantified([apply("bound")] "*"))
 
-rule.and <- fun[]:
-    return(quantified([apply('bound')] '*'))
+bootg.rules.or <- fun[]:
+    return(and([[apply("and")] [quantified([and([[token("|")] [out([apply("and")])]])] "*")]]))
 
-rule.or <- fun[]:
-    return(and([[apply('and')] [quantified([and([[token('|')] [out([apply('and')])]])] '*')]]))
+bootg.rules.rule <- fun[]:
+    return(and([[apply("spaces")] [out([and([[bound([apply("name")] "rule_name")] [bound([quantified([exactly("!")] "?")] "flags")] [bound([apply("and")] "args")] [and([[token("=")] [out([apply("or")])]])]])])]]))
 
-rule.rule <- fun[]:
-    return(and([[apply('spaces')] [out([and([[bound([apply('name')] 'rule_name')] [bound([quantified([exactly('!')] '?')] 'flags')] [bound([apply('and')] 'args')] [and([[token('=')] [out([apply('or')])]])]])])]]))
+bootg.rules.grammar <- fun[]:
+    return(and([[out([quantified([apply("rule")] "*")])] [apply("spaces")]]))
 
-rule.grammar <- fun[]:
-    return(and([[out([quantified([apply('rule')] '*')])] [apply('spaces')]]))
+bootg.rules.comment <- fun[]:
+    return(and([[exactly("#")] [quantified([and([[negation([exactly("\n")])] [apply("anything")]])] "*")]]))
 
-rule.comment <- fun[]:
-    return(and([[exactly('#')] [quantified([and([[negation([exactly('\n')])] [apply('anything')]])] '*')]]))
+bootg.rules.hspace <- fun[]:
+    return(or([[exactly("\s")] [exactly("\t")] [apply("comment")]]))
 
-rule.hspace <- fun[]:
-    return(or([[exactly("\s")] [exactly('\t')] [apply('comment')]]))
+bootg.rules.indentation <- fun[]:
+    return(and([[quantified([and([[quantified([apply("hspace")] "*")] [or([[and([[exactly("\r")] [exactly("\n")]])] [exactly("\r")] [exactly("\n")]])]])] "*")] [quantified([apply("hspace")] "+")]]))
 
-rule.indentation <- fun[]:
-    return(and([[quantified([and([[quantified([apply('hspace')] '*')] [or([[and([[exactly('\r')] [exactly('\n')]])] [exactly('\r')] [exactly('\n')]])]])] '*')] [quantified([apply('hspace')] '+')]]))
+bootg.rules.space <- fun[]:
+    return(or([[exactly("\n")] [exactly("\r")] [apply("hspace")]]))
 
-rule.space <- fun[]:
-    return(or([[exactly('\n')] [exactly('\r')] [apply('hspace')]]))
+bootg.rules.spaces <- fun[]:
+    return(quantified([apply("space")] "*"))
 
-rule.spaces <- fun[]:
-    return(quantified([apply('space')] '*'))
-hashtable.set("name" rule.name rules)
-hashtable.set("expr" rule.expr rules)
-hashtable.set("exactly" rule.exactly rules)
-hashtable.set("token" rule.token rules)
-hashtable.set("escaped_char" rule.escaped_char rules)
-hashtable.set("apply" rule.apply rules)
-hashtable.set("parenthesis" rule.parenthesis rules)
-hashtable.set("output" rule.output rules)
-hashtable.set("not" rule.not rules)
-hashtable.set("quantified" rule.quantified rules)
-hashtable.set("bound" rule.bound rules)
-hashtable.set("and" rule.and rules)
-hashtable.set("or" rule.or rules)
-hashtable.set("rule" rule.rule rules)
-hashtable.set("grammar" rule.grammar rules)
-hashtable.set("comment" rule.comment rules)
-hashtable.set("hspace" rule.hspace rules)
-hashtable.set("indentation" rule.indentation rules)
-hashtable.set("space" rule.space rules)
-hashtable.set("spaces" rule.spaces rules)
-hashtable.set("letter" rule.letter rules)
-hashtable.set("digit" rule.digit rules)
-hashtable.set("anything" rule.anything rules)
-flagged . append("exactly")
-flagged . append("token")
-flagged . append("escaped_char")
-flagged . append("apply")
-flagged . append("output")
+bootg.rules <- hashtable(200)
+bootg.flagged <- resizable(0)
+hashtable.set("name" bootg.rules.name bootg.rules)
+hashtable.set("expr" bootg.rules.expr bootg.rules)
+hashtable.set("exactly" bootg.rules.exactly bootg.rules)
+bootg.flagged . append("exactly")
+hashtable.set("token" bootg.rules.token bootg.rules)
+bootg.flagged . append("token")
+hashtable.set("escaped_char" bootg.rules.escaped_char bootg.rules)
+bootg.flagged . append("escaped_char")
+hashtable.set("apply" bootg.rules.apply bootg.rules)
+bootg.flagged . append("apply")
+hashtable.set("parenthesis" bootg.rules.parenthesis bootg.rules)
+hashtable.set("output" bootg.rules.output bootg.rules)
+bootg.flagged . append("output")
+hashtable.set("not" bootg.rules.not bootg.rules)
+hashtable.set("quantified" bootg.rules.quantified bootg.rules)
+hashtable.set("bound" bootg.rules.bound bootg.rules)
+hashtable.set("and" bootg.rules.and bootg.rules)
+hashtable.set("or" bootg.rules.or bootg.rules)
+hashtable.set("rule" bootg.rules.rule bootg.rules)
+hashtable.set("grammar" bootg.rules.grammar bootg.rules)
+hashtable.set("comment" bootg.rules.comment bootg.rules)
+hashtable.set("hspace" bootg.rules.hspace bootg.rules)
+hashtable.set("indentation" bootg.rules.indentation bootg.rules)
+hashtable.set("space" bootg.rules.space bootg.rules)
+hashtable.set("spaces" bootg.rules.spaces bootg.rules)
+add_base_rules(bootg.rules)
+add_escaped_char_rules(bootg.rules)
+
+bootg.base <- resizable(0)
+bootg.base . append("add_base_rules")
+bootg.base . append("add_escaped_char_rules")
+bootg <- resizable(0)
+bootg . append("bootg")
+bootg . append(bootg.rules)
+bootg . append(bootg.flagged)
+bootg . append(bootg.base)

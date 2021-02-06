@@ -63,3 +63,5 @@ multi-if <- inline[i]:
       i = 0
     else:
       drop1(`block)
+
+error_handler_set(debugger)

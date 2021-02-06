@@ -91,6 +91,7 @@ The existing precompiled files were created with
     python compiler.py lib/stage{0,1{a,b,b2,b3,c,d}}.flpc lib/grammar.flpc lib/stage{2,3a}.flpc test/stage3-test.flpc > precompiled/flpc-gen.f
     python compiler.py lib/stage{0,1{a,b,b2,b3,c,d},3{a,b}}.flpc lib/flpc_grammar.flpc lib/stage6{a,b}.flpc > precompiled/compiler.f
     python compiler.py lib/stage{0,1{a,b,b2,b3,c,d},3{a,b}}.flpc lib/flpc_grammar.flpc lib/stage6{a,b}.flpc test/self.flpc > precompiled/self.f
+    python compiler.py lib/stage{0,1{a,b,b2,b3,c,d},3{a,b}}.flpc lib/flpc_grammar.flpc lib/stage{6{a,b},7a}.flpc > precompiled/compiler.f
 
 To run tests (in `test/`), compile up to the needed test and append the test.
 
@@ -122,6 +123,11 @@ This is a long list but the size of each file is relatively small.
 - **stage5.flpc**: Pretty-prints the AST from stage4.
 - **stage6a.flpc**: Missing language features for implementing `compiler.py`: loops, list comprehension, string manipulation, some classes.
 - **stage6b.flpc**: Rest of the compiler. More or less a direct translation of `compiler.py` to FLPC.
+- **stage7a.flpc**: Starts a FlpcPython interpreter and triple quote.
+- **stage7a2.flpc**: Objects using hashtable for method lookup.
+- **stage7a3.flpc**: Python FFI. See `test/pyexec.flpc` for sample usage.
+- **stage7a4.flpc**: Other helpers. Currently contains easier dictionary creation (see `test/make_dict.flpc`).
+- **stage7b.flpc**: Compiled and run by the compiler from stages 1-6.
 
 ## What's next?
 
@@ -133,7 +139,7 @@ Its not clear what should go first, both as the next thing to write *and* the ne
 - **Modules.** We can't keep adding new features (like syscalls) as primitives. Ideally, they'd be referenced by name in some module system.
 - **Nested FlpcForth parser.** The number of auto-generated functions is pretty high and makes it a bit unreadable. Maybe this should even come right after the debugger (stage0).
 - **Direct Flpc AST interpreter** Maybe with an interpreter, we won't need the compiler (except at the very beginning). Everything can be rebound at runtime anyways.
-- **Foreign function interface** We probably don't want to reimplement everything (at least, not at first). Is there some language we can connect to and just use its functions as primitives?
+- **Foreign function interface. Early prototype COMPLETE** We probably don't want to reimplement everything (at least, not at first). Is there some language we can connect to and just use its functions as primitives?
 
 ## Debugging
 
@@ -207,6 +213,10 @@ TODO: document this more
 
 - Generate the content of `flpc_grammar.flpc` and `grammar.flpc`
 - Write some FlpcPython, compile it using `compiler.py` and run it.
+
+## Interpreter
+
+To document.
 
 ## Boot object model
 

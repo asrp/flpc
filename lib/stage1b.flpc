@@ -76,6 +76,19 @@ hashtable <- class[]:
     print("}")
     # printeol()
 
+  num_elems <- fun[self]:
+    keys = memory.get(self + 1)
+    count = 0
+    i = memory.get(self)
+    repeat_if:
+      i = `i - 1
+      key = boot_array.get(i keys)
+      if (`key > 0):
+        i count = s21()
+        count = `count + 1
+        count i = s21()
+    return(count)
+
   attrib <- fun[name receiver searcher]:
     if lookup_print:
       print("Dict_looking_up_")

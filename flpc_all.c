@@ -15,9 +15,9 @@
 #define LENGTH -1
 #define MEMORY_LENGTH 10000000
 #define STACK_MAXLEN 10000
-#define MAX_NUM_FILES 20
-#define FILE_BUFFER_SIZE 120000
-#define POS_MAP_LENGTH 17000
+#define MAX_NUM_FILES 50
+#define FILE_BUFFER_SIZE 150000
+#define POS_MAP_LENGTH 20000
 // TL: Type bits lengths (least significant x bits indicate types)
 #define TL 2
 #define call_stack_top call_stack[call_stack[LENGTH] - 1]
@@ -33,6 +33,7 @@
 #define None init(Pointer, -1)
 #define NoValue init(Pointer, -4)
 #define Sep init(Pointer, -2)
+#define FileSep init(Pointer, -5)
 #define True init(Int, 1)
 #define False init(Int, 0)
 #define cstring(s) (strings_raw + strings[value(s)] + 1)
@@ -43,6 +44,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
+#include <setjmp.h>
+// For usleep only
+#include <unistd.h>
 
 char *escape[256] = {NULL};
 char unescape[256] = {};
@@ -54,8 +58,14 @@ int prev_call_stack_array[STACK_MAXLEN];
 int *prev_call_stack;
 int data_stack_array[STACK_MAXLEN];
 int *data_stack;
+// Stack of variable names, almost with data_stack. Contains Sep which data_stack doesn't.
 int local_stack_array[STACK_MAXLEN];
 int *local_stack;
+// Input stack. Input caching, for rewinding
+int input_stack_array[STACK_MAXLEN];
+int *input_stack;
+int from_input = 0;
+int start_stack_len = 0;
 
 int rules_strings_array[50];
 int *rules_strings;
@@ -63,6 +73,8 @@ int _memoizer[28000][10][50][2];
 
 int *memory_array; //memory_array[MEMORY_LENGTH];
 int *memory;
+int *memory_hint_array;
+int *memory_hint;
 int positions[MEMORY_LENGTH][4]; // start, end, 0, 0 (wanted: source_index, filename)
 int pos_map_array[POS_MAP_LENGTH][4]; // forth_start, filenum, source_start, source_end
 int (*pos_map)[4];
@@ -90,15 +102,18 @@ char flpc_sources[MAX_NUM_FILES][FILE_BUFFER_SIZE];
 // int filename;
 
 int functions_end, debugger_waitlen, debug_function, debugger_skip, catch_error;
+int error_handler;
 int run_index, eofunc_index, names_get_index;
 int unnamed_string = init(Int, -3);
 FILE *input;
+int input_index; // -1 means stdin
+int STDIN_INDEX = init(Int, -1);
 FILE *outf;
 struct Files {
   int len;
   FILE *files[10];
 } files;
-char *input_filename;
+char input_filename[50];
 
 int string_new(char *source);
 int raw_string_new(char *source);
@@ -106,6 +121,8 @@ void func_call(int func);
 int input_next_token();
 int print_state();
 int _error(char *s);
+void call_error_handler();
+static jmp_buf error_jump_buffer;
 
 int bp() {return NoValue;} // Set gdb to break here before running
 void load_all(){
@@ -194,14 +211,17 @@ void prints(int* array){
   printf("\n");}
 
 void string_print_repr(int string_index){
+  cvalue(string_index, String); //assert
+  fprintf(outf, "\"");
   char* s1 = cstring(string_index);
   _assert(s1[LENGTH] < 500);
   for (int i=0; i<s1[LENGTH]; i++){
-    if (s1[i] == '\n' || s1[i] == '\r' || s1[i] == '\\' || s1[i] == '\"' ||
-        s1[i] == '\'') {
-      printf(escape[s1[i]]);}
+    // || s1[i] == '\''
+    if (s1[i] == '\n' || s1[i] == '\r' || s1[i] == '\\' || s1[i] == '"' || s1[i] == ' ' || s1[i] == '\t' || s1[i] == '"') {
+      fprintf(outf, escape[s1[i]]);}
     else {
-      printf("%c", s1[i]);}}}
+      fprintf(outf, "%c", s1[i]);}}
+  fprintf(outf, "\"");}
 
 void string_print(int string_index){
   char* s1 = cstring(string_index);
@@ -213,6 +233,37 @@ void string_print(int string_index){
       fprintf(outf, "_"); i++;}
     else {
       fprintf(outf, "%c", s1[i]);}}}
+
+int string_unescape(){
+  int string_index = ds_pop();
+  char* s1 = cstring(string_index);
+  _assert(s1[LENGTH] < 500);
+  char buffer[10000] = "";
+  int cur_len = 0;
+  for (int i=0; i<s1[LENGTH]; i++){
+    if (s1[i] == '_') {
+      buffer[cur_len++] = ' ';}
+    else if (s1[i] == '\\' && s1[i+1] == 'u') {
+      buffer[cur_len++] = '_'; i++;}
+    else {
+      buffer[cur_len++] = s1[i];}}
+  return raw_string_new(buffer);}
+
+int string_escape(){
+  int string_index = ds_pop();
+  char* s1 = cstring(string_index);
+  _assert(s1[LENGTH] < 500);
+  char buffer[10000] = "";
+  int cur_len = 0;
+  for (int i=0; i<s1[LENGTH]; i++){
+    if (s1[i] == '\n' || s1[i] == '\r' || s1[i] == '\\' || s1[i] == '"' || s1[i] == ' ' || s1[i] == '_' || s1[i] == '\t' || s1[i] == '"') {
+      char *replacement = escape[s1[i]];
+      for (int j=0; j<2; j++){
+        if (replacement[j] == '\0') break;
+        buffer[cur_len++] = replacement[j];}}
+    else {
+      buffer[cur_len++] = s1[i];}}
+  return raw_string_new(buffer);}
 
 void string_print_raw(int string_index){
   char* s1 = cstring(string_index);
@@ -226,15 +277,17 @@ void tprint(int elem){
     else if (elem == Sep){
       fprintf(outf, "--Sep--");}
     else {
-      fprintf(outf, "<mem %i>", value(elem));}}
+      fprintf(outf, "<mem %i ", value(elem));
+      if (memory_hint[value(elem)]) {
+        string_print(memory_hint[value(elem)]);}
+      fprintf(outf, ">");
+    }}
   else if (type(elem) == Primitive){
     fprintf(outf, "<prim ");
     string_print(primitive_names[value(elem)]);
     fprintf(outf, ">");}
   else if (type(elem) == String){
-    fprintf(outf, "\"");
-    string_print_repr(elem);
-    fprintf(outf, "\"");}
+    string_print_repr(elem);}
   else {
     fprintf(outf, "<int %i>", value(elem));}}
 
@@ -270,27 +323,32 @@ void tprint_array(int* array){
   printf("\n");}
 
 int next_command(){
-  if (call_stack[LENGTH] != 3){
+  // Behaviour depends on if this was called from stdin or not
+  // !from_input
+  if (call_stack[LENGTH] != from_input) {
     // printf("Reading from memory %i\n", call_stack_top);
     call_stack_top += 1;
     return memory[call_stack_top - 1];}
   else {
     // printf("Reading from input\n");
+    // from_input = 0;
     return input_next_token();}}
 
 int next_token2(){
-  if (call_stack[LENGTH] != 4){
+  if (call_stack[LENGTH] != from_input + 1) {
     call_stack[call_stack[LENGTH] - 2] += 1;
     return memory[call_stack[call_stack[LENGTH] - 2] - 1];}
   else {
     // printf("Reading from input 2\n");
+    // from_input = 0;
     return input_next_token();}}
 
 int push() {return next_command();}
 int pushf() {return next_command();}
 int pushi(){
   int val = init(Int, atoi(cstring(next_command())));
-  if (call_stack[LENGTH] > 3){
+  // Caching
+  if (call_stack[LENGTH] != from_input){
     memory[call_stack_top - 2] = index_of(push); //push_index;
     memory[call_stack_top - 1] = val;}
   return val;}
@@ -352,52 +410,58 @@ int check(){
 int pick(){
   int name = next_command();
   // printf("Picking "); tprint(name); printf("\n");
-  for (int i=local_stack[LENGTH]-1; ; i--){
+  for (int i=local_stack[LENGTH]-1; i >= 0; i--){
     //printf("Comparing to "); tprint(local_stack[i]); printf("\n");
     //printf("result: %i", (string_equal_(local_stack[i], name) == True));
     //printf("\n%i", local_stack[i] == unnamed_string);
     if (local_stack[i] == unnamed_string){
       continue;}
-    else if (local_stack[i] == Sep || i == 0){
+    else if (local_stack[i] == Sep){
       // printf("Not found in locals\n");
       ds_append(name);
       func_call(init(Pointer, names_get_index));
       return NoValue;}
     else if (string_equal_(local_stack[i], name) == True){
       // printf("Returning %i ", i); tprint(data_stack[data_stack[LENGTH] - (local_stack[LENGTH]-1 - i) - 1]);
-      return data_stack[data_stack[LENGTH] - (local_stack[LENGTH]-1 - i) - 1];} }}
+      return data_stack[data_stack[LENGTH] - (local_stack[LENGTH]-1 - i) - 1];} }
     /*print_state();
       printf("Can't pick "); tprint(name); printf(" out of\n");
       tprint_array(local_stack);
       printf("%i", True == string_equal_(local_stack[local_stack[LENGTH] - 2], name));
       _error("");}}}*/
+    ds_append(name);
+    func_call(init(Pointer, names_get_index));
+    return NoValue;}
+
+int print_var_stack(int);
+
+int newfunc_(int n){
+  // Should think of a way to do this with only ds "primitives"
+  // But using a temporary buffer also seems wasterful.
+  append(input_stack, init(Int, call_stack[LENGTH]));
+  append(input_stack, Sep);
+  for (int i=0; i<n; i++) {
+    append(input_stack, data_stack[data_stack[LENGTH] - n + i]);
+    assert(local_stack[local_stack[LENGTH] - i - 1] != Sep);
+    local_stack[local_stack[LENGTH] - i] = unnamed_string;}
+  local_stack[local_stack[LENGTH] - n] = Sep;
+  local_stack[LENGTH] += 1;
+  return NoValue;}
+
+int newfunc(){
+  return newfunc_(value(ds_pop()));}
 
 int newfunc0(){
-  append(local_stack, Sep); return NoValue;}
+  return(newfunc_(0));}
 
 int newfunc1(){
-  int val = ds_pop();
-  append(local_stack, Sep);
-  ds_append(val);
-  return NoValue;}
+  return(newfunc_(1));}
 
 int newfunc2(){
-  int val1 = ds_pop();
-  int val2 = ds_pop();
-  append(local_stack, Sep);
-  ds_append(val2);
-  ds_append(val1);
-  return NoValue;}
+  return(newfunc_(2));}
 
 int newfunc3(){
-  int val1 = ds_pop();
-  int val2 = ds_pop();
-  int val3 = ds_pop();
-  append(local_stack, Sep);
-  ds_append(val3);
-  ds_append(val2);
-  ds_append(val1);
-  return NoValue;}
+  return(newfunc_(3));}
 
 int if_(){
   int index = ds_pop();
@@ -415,7 +479,7 @@ int if_else(){
   return NoValue;}
 
 char unescaped(char ch){
-  if (ch == 'n' || ch == 't' || ch == 'r' || ch == 's' || ch == 'u'){
+  if (ch == 'n' || ch == 't' || ch == 'r' || ch == 's' || ch == 'u' || ch == 'q'){
     return unescape[ch];}
   else if (ch == '\\' | ch == '(' || ch == ')'){
     return ch;}
@@ -465,7 +529,8 @@ int str_len(){
 int int_to_str(){
   int x = ds_pop();
   char buffer[20];
-  sprintf(buffer, "%d", cvalue(x, Int));
+  //sprintf(buffer, "%d", cvalue(x, Int));
+  sprintf(buffer, "%d", value(x));
   // itoa(num, buffer, 10);
   return string_new(buffer);}
 
@@ -493,12 +558,18 @@ int is_basic(){
                     type(elem) == Primitive ||
                     elem == None || elem == NoValue));}
 
+int type_of(){
+  int elem = ds_pop();
+  return init(Int, type(elem));}
+
 int func_end(){
   pop(call_stack); return NoValue;}
 
 int return_no_value(){
   while(local_stack[local_stack[LENGTH]-1] != Sep){
     ds_pop();}
+  while(pop(input_stack) != Sep){;}
+  pop(input_stack); // Call stack length
   pop(local_stack);
   pop(call_stack);
   return NoValue;}
@@ -557,6 +628,25 @@ int return4(){
   pop(call_stack);
   return ret_val;}
 
+int rewind_(){
+  int num_calls = value(ds_pop());
+  int input_stack_length = 0;
+  // This isn't the right number of frames of call stack to pop.
+  // Don't know how many but need to find when newfunc was called.
+  for (int i=0; i < num_calls; i++){
+    input_stack_length = input_stack[LENGTH];
+    return_no_value();}
+  int call_stack_length = cvalue(input_stack[input_stack[LENGTH]], Int);
+  // Bad! Abusing the fact that popped input stack (from return_no_value())
+  // doesn't actually erase the values.
+  for (int i=input_stack[LENGTH] + 2; i < input_stack_length; i++){
+    ds_append(input_stack[i]);}
+  while(call_stack[LENGTH] >= call_stack_length){
+    pop(call_stack);}
+  // Call function again. Unfortunately, prev_call_stack temporarily has the wrong value.
+  call_stack_top = prev_call_stack[call_stack[LENGTH] - 1];
+  return NoValue;}
+
 int string_new(char *source){
   strings[strings[LENGTH]] = strings_raw_length;
   int orig_length = strings_raw_length;
@@ -592,19 +682,74 @@ int char_new(char c){
   return init(String, strings[LENGTH] - 1);}
 
 int input_next_token() {
+  // Need to fix this too. Only prompt when reading from stdin and nothing else to read.
   if (input == stdin) {printf("> ");}
   last_pos[0] = ftell(input);
   if (fscanf(input, "%s", input_buffer) == EOF) {
-    if (input != stdin) {input = stdin; return input_next_token();}
-    else {printf("EOF reached. Mem used: %i\n", memory[LENGTH]); exit(0);}} //_error("EOF reached");
+    //fread(&input_buffer, 2048, 1, input);
+    last_pos[1] = ftell(input);
+    // Bad because we're effectively assuming only input_loop call this.
+    pop(call_stack);
+    pop(call_stack);
+    return NoValue;}
+    //return string_new("return_no_value2");}
   last_pos[1] = ftell(input);
   // printf("*** Read token %.*s\n", last_pos[1] - last_pos[0], file_source + last_pos[0]);
   return string_new(input_buffer);}
+
+int input_next_triple_quote(){
+  last_pos[0] = ftell(input);
+  char char_buffer[2];
+  int len = -1;
+  while(!(len > 3
+          && (input_buffer[len - 1] == input_buffer[len - 2])
+          && (input_buffer[len - 2] == input_buffer[len - 3])
+          && (input_buffer[len - 3] == '\''))){
+    if (fscanf(input, "%c", char_buffer) == EOF) {
+      last_pos[1] = ftell(input);
+      input_buffer[len] = '\0';
+      printf("%s", input_buffer);
+      _error("A triple-quote was not closed.");}
+    //printf("%i %c\n", len, char_buffer[0]);
+    // Ignores only first char so its still possible to start with a space.
+    if (len >= 0) {input_buffer[len] = char_buffer[0];}
+    len++;}
+  // Should assert last char is whitespace?
+  input_buffer[len - 3 - 1] = '\0';
+  last_pos[1] = ftell(input);
+  return string_new(input_buffer);}
+
+int triple_quote(){
+  if (call_stack[LENGTH] != from_input) {
+    // printf("Reading from memory %i\n", call_stack_top);
+    call_stack_top += 1;
+    return memory[call_stack_top - 1];}
+  else {
+    return input_next_triple_quote();}}
 
 int stdin_next_token() {
   // printf("Reading from stdin\n");
   if (scanf("%s", input_buffer) == EOF) {_error("EOF reached");}
   return string_new(input_buffer);}
+
+// May buffer overflow
+int stdin_next_line() {
+  //if (scanf(" %[^\n]", input_buffer) == EOF) {
+  size_t bufsize = 2048;
+  char *buffer = input_buffer;
+  if (getline(&buffer, &bufsize, stdin) == EOF) {
+    /* Doesn't seem to work as intended (allowing us to read
+       more from stdin after a control-D. Right now, using line
+       with single letter q to exit prompt. */
+    //fread(&input_buffer, 2048, 1, input);
+    //clearerr(stdin);
+    return(None);}
+  else {
+    for (int i=0; ;i++){
+      if (buffer[i] == '\n') {
+        buffer[i] = '\0';
+        break;}}
+    return string_new(input_buffer);}}
 
 int fd_position(){
   FILE* fd = files.files[value(ds_pop())];
@@ -649,19 +794,61 @@ int fd_next_char(){
   //printf("Next char: %c\n", c[0]);
   return char_new(c[0]);}
 
+int fd_next_line(){
+  FILE* fd = files.files[value(ds_pop())];
+  char c[2];
+  char buffer[10000] = "";
+  int start = ftell(fd);
+  for (int i=0;;i++){
+    if (!fread(&c, 1, 1, fd)) {
+      // Probably end of file?
+      fseek(fd, start, SEEK_SET);
+      return None;}
+    if (c[0] == '\n') {
+      buffer[i] = c[0];
+      buffer[i+1] = '\0';
+      return raw_string_new(buffer);}
+    buffer[i] = c[0];}}
+
+// Not strictly needed since we have set_output
+int fd_write(){
+  FILE* fd = files.files[value(ds_pop())];
+  int fs = ds_pop();
+  char* s = cstring(fs);
+  _assert(s[LENGTH] < 500);
+  fprintf(fd, "%.*s", s[LENGTH], s);
+  fflush(fd);
+  return NoValue;}
+
+int fd_flush(){
+  FILE* fd = files.files[value(ds_pop())];
+  fflush(fd);
+  return NoValue;}
+
 int fd_ended(){
   FILE* fd = files.files[value(ds_pop())];
   return feof(fd);}
 
-int file_open(){
+int file_close(){
+  FILE* fd = files.files[value(ds_pop())];
+  fclose(fd);
+  return NoValue;}
+
+int file_open_at_(int index){
   char *filename = cstring(ds_pop());
   char *mode = cstring(ds_pop());
   char buf[50];
   char mode_buf[3];
   sprintf(buf, "%.*s", filename[LENGTH], filename);
   sprintf(mode_buf, "%.*s", mode[LENGTH], mode);
-  files.files[files.len++] = fopen(buf, mode_buf);
-  return init(Int, files.len - 1);}
+  files.files[index] = fopen(buf, mode_buf);
+  return init(Int, index);}
+
+int file_open_at(){
+  return file_open_at_(value(ds_pop()));}
+
+int file_open(){
+  return file_open_at_(files.len++);}
 
 int set_output(){
   // Could check for errors and return values depending on that.
@@ -672,6 +859,11 @@ int set_output(){
     outf = files.files[value(file_num)];}
   return NoValue;}
 
+int msleep(){
+  int usec = value(ds_pop());
+  usleep(usec * 1000);
+  return NoValue;}
+
 void func_call(int func){
   // printf("Calling %i %i\n", type(func), value(func));
   if (type(func) == Pointer){
@@ -680,7 +872,9 @@ void func_call(int func){
   else if (type(func) == Primitive){
     assert(func >= 0);
     int output = primitives[value(func)]();
-    if (output != NoValue) {ds_append(output);}}}
+    if (output != NoValue) {ds_append(output);}
+  } else {
+    _error("Called a non pointer or primitive");}}
 
 int repeat(){
   call_stack_top -= 3;
@@ -703,6 +897,12 @@ int call(){
   func_call(val);
   return NoValue;}
 
+int call_from_input(){
+  // Ugly hack. Only relevant when calling primitives that call next_command
+  // Probably still doesn't work well when nested?
+  from_input = call_stack[LENGTH];
+  return call();}
+
 int print_() {
   int elem = ds_pop();
   if (type(elem) == String) {string_print(elem);}
@@ -711,7 +911,7 @@ int print_() {
 int printraw() {
   string_print_raw(ds_pop()); return NoValue;}
 int printrepr() {
-  fprintf(outf, "\""); string_print_repr(ds_pop()); fprintf(outf, "\""); return NoValue;}
+  string_print_repr(ds_pop()); return NoValue;}
 int printspace() {fprintf(outf, " "); return NoValue;}
 int printeol() {fprintf(outf, "\n"); return NoValue;}
 int print_repr() {tprint(ds_pop()); return NoValue;}
@@ -778,7 +978,9 @@ void main_loop(){
   int func;
   FILE* prof_file;
   //prof_file = fopen("profile.txt", "w");
-  while(call_stack[LENGTH]){
+  while(call_stack[LENGTH] > start_stack_len){
+    assert(call_stack[LENGTH] > 0 && call_stack[LENGTH] < 10000);
+    assert(call_stack == call_stack_array + 1);
     /*if (call_stack[LENGTH] == 4){
       print_state();}
     if (call_stack_top == functions_end - 7){
@@ -787,10 +989,15 @@ void main_loop(){
       fprintf(prof_file, "%i ", call_stack[i]);}
       fprintf(prof_file, "\n");*/
     debugger();
+    if (call_stack[start_stack_len] > 1){
+      _error("Call stack went beyond starting point.");}
     prev_call_stack[call_stack[LENGTH] - 1] = call_stack_top;
     func = memory[call_stack_top];
     call_stack_top += 1;
-    func_call(func);}}
+    if (setjmp(error_jump_buffer)) {
+      call_error_handler();
+    } else {
+      func_call(func);}}}
 
 int unimpl(){
   _error("Unimplemented");}
@@ -803,8 +1010,22 @@ int error(){
   exit(1);}
 
 int _error(char *s){
-  printf("%s\n", s);
-  exit(1);}
+  printf("Error: %s\n", s);
+  longjmp(error_jump_buffer, 1);}
+  //exit(1);}
+
+int error_handler_set() {
+  error_handler = ds_pop();
+  assert(type(error_handler) == Primitive || type(error_handler) == Pointer);
+  return NoValue;}
+
+void call_error_handler() {
+  if (error_handler != None) {
+    prev_call_stack[call_stack[LENGTH] - 1] = call_stack_top;
+    func_call(error_handler);}
+  else {
+    printf("No error handler set. Exiting.");
+    exit(1);}}
 
 int lookup_error(){
   print_state();
@@ -848,6 +1069,26 @@ int memory_set() {
     _error("Setting index greater than memory length");}
   return NoValue;}
 
+int memory_hint_get() {return memory_hint[value(ds_pop())];}
+int memory_hint_set() {
+  int index = ds_pop(); int x = ds_pop();
+  int i = value(index);
+  /*printf("Setting %i to %i ", i, x);
+  string_print(x);
+  printf("\n");*/
+  if (type(index) != Pointer){
+    printf("Not setting memory hint to non-pointer %i\n", index);}
+  else if (i == -1) {
+    printf("Not setting memory hint None\n");}
+  else if (i < memory_hint[LENGTH]){
+    memory_hint[i] = x;}
+  else if (i == memory_hint[LENGTH]) {
+    append(memory_hint, x);}
+  else {
+    printf("%d %d", i, x);
+    _error("Setting index greater than memory hint length");}
+  return NoValue;}
+
 int pos_map_index(int forth_index){
   for(int i=0; i<pos_map[LENGTH][0]; i++){
     if (forth_index < pos_map[i][0]) return i - 1;}
@@ -877,7 +1118,7 @@ void print_boot_frame(int frame){
       print_slice(source, pos[1], j);
       printf("\n"); }
 
-void print_frame(int frame){
+void _print_frame(int frame, int context){
   char *source;
   char *fn;
     int* pos = positions[frame];
@@ -911,6 +1152,10 @@ void print_frame(int frame){
           if (j >= (*fpos)[3]) {break;}
           lineno += 1;
           prev = j;}}
+      for(int count=0; count<context+1; j++) {
+        if (source[j] == '\n') count++;}
+      for(int count=0; count<context+1; first--) {
+        if (source[first] == '\n') count++;}
       // printf("%i %i ", first, j);
       printf("  In file \033[92m%s\033[0m line %i function \033[92m(", fn, first_lineno);
       tprint(memory[frame]);
@@ -922,6 +1167,17 @@ void print_frame(int frame){
       print_slice(source, (*fpos)[3], j);
       printf("\n"); }}
 
+int print_frame(){
+  int i = value(ds_pop());
+  int context = value(ds_pop());
+  // Bad: should probably be a different function.
+  int raw_memory_location = value(ds_pop());
+  int frame = raw_memory_location ? i :
+    (prev_call_stack[i] ? prev_call_stack[i] : call_stack[i]);
+  printf("%i", i);
+  _print_frame(frame, context);
+  return NoValue;}
+
 // start = -1 means print everything
 int print_stack(int start){
   int frame;
@@ -929,7 +1185,7 @@ int print_stack(int start){
     if (start != -1 && i < call_stack[LENGTH] - start) {continue;}
     frame = prev_call_stack[i] ? prev_call_stack[i] : call_stack[i];
     printf("%i", i);
-    print_frame(frame);}
+    _print_frame(frame, 1);}
   return NoValue;}
 
 // sep_diff = -1 means print everything
@@ -945,11 +1201,27 @@ int print_var_stack(int sep_diff) {
       if (local_stack[j] == unnamed_string){
         ;}
       else if (type(local_stack[j]) == String) {
-        string_print(local_stack[j]);}
+        string_print_raw(local_stack[j]);}
       else {
         _error("Unknown name!");}// tprint(local_stack[j]); exit(1);}
       printf(": ");
       tprint(data_stack[j - num_sep]);
+      printf("\n");}
+    else {
+      num_sep--;
+      if (sep_diff != -1 && max_num_sep - num_sep > sep_diff) break;
+      printf("-----\n");}}}
+
+int print_input_stack(int sep_diff) {
+  //int i = 0;
+  int num_sep = 0;
+  for (int j = 0; j < input_stack[LENGTH]; j++){
+    if (input_stack[j] == Sep){num_sep++;}}
+  int max_num_sep = num_sep;
+  //for (int j = 0; j < input_stack[LENGTH]; j++){
+  for (int j = input_stack[LENGTH] - 1; j >= 0; j--){
+    if (input_stack[j] != Sep){
+      tprint(input_stack[j]);
       printf("\n");}
     else {
       num_sep--;
@@ -969,8 +1241,10 @@ void print_input_state(){
 int print_state() {
   // printf("Input: %.*s\n", last_pos[1] - last_pos[0] + 40, file_source + (last_pos[0] - 20));
   print_input_state();
-  printf("data_stack:\n");
+  printf("\ndata_stack:\n");
   print_var_stack(5);
+  printf("\ninput_stack:\n");
+  print_input_stack(5);
   print_stack(6);
   printf("\n");
   /*printf("\nnext tokens from input:\n");
@@ -990,6 +1264,8 @@ int print_full_state() {
   print_input_state();
   printf("data_stack:\n");
   print_var_stack(-1);
+  printf("input_stack:\n");
+  print_input_stack(-1);
   print_stack(-1);
   printf("\n");}
 
@@ -1077,6 +1353,7 @@ int _string_index(int s){
   append(rules_strings, s);
   return rules_strings[LENGTH] - 1;}
 
+// name pos indentation
 int memoizer_get(){
   // len(indentation) This is a heuristic that is wrong in general.
   // Should extract values as a tuple instead.
@@ -1131,7 +1408,9 @@ int memoizer_set(){
   return NoValue;}
 
 int memoizer_reset() {
-  memset(_memoizer, 0, sizeof _memoizer);}
+  memset(_memoizer, 0, sizeof _memoizer);
+  rules_strings[LENGTH] = 0;
+  return NoValue;}
 
 void setup_escape(){
   escape['\0'] = "\\0";
@@ -1140,15 +1419,64 @@ void setup_escape(){
   escape['\t'] = "\\t";
   escape[' '] = "\\s";
   escape['_'] = "\\u";
+  escape['"'] = "\\q";
   escape['\''] = "'";
-  escape['\"'] = "\"";
+  escape['"'] = "\\q";
   escape['\\'] = "\\\\";
   unescape['0'] = '\0';
   unescape['n'] = '\n';
   unescape['r'] = '\r';
   unescape['t'] = '\t';
   unescape['s'] = ' ';
+  unescape['q'] = '"';
   unescape['u'] = '_';}
+
+int continue_from_file(){
+  int top = ds_pop();
+  assert(top == FileSep); // p top
+  input_index = value(ds_pop());
+  char* filename = cstring(ds_pop());
+  sprintf(input_filename, "%.*s", filename[LENGTH], filename);
+  printf("Continuing from file %s\n", input_filename);
+  input = files.files[input_index];
+  if (input != stdin){
+    int pos = ftell(input);
+    fseek(input, 0, SEEK_SET);
+    fread(&file_source, FILE_BUFFER_SIZE, 1, input);
+    fseek(input, pos, SEEK_SET);}
+  return NoValue;}
+
+// Switch future input stream to a (new) file.
+void run_file_(char *filename){
+  sprintf(input_filename, "%.*s", filename[LENGTH], filename);
+  printf("Running from file %s\n", input_filename);
+  input = files.files[files.len] = fopen(input_filename, "r");
+  input_index = files.len++;
+  fread(&file_source, FILE_BUFFER_SIZE, 1, input);
+  fseek(input, 0, SEEK_SET);}
+
+int current_input_file() {
+  // Save previous file into onto stack. To be used by continue_from_file
+  // Should possibly make this into primitives.
+  ds_append(string_new(input_filename));
+  ds_append(init(Int, input_index));
+  ds_append(FileSep);
+  return NoValue;}
+
+int switch_input_file() {
+  char* filename = cstring(ds_pop());
+
+  run_file_(filename);
+  start_stack_len = call_stack[LENGTH];
+  append(call_stack, 0);
+  // Not sure if nested main loop is needed.
+  // Currently used as indicator when we run out of input
+  main_loop();
+  // if (input != stdin) fclose(input);
+  from_input = 3;
+  // Wrong! Should probably push these values onto the param stack or something.
+  start_stack_len = 0;
+  return NoValue;}
 
 int main(int argc, char *argv[]) {
   outf = stdout;
@@ -1157,9 +1485,13 @@ int main(int argc, char *argv[]) {
   prev_call_stack = prev_call_stack_array + 1;
   data_stack = data_stack_array + 1;
   local_stack = local_stack_array + 1;
+  input_stack = input_stack_array + 1;
   rules_strings = rules_strings_array + 1;
   memory_array = malloc((MEMORY_LENGTH + 1) * sizeof(int));
   memory = memory_array + 1;
+  memory_hint_array = malloc((MEMORY_LENGTH + 1) * sizeof(int));
+  memory_hint = memory_hint_array + 1;
+  memory_hint[LENGTH] = MEMORY_LENGTH;
   pos_map = &pos_map_array[1];
   // positions = positions_array + 1;
   primitive_names = primitive_names_array + 1;
@@ -1176,23 +1508,28 @@ int main(int argc, char *argv[]) {
   eofunc_index = init(Primitive, index_of(func_end)); // Hack!
   catch_error = False;
 
+  // Can we somehow fold the two cases together?
   if (argc == 1) {
-    input_filename = "stdin";
+    sprintf(input_filename, "%.*s", 5, "stdin");
     printf("Running from stdin\n");
     input = stdin;}
   else {
-    input_filename = argv[1];
-    printf("Running from file %s\n", input_filename);
-    input = fopen(input_filename, "r");
-    fread(&file_source, FILE_BUFFER_SIZE, 1, input);
-    fseek(input, 0, SEEK_SET);}
+    run_file_(cstring(string_new(argv[1])));}
   FILE* boot = fopen("lib/boot.flpc", "r");
   fread(&boot_source, FILE_BUFFER_SIZE, 1, boot);
   fclose(boot);
   debugger_waitlen = NoValue;
   debug_function = None;
+  error_handler = None;
   append(call_stack, 0);
-  main_loop();}
+  main_loop();
+  // Shouldn't really be hard-coded here.
+  if (input != stdin) {
+    fclose(input);
+    append(call_stack, 0);
+    input = stdin;
+    main_loop();}
+  printf("EOF reached. Mem used: %i\n", memory[LENGTH]);}
 
 void test(){
   append(call_stack, 10);
@@ -1202,4 +1539,4 @@ void test(){
   prints(primitive_names);
   string_print(primitive_names[0]);
   }
-int (*primitives[])(void) = {zero, bin_or, load_state, if_else, call_stack_len, str_join, _cheat_dict_new, is_alpha, newfunc2, newfunc3, printspace, less, s4127, func_end, memory_set, equal, return_if, sub_str, not_, return_no_value, mod, mempos_append, print_state, printraw, functions_end_increase, debug_function_set, fd_startswith, str_len, functions_end_decrease, functions_end_, return_no_value2, add, memoizer_get, intdiv, print_, return4, None_, hash, push, debugger_waitlen_set, lookup_error, pushf, bp, bin_and, file_open, cache_slot, repeat_if, names_set, _cheat_dict_get, check, fpointer, load, shuffle, c_infinity, newfunc0, fd_position_set, newfunc1, pushi, _cheat_dict_set, two, call, fd_position, drop1, string_equal, greater, input_next_token, int_to_str, printrepr, save_state, save, memoizer_set, return_two1, return_two2, functions_end_, fd_ended, return1, return3, return2, fd_next_token, error, memory_len, memory_get, char_between, prm, assign, memoizer_reset, if_, pick, sub, pick1, printeol, one, stdin_next_token, call_stack_top2, repeat, next_token2, fd_next_char, is_basic, func_end, is_str, memory_append, s21, set_output};
+int (*primitives[])(void) = {zero, fd_next_line, bin_or, file_close, load_state, if_else, call_stack_len, str_join, _cheat_dict_new, is_alpha, newfunc2, newfunc3, printspace, less, s4127, func_end, memory_set, equal, return_if, sub_str, call_from_input, not_, return_no_value, mod, mempos_append, print_state, current_input_file, printraw, functions_end_increase, debug_function_set, fd_startswith, str_len, functions_end_decrease, functions_end_, msleep, return_no_value2, string_unescape, add, memoizer_get, intdiv, print_, return4, None_, hash, push, debugger_waitlen_set, lookup_error, pushf, bp, call_stack_top2, bin_and, file_open, cache_slot, fd_flush, repeat_if, names_set, _cheat_dict_get, check, fpointer, load, shuffle, memory_hint_get, input_next_triple_quote, continue_from_file, triple_quote, c_infinity, newfunc0, fd_position_set, newfunc1, func_end, pushi, _cheat_dict_set, two, call, fd_position, drop1, memory_hint_set, string_equal, greater, input_next_token, int_to_str, printrepr, stdin_next_line, newfunc, save_state, save, memoizer_set, return_two1, return_two2, functions_end_, fd_ended, return1, return3, return2, fd_next_token, error, memory_len, memory_get, char_between, prm, assign, memoizer_reset, string_escape, if_, pick, sub, pick1, printeol, one, switch_input_file, rewind_, stdin_next_token, type_of, repeat, next_token2, error_handler_set, fd_next_char, fd_write, is_basic, print_frame, is_str, memory_append, s21, file_open_at, set_output};

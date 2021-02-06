@@ -1,5 +1,5 @@
-output = apply("grammar")
-output . print()
-print("Writing_stage4.flpc")
-printeol()
-to_flpc2_grammar(output)
+write_parsed(bootg "grammar/boot.grammar" "gen/grammar.flpc")
+# Wrong place to make modifications
+bootg.base . append("add_indent_rules")
+bootg . set(0 "flpcg")
+write_parsed(bootg "grammar/flpc.grammar" "gen/flpc_grammar.flpc")

@@ -1,28 +1,23 @@
-indentation . append(0)
-
-rule.SAME_INDENT <- fun[]:
+base.rules.SAME_INDENT <- fun[]:
     saved = source . position()
     s = make_string(apply('hspaces'))
-    if indentation . top() == str_len(s):
+    if parseg . get("indentation") . top() == str_len(s):
         return(None())
     source . position_set(saved)
     return(MatchError("Different_indent"))
 
-rule.DEDENT <- fun[]:
-    indentation . pop()
+base.rules.DEDENT <- fun[]:
+    parseg . get("indentation") . pop()
     return(None())
 
-rule.INDENT <- fun[]:
+base.rules.INDENT <- fun[]:
     saved = source . position()
     if is_instance(apply('NEWLINE') MatchError_class):
         source . position_set(saved)
         return(MatchError("Missing_newline_before_indent"))
     s = make_string(apply('hspaces'))
     source . position_set(saved)
-    indentation . append(str_len(s))
-    return(None())
-
-rule.void <- fun[]:
+    parseg . get("indentation") . append(str_len(s))
     return(None())
 
 # Need new token function anyways
@@ -53,18 +48,16 @@ token <- fun[s]:
 # So rebind will do something random.
 # rules <- boot_dict(100)
 # Reset the keys and values array instead.
-print("Regenerating_")
-print(rules . len)
-printeol()
-memory.set(boot_array(rules . len) rules + 1)
-memory.set(boot_array(rules . len) rules + 2)
+#print("Regenerating_")
+#print(rules . len)
+#printeol()
+#memory.set(boot_array(rules . len) rules + 1)
+#memory.set(boot_array(rules . len) rules + 2)
 
 #names.set("rules" boot_dict(100))
 #names.set("rules" cheat_dict())
-hashtable.set("letter" rule.letter rules)
-hashtable.set("digit" rule.digit rules)
-hashtable.set("anything" rule.anything rules)
-hashtable.set("INDENT" rule.INDENT rules)
-hashtable.set("DEDENT" rule.DEDENT rules)
-hashtable.set("void" rule.void rules)
-hashtable.set("SAME_INDENT" rule.SAME_INDENT rules)
+
+add_indent_rules <- fun[rules]:
+  hashtable.set("INDENT" base.rules.INDENT rules)
+  hashtable.set("DEDENT" base.rules.DEDENT rules)
+  hashtable.set("SAME_INDENT" base.rules.SAME_INDENT rules)

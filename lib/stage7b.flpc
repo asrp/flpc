@@ -1,0 +1,25 @@
+# To parse from stage7a
+
+print("hello_world")
+printeol()
+print("hi_world")
+printeol()
+
+uhoh <- fun[]:
+  debuggerv2()
+  print_state()
+  rewind(4)
+
+inner <- fun[]:
+  # Change this line after rewinding.
+  print("Inner_1")
+  printeol()
+  uhoh()
+
+outer <- fun[]:
+  print("Outer")
+  printeol()
+  i = 4
+  inner()
+
+outer()

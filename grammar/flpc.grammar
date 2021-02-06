@@ -42,4 +42,4 @@ suite = INDENT (NEWLINE+ SAME_INDENT statement)+ DEDENT
 NEWLINE = hspaces ('\n' | '\r') {} | COMMENT_LINE
 COMMENT_LINE = hspaces {comment} hspaces ('\n' | '\r')
 grammar = (NEWLINE* SAME_INDENT statement (NEWLINE+ | ~anything))+=suite
-          | statement
+          | statement=suite

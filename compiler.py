@@ -162,7 +162,12 @@ def to_forth(root):
         names = children[0].value if root[0].name == "simple_quote"\
                 else children[0][1::2]
         if root.name == "fun":
-            decl = FList([FCall("newfunc%s" % len(names), root[0].pos)])
+            if len(names) < 4:
+                decl = FList([FCall("newfunc%s" % len(names), root[0].pos)])
+            else:
+                decl = FList([FCall("pushi:", root[0].pos),
+                              FCall(str(len(names)), root[0].pos),
+                              FCall("newfunc", root[0].pos)])
         else:
             decl = FList([], root[0].pos)
         for name in reversed(names):
@@ -287,7 +292,7 @@ def write_blocks(root, depth=1, nesting=0):
         if root.func_name.startswith("autogen"):
             [write_sep(c, pos=root.pos) for c in ["bind:", root.func_name, "\n"]]
 
-def write_suite(root, prefix=""):
+def write_suite(root, prefix="", ns=False):
     for child in root:
         if isinstance(child, FComment):
             continue
@@ -295,6 +300,16 @@ def write_suite(root, prefix=""):
             if str(child[-3]) == "class":
                 # Skip FQuote to avoid writing a function
                 write_suite(list(child[-4]), "%s." % child[-1])
+            elif str(child[-3]) == "ns_class":
+                # Wrong place. Should be added before write_*
+                for token in ["pushi:", "100", "hashtable", "bind:", "current_ns"]:
+                    write_sep(token, root.pos)
+                write_sep("\n")
+                write_suite(list(child[-4]), ns=True)
+                # Wrong place. Should be added before write_*
+                for token in ["push:", child[-1], "new_ns_class"]:
+                    write_sep(token, root.pos)
+                write_sep("\n")
             else:
                 body = child[0] if len(child) == 3 else child[1]
                 if isinstance(body, (FStr, FCall)):
@@ -306,7 +321,9 @@ def write_suite(root, prefix=""):
                 assert(len(child) == 3)
                 body.func_name = (prefix + child[-1].str).replace("_colon", ":")
                 write_blocks(body)
-                if body.func_name not in g.written:
+                if ns:
+                    write_sep("ns_bind:", body.pos)
+                elif body.func_name not in g.written:
                     g.written.append(body.func_name)
                     write_sep("bind:", body.pos)
                 else:
@@ -317,6 +334,8 @@ def write_suite(root, prefix=""):
             g.nesting = 0
             write_string_body(child, 0)
             write_sep("\n")
+        else:
+            import pdb; pdb.set_trace()
 
 class Global(object):
     pass
@@ -325,6 +344,7 @@ g = Global()
             
 if __name__ == "__main__":
     output_stream = sys.stdout
+    time_log = open("time.log", "w")
     output_stream_pos = 0
     pos_map = {}
     g.func_count = 0
@@ -336,10 +356,15 @@ if __name__ == "__main__":
     lang_tree = match(t2, grammar + boot_grammar.extra)
 
     header = "push: Generated_from_" + "_".join(sys.argv[1:]) + " print"
-    print(header)
+    output_stream.write(header + "\n")
     output_stream_pos += len(header)
+    import time
+    start_time = time.time()
     for filename in sys.argv[1:]:
-        write_suite(to_forth(simplify(parse(open(filename).read()))))
+        parsed = parse(open(filename).read())
+        time_log.write(str((filename, "parse", time.time() - start_time)) + "\n")
+        write_suite(to_forth(simplify(parsed)))
+        time_log.write(str((filename, "all", time.time() - start_time)) + "\n")
     open("pos_map.txt", "w").write("%s %s\n" % (len(sys.argv[1:]), " ".join(sys.argv[1:])) +\
                                    "%s\n" % len(pos_map) +\
         "\n".join(" ".join(map(str, (key[0],) + pos_map[key]))

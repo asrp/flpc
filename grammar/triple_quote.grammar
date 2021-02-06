@@ -1,0 +1,5 @@
+single_quotes = '\'' '\'' '\''
+double_quotes = '"' '"' '"'
+TRIPLE_QUOTE! = hspaces (single_quotes {(~single_quotes anything)*} single_quotes | double_quotes {(~double_quotes anything)*} double_quotes)
+non_block_non_infix = forth | func_call | name_quote | quote
+                    | parenthesis | NUMBER | TRIPLE_QUOTE | STRING | variable

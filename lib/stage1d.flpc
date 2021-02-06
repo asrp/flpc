@@ -174,32 +174,39 @@ bound <- fun[child name]:
     return(output)
   return(node(name output))
 
-flagged <- resizable(0)
-
 should_make_node <- fun[output]:
   if is_instance(output resizable_class):
     return(output . len > 1)
   return(False)
 
-# Should search here instead of globals
-rules <- hashtable(223)
-#rules <- cheat_dict()
+parseg <- hashtable(40)
 
-# Unused until later
-indentation <- resizable(0)
-nest <- boot_array(1)
-nest . set(0 0)
+debug_parse <- fun[]:
+  parseg . set("apply_print" True)
+
+init_parseg <- fun[grammar_obj]:
+  # TODO make this not index based.
+  # Could almost overwrite parseg if grammar_obj was a hashtable
+  parseg . set("prefix" grammar_obj . get(0))
+  parseg . set("rules" grammar_obj . get(1))
+  #rules <- cheat_dict()
+  parseg . set("flagged" grammar_obj . get(2))
+  parseg . set("base_rules" grammar_obj . get(3))
+  parseg . set("nest" 0)
+  parseg . set("apply_print" False)
+  # Could reuse the same one
+  parseg . set("indentation" resizable(0))
+  parseg . get("indentation") . append(0)
+  memoizer.reset()
 
 # Reverse the names of _apply and apply to toggle memoizer.
 
 _apply <- fun[name]:
   error("Dummy")
 
-apply_print <- False
-
 _apply <- fun[name]:
-  nesting = nest . get(0)
-  if apply_print:
+  nesting = parseg . get("nest")
+  if parseg . get("apply_print"):
     i = nesting
     repeat_if:
       printspace()
@@ -208,11 +215,11 @@ _apply <- fun[name]:
     printspace()
     tprint(source . position())
     printeol()
-  nest . set(0 nesting + 1)
-  output = call(hashtable.get(name rules))
-  # output = call(_cheat_dict.get(name rules))
-  nest . set(0 nesting)
-  if apply_print:
+  parseg . set("nest" nesting + 1)
+  output = call(hashtable.get(name parseg . get("rules")))
+  # output = call(_cheat_dict.get(name parseg . get("rules")))
+  parseg . set("nest" nesting)
+  if parseg . get("apply_print"):
     i = nesting
     repeat_if:
       printspace()
@@ -239,38 +246,70 @@ _apply <- fun[name]:
     printraw(name)
     printeol()
     return(node(name output))
-  if flagged . string_index(name) == None():
+  if parseg . get("flagged") . string_index(name) == None():
     return(output)
   return(node(name output))
 
 # push: foo apply
 apply <- fun[name]:
-  mem_out new_pos memoized = memoizer.get(name source . position() indentation)
+  mem_out new_pos memoized = memoizer.get(name source . position() parseg . get("indentation"))
   if `memoized:
     source . position_set(`new_pos)
     return(`mem_out)
   else:
     saved = source . position()
     output = _apply(name)
-    memoizer.set(name saved indentation output source . position())
+    memoizer.set(name saved parseg . get("indentation") output source . position())
     return(`output)
 
-rule.anything <- fun[]:
+base.rules.anything <- fun[]:
   char = source . next_char()
   if char == None():
     return(MatchError("End_of_file"))
   return(`char)
 
-rule.letter <- fun[]:
+base.rules.void <- fun[]:
+  return(None())
+
+base.rules.letter <- fun[]:
   return(or([[between("a" "z")] [between("A" "Z")]]))
 
-rule.digit <- fun[]:
+base.rules.digit <- fun[]:
   return(between("0" "9"))
 
-rule.name <- fun[]:
+base.rules.name <- fun[]:
   return(and([[or([[apply("rule.letter")] [exactly("_")]])] [quantified([or([[apply("rule.letter")] [apply("rule.digit")] [exactly("_")]])] "*")]]))
 
-source_index = functions.end() + 5
+base.rules.wrapped_escaped_char <- fun[]:
+    output = apply("raw_escaped_char")
+    if is_instance(output MatchError_class):
+      return(output)
+    if string_equal(output "t"):
+      return("\t")
+    if string_equal(output "n"):
+      return("\n")
+    if string_equal(output "r"):
+      return("\r")
+    if string_equal(output "\\"):
+      return("\\")
+    if string_equal(output "'"):
+      return("'")
+    if string_equal(output '"'):
+      return('"')
+    error("Unknown_escaped_char")
+
+add_base_rules <- fun[rules]:
+  hashtable.set("letter" base.rules.letter rules)
+  hashtable.set("digit" base.rules.digit rules)
+  hashtable.set("anything" base.rules.anything rules)
+  hashtable.set("void" base.rules.void rules)
+
+add_escaped_char_rules <- fun[rules]:
+  hashtable.set("raw_escaped_char" rules . get("escaped_char") rules)
+  hashtable.set("escaped_char" base.rules.wrapped_escaped_char rules)
+
+# source_index = functions.end() + 5
 # source <- Input("grammar/boot.grammar")
-source <- Input("grammar/flpc.grammar")
+# source <- Input("grammar/flpc.grammar")
 # source <- Input("grammar/test.grammar")
+source <- None()

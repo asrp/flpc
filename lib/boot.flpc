@@ -45,6 +45,8 @@ write_loop <- fun[]:
       memory.append(input.next_token())
     if string_equal(token "bind:"):
       memory.append(input.next_token())
+    if string_equal(token "'''"):
+      memory.append(input.next_triple_quote())
     if string_equal(`token "]"):
       return(`pointer)
 
@@ -52,7 +54,7 @@ write_loop <- fun[]:
 run <- inline[name]:
   call(names.get(`name))
 
-input_loop2 <- fun[]:
+input_loop2 <- inline[]:
   repeat:
     # Too many issues when calling run instead...
-    call(names.get(input.next_token()))
+    call_from_input(names.get(input.next_token()))

@@ -140,12 +140,12 @@ boot_array <- class[]:
   hash_index <- fun[key i self]:
     self i = s21()
     repeat:
-      i = `i - 1
       # Need default value here, which is probably 0?
-      if(boot_array.get(i self) == 0):
-        return(None())
       if string_equal(key boot_array.get(i self)):
         return(`i)
+      if(boot_array.get(i self) == 0):
+        return(None())
+      i = `i - 1
       if i == 0:
         drop1()
         # self . len()
@@ -154,10 +154,10 @@ boot_array <- class[]:
   none_index <- fun[i self]:
     self i = s21()
     repeat:
-      i = `i - 1
       # Need default value here, which is probably 0?
       if(boot_array.get(i self) == 0):
         return(`i)
+      i = `i - 1
       if i == 0:
         drop1()
         # self . len()

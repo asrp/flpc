@@ -1,162 +1,171 @@
-rule.comment <- fun[]:
+flpcg.rules.comment <- fun[]:
     return(bound([and([[exactly("#")] [out([quantified([and([[negation([exactly("\n")])] [out([apply("anything")])]])] "*")])]])] "comment"))
 
-rule.space <- fun[]:
-    return(or([[exactly("\n")][exactly("\r")][exactly("\s")] [exactly("\t")]]))
+flpcg.rules.space <- fun[]:
+    return(or([[exactly("\n")] [exactly("\r")] [exactly("\s")] [exactly("\t")]]))
 
-rule.spaces <- fun[]:
+flpcg.rules.spaces <- fun[]:
     return(quantified([apply("space")] "*"))
 
-rule.spacesp <- fun[]:
+flpcg.rules.spacesp <- fun[]:
     return(quantified([apply("space")] "+"))
 
-rule.hspaces <- fun[]:
+flpcg.rules.hspaces <- fun[]:
     return(quantified([or([[exactly("\s")] [exactly("\t")]])] "*"))
 
-rule.hspacesp <- fun[]:
+flpcg.rules.hspacesp <- fun[]:
     return(quantified([or([[exactly("\s")] [exactly("\t")]])] "+"))
 
-rule.EMPTY_LINE <- fun[]:
-    return(bound([and([[apply("hspaces")][quantified([apply("comment")] "?")] [or([[exactly("\n")] [exactly("\r")]])]])] "EMPTY_LINE"))
+flpcg.rules.EMPTY_LINE <- fun[]:
+    return(bound([and([[apply("hspaces")] [quantified([apply("comment")] "?")] [or([[exactly("\n")] [exactly("\r")]])]])] "EMPTY_LINE"))
 
-rule.NUMBER <- fun[]:
+flpcg.rules.NUMBER <- fun[]:
     return(and([[apply("hspaces")] [out([and([[quantified([exactly("-")] "?")] [quantified([apply("digit")] "+")]])])]]))
 
-rule.STRING <- fun[]:
-    return(and([[apply("hspaces")] [or([[and([[exactly('"')][out([quantified([and([[negation([exactly('"')])] [apply("anything")]])] "*")])] [exactly('"')]])] [and([[exactly("'")][out([quantified([and([[negation([exactly("'")])] [apply("anything")]])] "*")])] [exactly("'")]])]])]]))
+flpcg.rules.STRING <- fun[]:
+    return(and([[apply("hspaces")] [or([[and([[exactly("\q")] [out([quantified([and([[negation([exactly("\q")])] [apply("anything")]])] "*")])] [exactly("\q")]])] [and([[exactly("'")] [out([quantified([and([[negation([exactly("'")])] [apply("anything")]])] "*")])] [exactly("'")]])]])]]))
 
-rule.NAME <- fun[]:
-    return(and([[apply("hspaces")] [out([and([[or([[apply("letter")] [exactly("_")]])] [quantified([and([[negation([apply("space")])][negation([exactly("(")])][negation([exactly("=")])][negation([exactly(")")])][negation([exactly("[")])][negation([exactly("]")])][negation([exactly("<")])][negation([exactly(":")])][negation([exactly("'")])] [apply("anything")]])] "*")]])])]]))
+flpcg.rules.NAME <- fun[]:
+    return(and([[apply("hspaces")] [out([and([[or([[apply("letter")] [exactly("_")]])] [quantified([and([[negation([apply("space")])] [negation([exactly("(")])] [negation([exactly("=")])] [negation([exactly(")")])] [negation([exactly("[")])] [negation([exactly("]")])] [negation([exactly("<")])] [negation([exactly(":")])] [negation([exactly("'")])] [apply("anything")]])] "*")]])])]]))
 
-rule.FORTH_NAME <- fun[]:
-    return(and([[apply("hspacesp")][negation([token("'F")])] [out([quantified([and([[negation([apply("space")])] [apply("anything")]])] "*")])]]))
+flpcg.rules.FORTH_NAME <- fun[]:
+    return(and([[apply("hspacesp")] [negation([token("'F")])] [out([quantified([and([[negation([apply("space")])] [apply("anything")]])] "*")])]]))
 
-rule.bin_op <- fun[]:
-    return(or([[token("+")][token("-")][token("/")][token("==")][token("<")][token(">")][token(".")][token("in")][token("||")] [token("&&")]]))
+flpcg.rules.bin_op <- fun[]:
+    return(or([[token("+")] [token("-")] [token("/")] [token("==")] [token("<")] [token(">")] [token(".")] [token("in")] [token("||")] [token("&&")]]))
 
-rule.names <- fun[]:
+flpcg.rules.names <- fun[]:
     return(quantified([apply("NAME")] "*"))
 
-rule.variable <- fun[]:
+flpcg.rules.variable <- fun[]:
     return(apply("NAME"))
 
-rule.name_quote <- fun[]:
+flpcg.rules.name_quote <- fun[]:
     return(and([[token("`")] [out([apply("NAME")])]]))
 
-rule.quote <- fun[]:
-    return(and([[token("[")][out([quantified([and([[negation([token("]")])][apply("spaces")] [out([apply("statement")])]])] "+")])] [token("]")]]))
+flpcg.rules.quote <- fun[]:
+    return(and([[token("[")] [out([quantified([and([[negation([token("]")])] [apply("spaces")] [out([apply("statement")])]])] "+")])] [token("]")]]))
 
-rule.forth <- fun[]:
-    return(and([[token("F'")][out([and([[apply("forth_line")] [quantified([and([[apply("hspaces")][or([[exactly("\n")] [exactly("\r")]])] [out([apply("forth_line")])]])] "*")]])])][apply("spaces")] [token("'F")]]))
+flpcg.rules.forth <- fun[]:
+    return(and([[token("F'")] [out([and([[apply("forth_line")] [quantified([and([[apply("hspaces")] [or([[exactly("\n")] [exactly("\r")]])] [out([apply("forth_line")])]])] "*")]])])] [apply("spaces")] [token("'F")]]))
 
-rule.forth_line <- fun[]:
+flpcg.rules.forth_line <- fun[]:
     return(quantified([bound([apply("FORTH_NAME")] "NAME")] "*"))
 
-rule.simple_quote <- fun[]:
-    return(and([[token("[")][out([apply("names")])] [token("]")]]))
+flpcg.rules.simple_quote <- fun[]:
+    return(and([[token("[")] [out([apply("names")])] [token("]")]]))
 
-rule.parenthesis <- fun[]:
-    return(and([[token("(")][out([apply("expr")])] [token(")")]]))
+flpcg.rules.parenthesis <- fun[]:
+    return(and([[token("(")] [out([apply("expr")])] [token(")")]]))
 
-rule.func_call <- fun[]:
-    return(and([[out([or([[apply("NAME")] [bound([apply("bin_op")] "NAME")]])])][exactly("(")][out([bound([apply("exprs")] "parameters")])] [token(")")]]))
+flpcg.rules.func_call <- fun[]:
+    return(and([[out([or([[apply("NAME")] [bound([apply("bin_op")] "NAME")]])])] [exactly("(")] [out([bound([apply("exprs")] "parameters")])] [token(")")]]))
 
-rule.block_call <- fun[]:
-    return(and([[apply("NAME")] [bound([and([[out([or([[apply("simple_quote")][apply("non_block")] [apply("void")]])])][token(":")] [out([bound([apply("suite")] "quote")])]])] "parameters")]]))
+flpcg.rules.block_call <- fun[]:
+    return(and([[apply("NAME")] [bound([and([[out([or([[apply("simple_quote")] [apply("non_block")] [apply("void")]])])] [token(":")] [out([bound([apply("suite")] "quote")])]])] "parameters")]]))
 
-rule.multi_block_call <- fun[]:
-    return(and([[apply("block_call")] [quantified([and([[quantified([apply("NEWLINE")] "+")][apply("SAME_INDENT")] [out([apply("block_call")])]])] "+")]]))
+flpcg.rules.multi_block_call <- fun[]:
+    return(and([[apply("block_call")] [quantified([and([[quantified([apply("NEWLINE")] "+")] [apply("SAME_INDENT")] [out([apply("block_call")])]])] "+")]]))
 
-rule.non_block_non_infix <- fun[]:
-    return(or([[apply("forth")][apply("func_call")][apply("name_quote")][apply("quote")][apply("parenthesis")][apply("NUMBER")][apply("STRING")] [apply("variable")]]))
+flpcg.rules.non_block_non_infix <- fun[]:
+    return(or([[apply("forth")] [apply("func_call")] [apply("name_quote")] [apply("quote")] [apply("parenthesis")] [apply("NUMBER")] [apply("STRING")] [apply("variable")]]))
 
-rule.non_block <- fun[]:
+flpcg.rules.non_block <- fun[]:
     return(or([[apply("infix")] [apply("non_block_non_infix")]]))
 
-rule.infix <- fun[]:
+flpcg.rules.infix <- fun[]:
     return(and([[apply("non_block_non_infix")] [quantified([and([[bound([apply("bin_op")] "op")] [apply("non_block_non_infix")]])] "+")]]))
 
-rule.non_infix <- fun[]:
+flpcg.rules.non_infix <- fun[]:
     return(or([[apply("block_call")] [apply("non_block_non_infix")]]))
 
-rule.expr <- fun[]:
+flpcg.rules.expr <- fun[]:
     return(or([[apply("infix")] [apply("non_infix")]]))
 
-rule.exprs <- fun[]:
+flpcg.rules.exprs <- fun[]:
     return(or([[and([[apply("expr")] [quantified([and([[apply("spacesp")] [out([apply("expr")])]])] "*")]])] [apply("void")]]))
 
-rule.exprsp <- fun[]:
+flpcg.rules.exprsp <- fun[]:
     return(and([[apply("expr")] [quantified([and([[apply("hspacesp")] [out([apply("expr")])]])] "*")]]))
 
-rule.assign <- fun[]:
-    return(and([[or([[and([[out([apply("names")])][token("=")] [apply("space")]])] [apply("void")]])] [apply("exprsp")]]))
+flpcg.rules.assign <- fun[]:
+    return(and([[or([[and([[out([apply("names")])] [token("=")] [apply("space")]])] [apply("void")]])] [apply("exprsp")]]))
 
-rule.bind <- fun[]:
-    return(and([[out([apply("names")])][token("<-")] [out([apply("exprsp")])]]))
+flpcg.rules.bind <- fun[]:
+    return(and([[out([apply("names")])] [token("<-")] [out([apply("exprsp")])]]))
 
-rule.statement <- fun[]:
-    return(or([[apply("multi_block_call")][apply("bind")] [apply("assign")]]))
+flpcg.rules.statement <- fun[]:
+    return(or([[apply("multi_block_call")] [apply("bind")] [apply("assign")]]))
 
-rule.suite <- fun[]:
-    return(or([[and([[apply("INDENT")][quantified([and([[quantified([apply("NEWLINE")] "+")][apply("SAME_INDENT")] [apply("statement")]])] "+")] [apply("DEDENT")]])] [apply("statement")]]))
+flpcg.rules.suite <- fun[]:
+    return(or([[and([[apply("INDENT")] [quantified([and([[quantified([apply("NEWLINE")] "+")] [apply("SAME_INDENT")] [apply("statement")]])] "+")] [apply("DEDENT")]])] [apply("statement")]]))
 
-rule.NEWLINE <- fun[]:
-    return(or([[and([[apply("hspaces")][or([[exactly("\n")] [exactly("\r")]])] [out(None)]])] [apply("COMMENT_LINE")]]))
+flpcg.rules.NEWLINE <- fun[]:
+    return(or([[and([[apply("hspaces")] [or([[exactly("\n")] [exactly("\r")]])] [out(None)]])] [apply("COMMENT_LINE")]]))
 
-rule.COMMENT_LINE <- fun[]:
-    return(and([[apply("hspaces")][out([apply("comment")])][apply("hspaces")] [or([[exactly("\n")] [exactly("\r")]])]]))
+flpcg.rules.COMMENT_LINE <- fun[]:
+    return(and([[apply("hspaces")] [out([apply("comment")])] [apply("hspaces")] [or([[exactly("\n")] [exactly("\r")]])]]))
 
-rule.grammar <- fun[]:
-    return(or([[bound([quantified([and([[quantified([apply("NEWLINE")] "*")][apply("SAME_INDENT")][apply("statement")] [or([[quantified([apply("NEWLINE")] "+")] [negation([apply("anything")])]])]])] "+")] "suite")] [apply("statement")]]))
+flpcg.rules.grammar <- fun[]:
+    return(or([[bound([quantified([and([[quantified([apply("NEWLINE")] "*")] [apply("SAME_INDENT")] [apply("statement")] [or([[quantified([apply("NEWLINE")] "+")] [negation([apply("anything")])]])]])] "+")] "suite")] [bound([apply("statement")] "suite")]]))
 
-hashtable.set("comment" rule.comment rules)
-hashtable.set("space" rule.space rules)
-hashtable.set("spaces" rule.spaces rules)
-hashtable.set("spacesp" rule.spacesp rules)
-hashtable.set("hspaces" rule.hspaces rules)
-hashtable.set("hspacesp" rule.hspacesp rules)
-hashtable.set("EMPTY_LINE" rule.EMPTY_LINE rules)
-hashtable.set("NUMBER" rule.NUMBER rules)
-hashtable.set("STRING" rule.STRING rules)
-hashtable.set("NAME" rule.NAME rules)
-hashtable.set("FORTH_NAME" rule.FORTH_NAME rules)
-hashtable.set("bin_op" rule.bin_op rules)
-hashtable.set("names" rule.names rules)
-hashtable.set("variable" rule.variable rules)
-hashtable.set("name_quote" rule.name_quote rules)
-hashtable.set("quote" rule.quote rules)
-hashtable.set("forth" rule.forth rules)
-hashtable.set("forth_line" rule.forth_line rules)
-hashtable.set("simple_quote" rule.simple_quote rules)
-hashtable.set("parenthesis" rule.parenthesis rules)
-hashtable.set("func_call" rule.func_call rules)
-hashtable.set("block_call" rule.block_call rules)
-hashtable.set("multi_block_call" rule.multi_block_call rules)
-hashtable.set("non_block_non_infix" rule.non_block_non_infix rules)
-hashtable.set("non_block" rule.non_block rules)
-hashtable.set("infix" rule.infix rules)
-hashtable.set("non_infix" rule.non_infix rules)
-hashtable.set("expr" rule.expr rules)
-hashtable.set("exprs" rule.exprs rules)
-hashtable.set("exprsp" rule.exprsp rules)
-hashtable.set("assign" rule.assign rules)
-hashtable.set("bind" rule.bind rules)
-hashtable.set("statement" rule.statement rules)
-hashtable.set("suite" rule.suite rules)
-hashtable.set("NEWLINE" rule.NEWLINE rules)
-hashtable.set("COMMENT_LINE" rule.COMMENT_LINE rules)
-hashtable.set("grammar" rule.grammar rules)
-hashtable.set("letter" rule.letter rules)
-hashtable.set("digit" rule.digit rules)
-hashtable.set("anything" rule.anything rules)
-flagged . append("EMPTY_LINE")
-flagged . append("NUMBER")
-flagged . append("STRING")
-flagged . append("NAME")
-flagged . append("names")
-flagged . append("variable")
-flagged . append("name_quote")
-flagged . append("quote")
-flagged . append("simple_quote")
-flagged . append("bind")
-memoizer.reset()
+flpcg.rules <- hashtable(148)
+flpcg.flagged <- resizable(0)
+hashtable.set("comment" flpcg.rules.comment flpcg.rules)
+hashtable.set("space" flpcg.rules.space flpcg.rules)
+hashtable.set("spaces" flpcg.rules.spaces flpcg.rules)
+hashtable.set("spacesp" flpcg.rules.spacesp flpcg.rules)
+hashtable.set("hspaces" flpcg.rules.hspaces flpcg.rules)
+hashtable.set("hspacesp" flpcg.rules.hspacesp flpcg.rules)
+hashtable.set("EMPTY_LINE" flpcg.rules.EMPTY_LINE flpcg.rules)
+flpcg.flagged . append("EMPTY_LINE")
+hashtable.set("NUMBER" flpcg.rules.NUMBER flpcg.rules)
+flpcg.flagged . append("NUMBER")
+hashtable.set("STRING" flpcg.rules.STRING flpcg.rules)
+flpcg.flagged . append("STRING")
+hashtable.set("NAME" flpcg.rules.NAME flpcg.rules)
+flpcg.flagged . append("NAME")
+hashtable.set("FORTH_NAME" flpcg.rules.FORTH_NAME flpcg.rules)
+hashtable.set("bin_op" flpcg.rules.bin_op flpcg.rules)
+hashtable.set("names" flpcg.rules.names flpcg.rules)
+flpcg.flagged . append("names")
+hashtable.set("variable" flpcg.rules.variable flpcg.rules)
+flpcg.flagged . append("variable")
+hashtable.set("name_quote" flpcg.rules.name_quote flpcg.rules)
+flpcg.flagged . append("name_quote")
+hashtable.set("quote" flpcg.rules.quote flpcg.rules)
+flpcg.flagged . append("quote")
+hashtable.set("forth" flpcg.rules.forth flpcg.rules)
+flpcg.flagged . append("forth")
+hashtable.set("forth_line" flpcg.rules.forth_line flpcg.rules)
+hashtable.set("simple_quote" flpcg.rules.simple_quote flpcg.rules)
+flpcg.flagged . append("simple_quote")
+hashtable.set("parenthesis" flpcg.rules.parenthesis flpcg.rules)
+hashtable.set("func_call" flpcg.rules.func_call flpcg.rules)
+hashtable.set("block_call" flpcg.rules.block_call flpcg.rules)
+hashtable.set("multi_block_call" flpcg.rules.multi_block_call flpcg.rules)
+hashtable.set("non_block_non_infix" flpcg.rules.non_block_non_infix flpcg.rules)
+hashtable.set("non_block" flpcg.rules.non_block flpcg.rules)
+hashtable.set("infix" flpcg.rules.infix flpcg.rules)
+hashtable.set("non_infix" flpcg.rules.non_infix flpcg.rules)
+hashtable.set("expr" flpcg.rules.expr flpcg.rules)
+hashtable.set("exprs" flpcg.rules.exprs flpcg.rules)
+hashtable.set("exprsp" flpcg.rules.exprsp flpcg.rules)
+hashtable.set("assign" flpcg.rules.assign flpcg.rules)
+hashtable.set("bind" flpcg.rules.bind flpcg.rules)
+flpcg.flagged . append("bind")
+hashtable.set("statement" flpcg.rules.statement flpcg.rules)
+hashtable.set("suite" flpcg.rules.suite flpcg.rules)
+hashtable.set("NEWLINE" flpcg.rules.NEWLINE flpcg.rules)
+hashtable.set("COMMENT_LINE" flpcg.rules.COMMENT_LINE flpcg.rules)
+hashtable.set("grammar" flpcg.rules.grammar flpcg.rules)
+add_base_rules(flpcg.rules)
+add_indent_rules(flpcg.rules)
+flpcg.base <- resizable(0)
+flpcg.base . append("add_base_rules")
+flpcg.base . append("add_indent_rules")
+flpcg <- resizable(0)
+flpcg . append("flpcg")
+flpcg . append(flpcg.rules)
+flpcg . append(flpcg.flagged)
+flpcg . append(flpcg.base)

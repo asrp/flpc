@@ -170,3 +170,9 @@ FQuote.attrib <- inline[]:
 to_flist <- fun[array]:
   change_class(array FList_class)
   return(`array)
+
+array.clear <- fun[self]:
+  i = memory.get(self)
+  repeat_if:
+    memory.set(0 self + i + 1)
+    i = `i - 1
