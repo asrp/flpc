@@ -1,10 +1,13 @@
 names <- hashtable(2131)
 F' [ pushf: names ] bind: names2 'F
-mem_value <- hashtable(4000)
+mem_value <- hashtable(200000)
 
 set_mem_hint <- fun[index hint]:
   hashtable.set(int_to_str(index) hint mem_value)
   memory_hint.set(hint index)
+
+get_mem_hint <- fun[index]:
+  return(hashtable.get(int_to_str(index) mem_value))
 
 convert_names <- fun[]:
   end = functions.end()
@@ -23,10 +26,10 @@ names.get <- fun[name]:
   value = hashtable.get(name names2())
   if value == None():
     if is_str(name):
-      print("Can't_find_global_name:_")
+      print("Can't find global name: ")
       printraw(name)
       printeol()
-    error("lookup_error")
+    value = error("Lookup error")
   return(value)
 
 new.bind <- fun[value]:

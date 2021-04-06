@@ -14,6 +14,7 @@
 
 #define LENGTH -1
 #define MEMORY_LENGTH 10000000
+#define STRINGS_LENGTH 10000000
 #define STACK_MAXLEN 10000
 #define MAX_NUM_FILES 50
 #define FILE_BUFFER_SIZE 150000
@@ -84,7 +85,7 @@ int (*primitives[300])(void);
 int (*primitives[])(void);
 #endif
 char input_buffer[2048];
-char strings_raw_array[10000000];
+char strings_raw_array[STRINGS_LENGTH];
 int strings_raw_length;
 char *strings_raw;
 // TODO: Stop creating new strings when reading the input!
@@ -153,7 +154,7 @@ void load_all(){
   fscanf(file, "%i", &count);
   for(int i=0; i<count; i++){
     fscanf(file, "%s", &input_buffer);
-    string_new(input_buffer);}
+    raw_string_new(input_buffer);}
   fscanf(file, "%s", &input_buffer); // #indices
   fscanf(file, "%i", &functions_end);
   fscanf(file, "%i", &names_get_index);
@@ -162,7 +163,7 @@ void load_all(){
   fscanf(file, "%i", &primitive_names[LENGTH]);
   for(int i=0; i<count; i++){
     fscanf(file, "%s", &input_buffer);
-    primitive_names[i] = string_new(input_buffer);}
+    primitive_names[i] = raw_string_new(input_buffer);}
 
   file = fopen("pos_map.txt", "r");
   FILE* flpc_fh;
@@ -211,13 +212,13 @@ void prints(int* array){
   printf("\n");}
 
 void string_print_repr(int string_index){
-  cvalue(string_index, String); //assert
+  assert(cvalue(string_index, String) < STRINGS_LENGTH); //assert
   fprintf(outf, "\"");
   char* s1 = cstring(string_index);
   _assert(s1[LENGTH] < 500);
   for (int i=0; i<s1[LENGTH]; i++){
-    // || s1[i] == '\''
-    if (s1[i] == '\n' || s1[i] == '\r' || s1[i] == '\\' || s1[i] == '"' || s1[i] == ' ' || s1[i] == '\t' || s1[i] == '"') {
+    // || s1[i] == '\'' || s1[i] == ' ' 
+    if (s1[i] == '\n' || s1[i] == '\r' || s1[i] == '\\' || s1[i] == '"' || s1[i] == '\t' || s1[i] == '"') {
       fprintf(outf, escape[s1[i]]);}
     else {
       fprintf(outf, "%c", s1[i]);}}
@@ -226,16 +227,17 @@ void string_print_repr(int string_index){
 void string_print(int string_index){
   char* s1 = cstring(string_index);
   _assert(s1[LENGTH] < 500);
-  for (int i=0; i<s1[LENGTH]; i++){
+  fprintf(outf, "%.*s", s1[LENGTH], s1);}
+/*for (int i=0; i<s1[LENGTH]; i++){
+    fprintf(outf, "%c", s1[i]);}}
     if (s1[i] == '_') {
       fprintf(outf, " ");}
     else if (s1[i] == '\\' && s1[i+1] == 'u') {
       fprintf(outf, "_"); i++;}
     else {
-      fprintf(outf, "%c", s1[i]);}}}
+    fprintf(outf, "%c", s1[i]);}}}*/
 
-int string_unescape(){
-  int string_index = ds_pop();
+int _string_unescape(int string_index){
   char* s1 = cstring(string_index);
   _assert(s1[LENGTH] < 500);
   char buffer[10000] = "";
@@ -243,11 +245,18 @@ int string_unescape(){
   for (int i=0; i<s1[LENGTH]; i++){
     if (s1[i] == '_') {
       buffer[cur_len++] = ' ';}
-    else if (s1[i] == '\\' && s1[i+1] == 'u') {
-      buffer[cur_len++] = '_'; i++;}
+    /*else if (s1[i] == '\\' && s1[i+1] == 'u') {
+      buffer[cur_len++] = '_'; i++;}*/
+    else if (s1[i] == '\\'){
+      i++;
+      buffer[cur_len++] = unescape[s1[i]];}
     else {
       buffer[cur_len++] = s1[i];}}
   return raw_string_new(buffer);}
+
+int string_unescape(){
+  int string_index = ds_pop();
+  return _string_unescape(string_index);}
 
 int string_escape(){
   int string_index = ds_pop();
@@ -256,7 +265,7 @@ int string_escape(){
   char buffer[10000] = "";
   int cur_len = 0;
   for (int i=0; i<s1[LENGTH]; i++){
-    if (s1[i] == '\n' || s1[i] == '\r' || s1[i] == '\\' || s1[i] == '"' || s1[i] == ' ' || s1[i] == '_' || s1[i] == '\t' || s1[i] == '"') {
+    if (s1[i] == '\n' || s1[i] == '\r' || s1[i] == '\\' || s1[i] == '"' || s1[i] == '_' || s1[i] == ' ' || s1[i] == '\t' || s1[i] == '"') {
       char *replacement = escape[s1[i]];
       for (int j=0; j<2; j++){
         if (replacement[j] == '\0') break;
@@ -278,7 +287,7 @@ void tprint(int elem){
       fprintf(outf, "--Sep--");}
     else {
       fprintf(outf, "<mem %i ", value(elem));
-      if (memory_hint[value(elem)]) {
+      if (value(elem) < memory_hint[LENGTH] && memory_hint[value(elem)]) {
         string_print(memory_hint[value(elem)]);}
       fprintf(outf, ">");
     }}
@@ -291,12 +300,28 @@ void tprint(int elem){
   else {
     fprintf(outf, "<int %i>", value(elem));}}
 
+int PRIMITIVE_LENGTH;
+
 int index_of(int(*func)()){
   //sizeof(primitives)/sizeof(primitives[0])
   // Hack!
-  for (int i=0; i<94; i++){
+  for (int i=0; i<PRIMITIVE_LENGTH; i++){
     if (primitives[i] == func){
       return init(Primitive, i);}}}
+
+int _print_mem(int frame){
+  for (int j=-5; j<5; j++){
+    if (frame+j < 0) continue;
+    if (j == 0) {printf("\033[91m");}
+    tprint(memory[frame+j]);
+    if (j == 0) {printf("\033[0m");}
+    printf(" ");}
+  printf("\n");}
+
+int print_mem(){
+  int val = ds_pop();
+  _print_mem(cvalue(val, Pointer));
+  return NoValue;}
 
 int prm(){
   int elem;
@@ -343,15 +368,36 @@ int next_token2(){
     // from_input = 0;
     return input_next_token();}}
 
-int push() {return next_command();}
+int push() {
+  // Copied from next_command
+  if (call_stack[LENGTH] != from_input) {
+    // printf("Reading from memory %i\n", call_stack_top);
+    call_stack_top += 1;
+    return memory[call_stack_top - 1];}
+  else {
+    // printf("Reading from input\n");
+    // from_input = 0;
+    return _string_unescape(input_next_token());}}
+
 int pushf() {return next_command();}
-int pushi(){
-  int val = init(Int, atoi(cstring(next_command())));
+int to_int(int s){
+  int val = init(Int, atoi(cstring(s)));
   // Caching
   if (call_stack[LENGTH] != from_input){
     memory[call_stack_top - 2] = index_of(push); //push_index;
     memory[call_stack_top - 1] = val;}
   return val;}
+
+int int_(){
+  int val = ds_pop();
+  if (type(val) == String) {
+    // to_int(val) // This doesn't work because we _don't_ want caching
+    return init(Int, atoi(cstring(val)));}
+  else {
+    _error("int() can't handle non-Strings.");}}
+
+int pushi(){
+  return to_int(next_command());}
 
 int pick1() {return data_stack[data_stack[LENGTH]-1];}
 
@@ -390,16 +436,23 @@ int string_hash(int str1){
 int hash(){
   return init(Int, string_hash(ds_pop()));}
 
-int assign(){
+// Find the first unnamed variable and give it the name in the string name
+int _assign(int name){
   /*if (local_stack[local_stack[LENGTH]-1] != unnamed_string){
     printf("Can't assign to top of stack\n");}*/
   //assert(local_stack[local_stack[LENGTH]-1] == unnamed_string);
   int i;
   for (i=1; i<local_stack[LENGTH]+1; i++){
     if (local_stack[local_stack[LENGTH]-i] == unnamed_string){
-      local_stack[local_stack[LENGTH]-i] = next_command();
+      local_stack[local_stack[LENGTH]-i] = name;
       return NoValue;}}
   _error("Can't assign. All var after separator already named.");}
+
+int assign(){
+  return _assign(next_command());}
+
+int assign2(){
+  return _assign(ds_pop());}
 
 int check(){
   int command = next_command();
@@ -433,7 +486,36 @@ int pick(){
     func_call(init(Pointer, names_get_index));
     return NoValue;}
 
+int all_data_stack_pick(){
+  int name = ds_pop();
+  int count = ds_pop();
+  count = cvalue(count, Int);
+  int sep_count = 0;
+  for (int i=local_stack[LENGTH]-1; i >= 0; i--){
+    if (local_stack[i] == unnamed_string){
+      continue;}
+    else if (local_stack[i] == Sep){
+      sep_count++;}
+    else if (string_equal_(local_stack[i], name) == True){
+      if (count == 0) {
+        //printf("%d\n", data_stack[LENGTH] - 1 + sep_count - (local_stack[LENGTH] - 1 - i));
+        return data_stack[data_stack[LENGTH] - 1 + sep_count - (local_stack[LENGTH] - 1 - i)];}
+      else {
+        count--;}}}
+  bp();
+  return None;}
+
 int print_var_stack(int);
+
+int remove_top_names_(int n){
+  int i;
+  for (i=1; i<n+1; i++){
+    assert(local_stack[local_stack[LENGTH] - i] != Sep);
+    local_stack[local_stack[LENGTH] - i] = unnamed_string;}
+  return NoValue;}
+
+int remove_top_names(){
+  return remove_top_names_(value(ds_pop()));}
 
 int newfunc_(int n){
   // Should think of a way to do this with only ds "primitives"
@@ -478,14 +560,7 @@ int if_else(){
     func_call(false_index);}
   return NoValue;}
 
-char unescaped(char ch){
-  if (ch == 'n' || ch == 't' || ch == 'r' || ch == 's' || ch == 'u' || ch == 'q'){
-    return unescape[ch];}
-  else if (ch == '\\' | ch == '(' || ch == ')'){
-    return ch;}
-  else {
-    _error("Unknown escape char");}}
-
+/* Joins the first few elements of an array assumed to all be strings. */
 int str_join(){
   int length = value(ds_pop());
   int array = value(ds_pop());
@@ -526,13 +601,25 @@ int str_len(){
   char *s = cstring(fs);
   return init(Int, s[LENGTH]);}
 
+int str_endswith(){
+  int fs2 = ds_pop();
+  char* s = cstring(fs2);
+  int fs1 = ds_pop();
+  char* suffix = cstring(fs1);
+  int diff = s[LENGTH] - suffix[LENGTH];
+  if (diff < 0) {
+    return False;}
+  for (int i=0; i<suffix[LENGTH]; i++){
+    if (suffix[i] != s[i + diff]) return False;}
+  return True;}
+
 int int_to_str(){
   int x = ds_pop();
   char buffer[20];
   //sprintf(buffer, "%d", cvalue(x, Int));
   sprintf(buffer, "%d", value(x));
   // itoa(num, buffer, 10);
-  return string_new(buffer);}
+  return raw_string_new(buffer);}
 
 int _isspace(char c) {return (c == ' ' || c == '\n' || c == '\r' || c == '\t');}
 int _isalpha(char c) {return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z');}
@@ -542,6 +629,28 @@ int is_alpha(){
   for (int i=0; i<s[LENGTH]; i++){
     if (!_isalpha(s[i])) return False;}
   return True;}
+
+int str_next_token(){
+  // Consumes spaces at the beginning, then returns all characters
+  // up to the next space of end of string.
+  int fs = ds_pop();
+  int start = value(ds_pop());
+  if (type(fs) != String) {_error("Getting str_next_token of non-string");}
+  char *s = cstring(fs);
+  if (start > s[LENGTH]) {
+    _error("start past string length.\n");}
+  if (start == s[LENGTH]) {
+    ds_append(init(Int, start));
+    return raw_string_new("");}
+  while(start < s[LENGTH] && _isspace(s[start])){
+    start++;}
+  char buffer[10000] = "";
+  int current;
+  for (current=start; current < s[LENGTH] && !_isspace(s[current]); current++){
+    buffer[current - start] = s[current];}
+  buffer[current - start + 1] = '\0';
+  ds_append(init(Int, current));
+  return raw_string_new(buffer);}
 
 int char_between(){
   char* c = cstring(ds_pop());
@@ -647,14 +756,18 @@ int rewind_(){
   call_stack_top = prev_call_stack[call_stack[LENGTH] - 1];
   return NoValue;}
 
-int string_new(char *source){
+int unescape_string_new(char *source){
+  // Replace escape sequences with chars equivalent.
+  // Replaces _ with space.
   strings[strings[LENGTH]] = strings_raw_length;
   int orig_length = strings_raw_length;
   strings_raw_length++;
   for (int i=0; i<strlen(source); i++){
-    if (source[i] == '\\' && source[i+1] != 'u'){
+    if (source[i] == '\\'){
       i++;
-      strings_raw[strings_raw_length++] = unescaped(source[i]);}
+      strings_raw[strings_raw_length++] = unescape[source[i]];}
+    else if (source[i] == '_') {
+      strings_raw[strings_raw_length++] = ' ';}
     else {
       strings_raw[strings_raw_length++] = source[i];}}
   strings_raw[orig_length] = strings_raw_length - orig_length - 1;
@@ -695,7 +808,7 @@ int input_next_token() {
     //return string_new("return_no_value2");}
   last_pos[1] = ftell(input);
   // printf("*** Read token %.*s\n", last_pos[1] - last_pos[0], file_source + last_pos[0]);
-  return string_new(input_buffer);}
+  return raw_string_new(input_buffer);}
 
 int input_next_triple_quote(){
   last_pos[0] = ftell(input);
@@ -717,7 +830,7 @@ int input_next_triple_quote(){
   // Should assert last char is whitespace?
   input_buffer[len - 3 - 1] = '\0';
   last_pos[1] = ftell(input);
-  return string_new(input_buffer);}
+  return raw_string_new(input_buffer);}
 
 int triple_quote(){
   if (call_stack[LENGTH] != from_input) {
@@ -730,7 +843,7 @@ int triple_quote(){
 int stdin_next_token() {
   // printf("Reading from stdin\n");
   if (scanf("%s", input_buffer) == EOF) {_error("EOF reached");}
-  return string_new(input_buffer);}
+  return unescape_string_new(input_buffer);}
 
 // May buffer overflow
 int stdin_next_line() {
@@ -749,7 +862,7 @@ int stdin_next_line() {
       if (buffer[i] == '\n') {
         buffer[i] = '\0';
         break;}}
-    return string_new(input_buffer);}}
+    return raw_string_new(input_buffer);}}
 
 int fd_position(){
   FILE* fd = files.files[value(ds_pop())];
@@ -777,6 +890,7 @@ int fd_startswith(){
   return fs;}
 
 int fd_next_token(){
+  // Next non-space char. Used for the "token" grammar rule.
   char c[2];
   FILE* fd = files.files[value(ds_pop())];
   c[0] = ' ';
@@ -802,7 +916,9 @@ int fd_next_line(){
   for (int i=0;;i++){
     if (!fread(&c, 1, 1, fd)) {
       // Probably end of file?
-      fseek(fd, start, SEEK_SET);
+      if (ftell(fd) != start) {
+        buffer[i] = '\0';
+        return raw_string_new(buffer);}
       return None;}
     if (c[0] == '\n') {
       buffer[i] = c[0];
@@ -842,6 +958,9 @@ int file_open_at_(int index){
   sprintf(buf, "%.*s", filename[LENGTH], filename);
   sprintf(mode_buf, "%.*s", mode[LENGTH], mode);
   files.files[index] = fopen(buf, mode_buf);
+  if (files.files[index] == NULL) {
+    printf("Error opening file %s\n", buf);
+    _error("Error opening file");}
   return init(Int, index);}
 
 int file_open_at(){
@@ -991,6 +1110,8 @@ void main_loop(){
     debugger();
     if (call_stack[start_stack_len] > 1){
       _error("Call stack went beyond starting point.");}
+    if (call_stack_top > memory[LENGTH]){
+      _error("Call stack past end of memory!");}
     prev_call_stack[call_stack[LENGTH] - 1] = call_stack_top;
     func = memory[call_stack_top];
     call_stack_top += 1;
@@ -1003,14 +1124,16 @@ int unimpl(){
   _error("Unimplemented");}
 
 int error(){
-  string_print(ds_pop());
-  printf("\n");
-  _error("");
-  print_state();
-  exit(1);}
+  char* cs = cstring(ds_pop());
+  char buf[100];
+  sprintf(buf, "%.*s", cs[LENGTH], cs);
+  _error(buf);
+  print_state();}
+  //exit(1);}
 
 int _error(char *s){
   printf("Error: %s\n", s);
+  ds_append(raw_string_new(s));
   longjmp(error_jump_buffer, 1);}
   //exit(1);}
 
@@ -1056,7 +1179,7 @@ int memory_append() {
 
 int memory_get() {return memory[value(ds_pop())];}
 int memory_set() {
-  int i = value(ds_pop()); int x = ds_pop();
+  int x = ds_pop(); int i = value(ds_pop());
   //if (type(i) == Pointer) {i = value(i);}
   /*printf("Functions end %i\n", functions_end);
   printf("Setting %i to %i\n", i, x);
@@ -1129,13 +1252,7 @@ void _print_frame(int frame, int context){
       else {
         tprint(frame);}
       printf("\033[0m\n");
-      for (int j=-5; j<5; j++){
-        if (frame+j < 0) continue;
-        if (j == 0) {printf("\033[91m");}
-        tprint(memory[frame+j]);
-        if (j == 0) {printf("\033[0m");}
-        printf(" ");}
-      printf("\n");}
+      _print_mem(frame);}
     else if (!pos[2]) {
       print_boot_frame(frame);}
     else {
@@ -1417,7 +1534,7 @@ void setup_escape(){
   escape['\n'] = "\\n";
   escape['\r'] = "\\r";
   escape['\t'] = "\\t";
-  escape[' '] = "\\s";
+  escape[' '] = "_";
   escape['_'] = "\\u";
   escape['"'] = "\\q";
   escape['\''] = "'";
@@ -1429,7 +1546,10 @@ void setup_escape(){
   unescape['t'] = '\t';
   unescape['s'] = ' ';
   unescape['q'] = '"';
-  unescape['u'] = '_';}
+  unescape['u'] = '_';
+  unescape['\\'] = '\\';
+  unescape['('] = '(';
+  unescape[')'] = ')';}
 
 int continue_from_file(){
   int top = ds_pop();
@@ -1451,6 +1571,9 @@ void run_file_(char *filename){
   sprintf(input_filename, "%.*s", filename[LENGTH], filename);
   printf("Running from file %s\n", input_filename);
   input = files.files[files.len] = fopen(input_filename, "r");
+  if (files.files[files.len] == NULL) {
+    printf("Error opening file %s\n", input_filename);
+    _error("Error opening file");}
   input_index = files.len++;
   fread(&file_source, FILE_BUFFER_SIZE, 1, input);
   fseek(input, 0, SEEK_SET);}
@@ -1458,7 +1581,7 @@ void run_file_(char *filename){
 int current_input_file() {
   // Save previous file into onto stack. To be used by continue_from_file
   // Should possibly make this into primitives.
-  ds_append(string_new(input_filename));
+  ds_append(raw_string_new(input_filename));
   ds_append(init(Int, input_index));
   ds_append(FileSep);
   return NoValue;}
@@ -1514,7 +1637,7 @@ int main(int argc, char *argv[]) {
     printf("Running from stdin\n");
     input = stdin;}
   else {
-    run_file_(cstring(string_new(argv[1])));}
+    run_file_(cstring(raw_string_new(argv[1])));}
   FILE* boot = fopen("lib/boot.flpc", "r");
   fread(&boot_source, FILE_BUFFER_SIZE, 1, boot);
   fclose(boot);
@@ -1539,4 +1662,5 @@ void test(){
   prints(primitive_names);
   string_print(primitive_names[0]);
   }
-int (*primitives[])(void) = {zero, fd_next_line, bin_or, file_close, load_state, if_else, call_stack_len, str_join, _cheat_dict_new, is_alpha, newfunc2, newfunc3, printspace, less, s4127, func_end, memory_set, equal, return_if, sub_str, call_from_input, not_, return_no_value, mod, mempos_append, print_state, current_input_file, printraw, functions_end_increase, debug_function_set, fd_startswith, str_len, functions_end_decrease, functions_end_, msleep, return_no_value2, string_unescape, add, memoizer_get, intdiv, print_, return4, None_, hash, push, debugger_waitlen_set, lookup_error, pushf, bp, call_stack_top2, bin_and, file_open, cache_slot, fd_flush, repeat_if, names_set, _cheat_dict_get, check, fpointer, load, shuffle, memory_hint_get, input_next_triple_quote, continue_from_file, triple_quote, c_infinity, newfunc0, fd_position_set, newfunc1, func_end, pushi, _cheat_dict_set, two, call, fd_position, drop1, memory_hint_set, string_equal, greater, input_next_token, int_to_str, printrepr, stdin_next_line, newfunc, save_state, save, memoizer_set, return_two1, return_two2, functions_end_, fd_ended, return1, return3, return2, fd_next_token, error, memory_len, memory_get, char_between, prm, assign, memoizer_reset, string_escape, if_, pick, sub, pick1, printeol, one, switch_input_file, rewind_, stdin_next_token, type_of, repeat, next_token2, error_handler_set, fd_next_char, fd_write, is_basic, print_frame, is_str, memory_append, s21, file_open_at, set_output};
+int PRIMITIVE_LENGTH = 132;
+int (*primitives[])(void) = {load, shuffle, str_endswith, input_next_triple_quote, fd_next_line, memoizer_get, bin_or, continue_from_file, file_close, triple_quote, load_state, file_open, input_next_token, if_else, call_stack_len, _cheat_dict_new, fd_position_set, newfunc1, str_join, func_end, pushi, _cheat_dict_set, newfunc0, zero, newfunc2, two, call, fd_position, drop1, memory_hint_set, newfunc, less, string_equal, greater, s4127, func_end, type_of, equal, return_if, error_handler_set, sub_str, return4, int_to_str, call_from_input, stdin_next_line, not_, return_no_value, str_next_token, mempos_append, mod, save_state, printspace, print_state, memoizer_set, return_two1, return_two2, names_set, debugger_waitlen_set, return1, current_input_file, return3, return2, printraw, error, fd_write, functions_end_increase, debug_function_set, fd_startswith, memory_get, functions_end_, assign2, char_between, prm, str_len, assign, functions_end_decrease, memoizer_reset, functions_end_, msleep, string_escape, fd_ended, memory_set, return_no_value2, remove_top_names, pick, string_unescape, add, sub, pick1, intdiv, printeol, one, fpointer, switch_input_file, rewind_, print_, stdin_next_token, if_, fd_next_token, None_, repeat, hash, next_token2, push, fd_next_char, lookup_error, save, memory_len, pushf, bp, call_stack_top2, bin_and, is_basic, memory_hint_get, c_infinity, cache_slot, print_frame, fd_flush, repeat_if, is_str, printrepr, memory_append, file_open_at, is_alpha, _cheat_dict_get, newfunc3, int_, s21, check, all_data_stack_pick, print_mem, set_output};

@@ -4,7 +4,7 @@
 # closure <- fun[method self]:
 #  # push: self push: method
 #  return(Pointer(memory.len() - 4))
-closure <- inline[]:
+closure <- fast_fun[]:
   F' pushf: push: memory.append memory.append
      memory.append
      pushf: ] memory.append
@@ -17,7 +17,7 @@ False <- 0
 lookup_print <- False
 
 # call(*args func)
-attr_colon <- inline[self]:
+attr_colon <- fast_fun[self]:
   # self.attrib(name self self)
   name = next_token2()
   name self = s21()
@@ -28,12 +28,20 @@ attr_colon <- inline[self]:
 # Can't cache if *not* writing to function!
 # Cache should depend on the object. Maybe only cache the last one?
 # This is getting complicated...
-attr_call_colon <- inline[self]:
+attr_call_colon <- fast_fun[self]:
+  assign2("self")
   name = next_token2()
+  if not(is_str(name)):
+    print("attr call on non string ")
+    print(name)
+    printeol()
+    error("attr call on non string")
   call(call(`name self self memory.get(self - 1)))
 
 nullobj.attrib <- fun[name receiver searcher]:
-  error("Lookup_error")
+  print("Cannot find ")
+  print(name)
+  error("Lookup error")
 
 subclass <- fun[attrib parent]:
   memory.append(`parent)
@@ -47,7 +55,10 @@ instance_attrib <- fun[name receiver searcher]:
   return_if(string_equal(name "parent") memory.get(receiver - 2))
   parent = searcher . parent
   if parent == nullobj:
-    error("Lookup_error")
+    print("Cannot find ")
+    print(name)
+    printeol()
+    error("Lookup error")
   # Abusing param resolution.
   parent_copy = pick1(name receiver parent)
   return(call(memory.get(`parent_copy - 1)))
@@ -55,18 +66,18 @@ instance_attrib <- fun[name receiver searcher]:
 minobj <- class[]:
   str <- fun[self]:
     # return("minobj_at_" + memory.str(self))
-    return("Boot_object_at_")
+    return("Boot object at ")
 
   instance <- fun[parent]:
     return(subclass(instance_attrib parent))
 
   attrib <- fun[name receiver searcher]:
-    error("Dummy_function_should_not_be_called")
+    error("Dummy function should not be called")
 
   # Closures have to be created manually
   attrib <- fun[name receiver searcher]:
     if lookup_print:
-      print("Boot_looking_up_")
+      print("Boot looking up ")
       print(name)
       printeol()
     return_if(string_equal(name "attrib_raw") memory.get(receiver - 1))
@@ -98,17 +109,17 @@ boot_array <- class[]:
   # Parent at -2, attrib at -1
   instance <- fun[length self]:
     new_obj = minobj.instance(boot_obj)
-    memory.set(self new_obj - 2)
-    memory.set(length new_obj)
+    memory.set(new_obj - 2 self)
+    memory.set(new_obj length)
     memory.extend(length)
     memory.append(names.get("]"))
     return(new_obj)
 
   in_range <- fun[key self]:
     if key < 0:
-      error("Index_out_of_range")
+      error("Index out of range")
     if not(key < memory.get(self)):
-      error("Index_out_of_range")
+      error("Index out of range")
 
   get <- fun[key self]:
     boot_array.in_range(key self)
@@ -116,10 +127,10 @@ boot_array <- class[]:
 
   set <- fun[key value self]:
     boot_array.in_range(key self)
-    memory.set(value self + key + 1)
+    memory.set(self + key + 1 value)
 
   print <- fun[self]:
-    print("{_")
+    print("{ ")
     l = memory.get(self)
     i = l
     repeat_if:
@@ -171,7 +182,7 @@ boot_array <- class[]:
 
   attrib <- fun[name receiver searcher]:
     if lookup_print:
-      print("Array_looking_up_")
+      print("Array looking up ")
       print(name)
       printeol()
     return_if(string_equal(name "get")      boot_array.get)
@@ -195,8 +206,8 @@ boot_dict <- class[]:
     keys = boot_array.instance(length boot_array_class)
     values = boot_array.instance(length boot_array_class)
     new_obj = minobj.instance(boot_obj)
-    memory.set(self new_obj - 2)
-    memory.set(0 new_obj)
+    memory.set(new_obj - 2 self)
+    memory.set(new_obj 0)
     memory.append(keys)
     memory.append(values)
     memory.append(names.get("]"))
@@ -211,29 +222,29 @@ boot_dict <- class[]:
     l = memory.get(self)
     boot_array.set(l key memory.get(self + 1))
     boot_array.set(l value memory.get(self + 2))
-    memory.set(memory.get(self) + 1 self)
+    memory.set(self memory.get(self) + 1)
 
   increase <- fun[self]:
-    memory.set(memory.get(self) + 1 self)
+    memory.set(self memory.get(self) + 1)
 
   print <- fun[self]:
-    print("{_")
+    print("{ ")
     l = memory.get(self)
     keys = memory.get(self + 1)
     values = memory.get(self + 2)
     i = l
     repeat_if:
       tprint(boot_array.get(l - i keys))
-      print(":_")
+      print(": ")
       tprint(boot_array.get(l - i values))
-      print(",_")
+      print(", ")
       i = `i - 1
     print("}")
     # printeol()
 
   attrib <- fun[name receiver searcher]:
     if lookup_print:
-      print("Dict_looking_up_")
+      print("Dict looking up ")
       print(name)
       printeol()
     return_if(string_equal(name "get")      boot_dict.get)

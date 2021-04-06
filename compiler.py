@@ -120,6 +120,9 @@ def flatten(lst):
         else:
             yield elem
 
+def escape_str(s, pos):
+    return s.replace("_", "\\u").replace(" ", "_")
+
 def to_forth(root):
     if not isinstance(root, Node):
         bp() # Shouldn't happen anymore either
@@ -139,7 +142,7 @@ def to_forth(root):
     elif root.name == "name_quote":
         return FList([FCall("check:", root.pos), to_forth(root[0])], root.pos)
     elif root.name == "STRING":
-        return FList([FCall("push:", root.pos), FStr(root[0], pos=root.pos)], root.pos)
+        return FList([FCall("push:", root.pos), FStr(escape_str(root[0], root.pos), pos=root.pos)], root.pos)
     elif root.name == "NUMBER":
         if 0 <= int(root[0]) < 3:
             return FStr(root[0], pos=root.pos)
@@ -156,7 +159,7 @@ def to_forth(root):
                              for n in [FCall("assign:", child.pos),
                                        to_forth(child)]], root[0].pos))
         return output
-    elif root.name in ["fun", "inline"]:
+    elif root.name in ["fun", "inline", "local_fun", "fast_fun"]:
         children = list(flatten(to_forth(child) for child in root))
         assert(len(children) == 2)
         names = children[0].value if root[0].name == "simple_quote"\
@@ -168,11 +171,16 @@ def to_forth(root):
                 decl = FList([FCall("pushi:", root[0].pos),
                               FCall(str(len(names)), root[0].pos),
                               FCall("newfunc", root[0].pos)])
-        else:
+        elif root.name == "local_fun":
+            decl = FList([FCall("pushi:", root[0].pos),
+                          FCall(str(len(names)), root[0].pos),
+                          FCall("remove_top_names", root[0].pos)])
+        else: # inline, fast_fun
             decl = FList([], root[0].pos)
-        for name in reversed(names):
-            decl.append(FCall("assign:", root[0].pos))
-            decl.append(name)
+        if root.name != "fast_fun":
+            for name in reversed(names):
+                decl.append(FCall("assign:", root[0].pos))
+                decl.append(name)
         # Could instead replace children[0]?
         output = FQuote([decl, FList(children[1])], root.pos)
         if root.name == "fun": # and children[0]:
@@ -361,7 +369,12 @@ if __name__ == "__main__":
     import time
     start_time = time.time()
     for filename in sys.argv[1:]:
+        # g.filename = filename
         parsed = parse(open(filename).read())
+        if python_compiled.g.input.position+1 != len(python_compiled.g.input.source):
+            inp = python_compiled.g.input
+            sys.stderr.write("Warning: %s stopped parsing at character %s: %s\n" %
+                             (filename, inp.position, inp.source[inp.position: inp.position + 100]))
         time_log.write(str((filename, "parse", time.time() - start_time)) + "\n")
         write_suite(to_forth(simplify(parsed)))
         time_log.write(str((filename, "all", time.time() - start_time)) + "\n")

@@ -7,7 +7,7 @@ hspacesp = (' ' | '\t')+
 EMPTY_LINE! = (hspaces comment? ('\n' | '\r'))=EMPTY_LINE
 
 NUMBER! = hspaces {'-'? digit+}
-STRING! = hspaces ('"' {(~'"' anything)*} '"' | '\'' {(~'\'' anything)*} '\'')
+STRING! = hspaces {('"' {(~'"' anything)*} '"' | '\'' {(~'\'' anything)*} '\'')}
 NAME! = hspaces {(letter | '_') (~space ~'(' ~'=' ~')' ~'[' ~']' ~'<' ~':' ~'\'' anything)*}
 FORTH_NAME = hspacesp ~"'F" {(~space anything)*}
 bin_op = "+" | "-" | "/" | "==" | "<" | ">" | "." | "in" | "||" | "&&"

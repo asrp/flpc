@@ -8,7 +8,7 @@ pyval_test <- fun[]:
   PyValue_class_attrib = PyValue_class - 1
   print(PyValue_class_attrib)
   print(memory.get(PyValue_class_attrib))
-  memory.set(PyValue_class . attrib PyValue_class_attrib)
+  memory.set(PyValue_class_attrib PyValue_class . attrib)
   print(memory.get(PyValue_class_attrib))
   pyexec("lastpy=3" "exec")
   py_x = PyValue("x")

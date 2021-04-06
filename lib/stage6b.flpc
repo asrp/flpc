@@ -1,7 +1,7 @@
 
 # python compiler.py lib/stage{0,1{a,b,b2,b3,c,d},3{a,b}}.flpc lib/flpc_grammar.flpc lib/stage6{a,b}.flpc > precompiled/test.f
 simplify <- fun[root]:
-  error("Dummy_function")
+  error("Dummy function")
 
 simplify <- fun[root]:
   # return inside a multi-if doesn't quite work...
@@ -28,11 +28,11 @@ simplify <- fun[root]:
       cond = (i < l)
     drop1(`i)
   elif string_equal(root . name "multi_block_call"):
-    dprint("multi-block-root:_" root)
+    dprint("multi-block-root: " root)
     debugger2()
     children = resizable(0)
     last_child = node("dummy" None())
-    simple_for(root . len 0 inline[]: # index
+    simple_for(root . len 0 fast_fun[index]:
       child = simplify(root . get(index))
       if string_equal(last_child . name "if") && string_equal(child . name "else"):
         last_child . children . append(child . children)
@@ -65,7 +65,7 @@ simplify <- fun[root]:
   elif string_equal(root . name "suite") && (root . len == 1):
     output = simplify(root . get(0))
   elif string_equal(root . name "suite"):
-    children = list_comp_cond([simplify(elem)] root inline[]: # elem
+    children = list_comp_cond([simplify(elem)] root fast_fun[elem]:
       if not(is_instance(elem node_class)):
         cond = True
       else:
@@ -90,7 +90,7 @@ simplify <- fun[root]:
 
 newfunc_str <- fun[i]:
   if not(i < 4):
-    error("newfunc_called_with_unexpected_argument")
+    error("newfunc called with unexpected argument")
   return(str_cat(int_to_str(i) "newfunc" 2))
 
 to_flist <- fun[array]:
@@ -98,7 +98,7 @@ to_flist <- fun[array]:
   return(`array)
 
 last_call <- fun[root]:
-  error("Dummy_function")
+  error("Dummy function")
 
 last_call <- fun[root]:
   # dprint("root:_" root)
@@ -107,18 +107,18 @@ last_call <- fun[root]:
     if string_equal(root . name "FCall"):
       return(root . value)
     else:
-      return("_")
+      return(" ")
   if is_instance(root FList_class) || is_instance(root resizable_class):
     return(last_call(root . get(root . len - 1)))
   if is_instance(root FQuote):
     return(last_call(root . value))
-  return("_")
+  return(" ")
 
 to_forth <- fun[root]:
-  error("Dummy_function")
+  error("Dummy function")
 
 changed_class <- fun[new_class obj]:
-  memory.set(new_class obj - 2)
+  memory.set(obj - 2 new_class)
   return(obj)
 
 # nest <- boot_array(1)
@@ -131,14 +131,14 @@ to_forth_conv <- class[]:
     return(changed_class(FList_class list_comp([to_forth(elem)] root)))
 
   quote <- fun[root]:
-    return(FQuote("_" flatten(list_comp([to_forth(elem)] root) FList_class)))
+    return(FQuote(" " flatten(list_comp([to_forth(elem)] root) FList_class)))
 
   simple_quote <- fun[root]:
     # if not(root . len == 1 and string_equal(root . get(0) . name "names")):
     #   error("not names")
     debugger2() # simple_quote start
     children = flatten(list_comp([to_forth(elem)] root) FList_class)
-    print("Children:_")
+    print("Children: ")
     tprint(children)
     printeol()
     debugger2() # simple_quote end
@@ -155,11 +155,11 @@ to_forth_conv <- class[]:
     return(changed_class(FList_class make_resizable(to_forth(root . get(0)) forthe("FCall" "check:") 2)))
 
   STRING <- fun[root]:
-    return(changed_class(FList_class make_resizable(forthe("FStr" root . get(0)) forthe("FCall" "push:") 2)))
+    return(changed_class(FList_class make_resizable(forthe("FStr" string_escape(root . get(0))) forthe("FCall" "push:") 2)))
 
   NUMBER <- fun[root]:
     child = root . children . get(0)
-    print("NUMBER_in:_")
+    print("NUMBER in: ")
     tprint(root)
     printeol()
     debugger2() # NUMBER before
@@ -168,7 +168,7 @@ to_forth_conv <- class[]:
       output = forthe("FStr" child)
     else:
       output = changed_class(FList_class make_resizable(forthe("FStr" child) forthe("FCall" "pushi:") 2))
-    print("NUMBER_out:_")
+    print("NUMBER out: ")
     # Broken for some reason
     # Maybe change_class doens't work that well?
     tprint(output)
@@ -193,10 +193,13 @@ to_forth_conv <- class[]:
     output . append(changed_class(FList_class assignments))
     return(output)
 
-  # fun and inline
+  # fun, fast_func, local_fun and inline
   fun <- fun[root]:
-    output = FQuote("_" list_comp([to_forth(elem)] root))
-    inline = string_equal(root . name "inline")
+    output = FQuote(" " list_comp([to_forth(elem)] root))
+    is_inline = string_equal(root . name "inline")
+    is_fun = string_equal(root . name "fun")
+    is_local_fun = string_equal(root . name "local_fun")
+    is_fast_fun = string_equal(root . name "fast_fun")
     cond = True
     if `cond:
       if string_equal(root . get(0) . name "simple_quote"):
@@ -204,7 +207,7 @@ to_forth_conv <- class[]:
       else:
         debugger() # not yet implemented
         names = output . get(0) . slice(1 -1 2)
-      if not(inline): # not(string_equal(root_name "inline") || string_equal(root_name "class")):
+      if is_fun:
         if names . len < 4:
           decl = make_resizable(forthe("FCall" newfunc_str(names . len)) 1)
         else:
@@ -212,14 +215,20 @@ to_forth_conv <- class[]:
                                 forthe("FStr" int_to_str(names . len))
                                 forthe("FCall" "pushi:")
                                 3)
-      else:
+      if is_local_fun:
+        decl = make_resizable(forthe("FCall" "remove_top_names")
+                              forthe("FStr" int_to_str(names . len))
+                              forthe("FCall" "pushi:")
+                              3)
+      if is_fast_fun || is_inline:
         decl = resizable(0)
       change_class(decl FList_class)
-      i = names . len
-      repeat_if:
-        i = `i - 1
-        decl . append(forthe("FCall" "assign:"))
-        decl . append(names . get(i))
+      if not(is_fast_fun):
+        i = names . len
+        repeat_if:
+          i = `i - 1
+          decl . append(forthe("FCall" "assign:"))
+          decl . append(names . get(i))
       tprint(decl)
       printeol()
       debugger2() # bind mid
@@ -230,7 +239,7 @@ to_forth_conv <- class[]:
       output . value . set(1 output . get(1) . value)
       # output . get(0) . value . append(decl)
       # TODO: Find a way to attach this info to output!
-      if not(inline):
+      if is_fun:
         # TODO: Handle the other cases
         # Should we just replace output[2] with its flattened version?
 
@@ -254,7 +263,7 @@ to_forth_conv <- class[]:
     debugger2() # bind pre-start
     output = to_forth(root . get(1))
     dprint("output:" output)
-    dprint("root_name:" root . name)
+    dprint("root name:" root . name)
     debugger2() # bind start
     if not(is_instance(output FList_class)):
       output = make_resizable(`output 1)
@@ -322,7 +331,7 @@ to_forth_conv <- class[]:
     debugger2() # general after
     return(changed_class(FList_class output))
 
-to_forth_conv_hash <- hashtable(60)
+to_forth_conv_hash <- hashtable(200)
 to_forth_conv_hash . set("suite"        to_forth_conv.suite)
 to_forth_conv_hash . set("forth"        to_forth_conv.suite)
 to_forth_conv_hash . set("quote"        to_forth_conv.quote)
@@ -336,6 +345,8 @@ to_forth_conv_hash . set("forth_line"   to_forth_conv.forth_line)
 to_forth_conv_hash . set("assign"       to_forth_conv.assign)
 to_forth_conv_hash . set("fun"          to_forth_conv.fun)
 to_forth_conv_hash . set("inline"       to_forth_conv.fun)
+to_forth_conv_hash . set("local_fun"    to_forth_conv.fun)
+to_forth_conv_hash . set("fast_fun"     to_forth_conv.fun)
 to_forth_conv_hash . set("bind"         to_forth_conv.bind)
 to_forth_conv_hash . set("comment"      to_forth_conv.comment)
 to_forth_conv_hash . set("."            to_forth_conv.dot)
@@ -348,20 +359,20 @@ to_forth <- fun[root]:
   parseg . set("nest" parseg . get("nest") + 1)
   simple_for(parseg . get("nest") 0 printspace)
   print(root . name)
-  print("_<-")
+  print(" <-")
   printeol()
   if not(is_instance(root node_class)):
-    dprint("root:_" root)
-    dprint("type:_" root . type)
+    dprint("root: " root)
+    dprint("type: " root . type)
     debugger()
-    error("Unexpected_non-node_root.")
+    error("Unexpected non-node root.")
   converter = to_forth_conv_hash . get(root . name)
   if converter == None():
     converter = to_forth_conv_hash . get("default")
   output = call(root converter)
   simple_for(parseg . get("nest") 0 printspace)
   print(root . name)
-  dprint("_->_" output)
+  dprint(" -> " output)
   parseg . set("nest" parseg . get("nest") - 1)
   return(`output)
 
@@ -371,20 +382,20 @@ g . set("written" hashtable(5000))
 init_g <- fun[filename]:
   array.clear(g . get("written") . keys)
   g . set("nesting" 0)
-  g . set("last_value" "_")
+  g . set("last_value" " ")
   g . set("autogen_count" 0)
   g . set("autogen_name" "autogen")
   if not(filename == None()):
     g . set("file" file.open("w" filename))
   else:
     g . set("file" None())
-  dprint("init_g:_" g)
+  dprint("init g: " g)
   debugger2() # init_g
 
 # init_g()
 
 # Not sure why it did something weird when it was a function
-write_eol <- inline[]:
+write_eol <- fast_fun[]:
   g . set("last_value" None())
 
 write_sep <- fun[value]:
@@ -398,7 +409,7 @@ write_sep <- fun[value]:
   set_output(None())
 
 write_string_body <- fun[root depth]:
-  error("Dummy_function")
+  error("Dummy function")
 
 write_string_body <- fun[root depth]:
   # dprint("ws_root:_" root)
@@ -421,31 +432,31 @@ write_string_body <- fun[root depth]:
   elif is_instance(root FList_class):
     g . set("nesting" g . get("nesting") + 1)
     debugger2() # flist start
-    for_in(root inline[]: # elem
+    for_in(root fast_fun[elem]:
       write_string_body(`elem depth))
     debugger2() # flist end
     g . set("nesting" g . get("nesting") - 1)
     write_eol()
   elif True:
-    dprint("ws_root:_" root)
-    dprint("ws_depth:_" depth)
-    dprint("ws_is_str:_" is_str(root))
-    dprint("ws_type:_" root . type)
+    dprint("ws root: " root)
+    dprint("ws depth: " depth)
+    dprint("ws is str: " is_str(root))
+    dprint("ws type: " root . type)
     debugger() # write_string_body shouldn't happen
 
 write_blocks <- fun[root depth]:
-  error("Dummy_function")
+  error("Dummy function")
 
 write_blocks <- fun[root depth]:
   if False:
-    dprint("root:_" root)
-    dprint("root_is_quote:_" is_instance(root FQuote_class))
-    dprint("root_is_list:_" is_instance(root FList_class))
-    dprint("g:_" g)
+    dprint("root: " root)
+    dprint("root is quote: " is_instance(root FQuote_class))
+    dprint("root is list: " is_instance(root FList_class))
+    dprint("g: " g)
   if is_instance(root FQuote_class) || is_instance(root FList_class):
     # Increase g.nesting
     g . set("nesting" g . get("nesting") + 1)
-    for_in(root inline[]: # elem
+    for_in(root fast_fun[elem]:
       if is_instance(elem FQuote_class):
         write_blocks(`elem depth + 1)
       else:
@@ -457,7 +468,7 @@ write_blocks <- fun[root depth]:
     nesting = g . get("nesting")
     # dprint("g:_" g)
     debugger2() # write_blocks fquote
-    if string_equal(root . name "_"):
+    if string_equal(root . name " "):
       # name_array = make_resizable(int_to_str(g . get("autogen_count")) "autogen" 2)
       # dprint("name_array:_" name_array)
       # name = str_join(name_array  . array + 1 name_array . len)
@@ -469,7 +480,7 @@ write_blocks <- fun[root depth]:
     g . set("nesting" 0)
     write_sep("[")
     g . set("nesting" 1)
-    for_in(root inline[]: # elem
+    for_in(root fast_fun[elem]:
       write_string_body(`elem depth))
     write_sep("]")
     if g . get("written") . get(root . name) == None():
@@ -481,18 +492,18 @@ write_blocks <- fun[root depth]:
     write_eol()
     g . set("nesting" nesting)
 
-print_child <- inline[]:
+print_child <- fast_fun[]:
   if is_instance(child FList_class):
     printeol()
-    dprint("child:_" child)
-    dprint("child.len:_" child . len)
+    dprint("child: " child)
+    dprint("child.len: " child . len)
     if child . len > 2:
-      dprint("is_bind:_" child . get(child . len - 2) . value)
+      dprint("is bind: " child . get(child . len - 2) . value)
     if child . len > 5:
-      dprint("is_class:_" child . get(child . len - 4) . value)
-      dprint("is_str:_" is_str(child . get(child . len - 4) . value))
-      dprint("str_eq:_" string_equal(child . get(child . len - 4) . value "class"))
-      dprint("lazy_cond:_" lazy_and([string_equal(child . get(child . len - 4) . value "class")] child . len > 4))
+      dprint("is class: " child . get(child . len - 4) . value)
+      dprint("is str: " is_str(child . get(child . len - 4) . value))
+      dprint("str eq: " string_equal(child . get(child . len - 4) . value "class"))
+      dprint("lazy cond: " lazy_and([string_equal(child . get(child . len - 4) . value "class")] child . len > 4))
   debugger2() # write_child start
 
 replace_name <- fun[s]:
@@ -505,7 +516,7 @@ replace_name <- fun[s]:
   return(s)
 
 write_suite <- fun[root prefix]:
-  error("Dummy_function")
+  error("Dummy function")
 
 write_child <- fun[child prefix]:
   # print_child()
@@ -524,7 +535,7 @@ write_child <- fun[child prefix]:
         write_eol()
       else:
         if child . len == 4:
-          error("Unexpected_bind_body_length")
+          error("Unexpected bind body length")
         # len(child) == 5 and str(child[-3]) in ["inline", "func"])
         # TODO: Now we really need str_cat for this.
         # body.func_name = (prefix + child[-1].str).replace("_colon", ":")
@@ -547,7 +558,7 @@ write_child <- fun[child prefix]:
   debugger2() # write_child end
 
 write_suite <- fun[root prefix]:
-  for_in(root inline[]: # elem
+  for_in(root fast_fun[elem]:
     write_child(`elem prefix))
 
 print_separator <- fun[sep filename]:
@@ -557,27 +568,29 @@ print_separator <- fun[sep filename]:
   printeol()
 
 compile_file <- fun[filename]:
-  print("compiling_file_")
+  print("compiling file ")
   printraw(filename)
   printeol()
   # source <- Input(filename)
   hashtable.set("source" Input(filename) names2())
   init_parseg(flpcg)
   printeol()
-  print("Running_flpc_grammar_on_input_")
+  print("Running flpc grammar on input ")
   printraw(filename)
   printeol()
   parsed = apply("grammar")
-  print("Input:_")
+  print("Input: ")
   tprint(parsed)
   printeol()
   simplified = simplify(parsed)
-  print("Simplified:_")
+  print("Simplified: ")
   simplified . print()
   printeol()
+  if is_instance(simplified MatchError_class):
+    error("Parse error at simplification step.")
   parseg . set("nest" 0)
   forthed = to_forth(simplified)
-  print("ToForth:_")
+  print("ToForth: ")
   forthed . print()
   printeol()
   printeol()
@@ -589,9 +602,9 @@ compile_file <- fun[filename]:
 compile_all <- fun[filenames output]:
   init_g(output)
   set_output(g . get("file"))
-  print("push:_")
+  print("push: ")
   printraw("Generated_from")
-  for_in(filenames inline[]:
+  for_in(filenames fast_fun[]:
     printraw("_")
     printraw(`elem))
   print("_print")

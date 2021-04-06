@@ -1,0 +1,213 @@
+closure <- fast_fun[]:
+  F' pushf: push: memory.append memory.append
+     memory.append
+     pushf: ] memory.append
+     memory.len pushi: 4 - Pointer
+     pick1 push: closure set_mem_hint 'F
+
+print_array <- fun[iterable]:
+  l = iterable . len
+  simple_for(l 0 fast_fun[]:
+    tprint(iterable . get(l - index - 1)))
+
+ns_obj <- class[]:
+  attrib <- fun[name receiver searcher]:
+    error("Dummy")
+
+  child <- fun[child_hash parent]:
+    memory.append(parent)
+    memory.append(ns_obj.attrib)
+    memory.append(child_hash)
+    memory.append(names.get("]"))
+    pointer = Pointer(memory.len() - 2)
+    set_mem_hint(pointer str_cat(" instance" parent . type 2))
+    return(pointer)
+
+  set_attr <- fun[key value self]:
+    return(self . attr . set(key value))
+
+  print <- fun[self]:
+    print("ns_obj instance or subclass")
+
+  getattrib <- fun[name self]:
+    return(self . attr . get(name))
+
+  attrib <- fun[name receiver searcher]:
+    return_if(string_equal(name "attr") memory.get(receiver))
+    value = searcher . attr . get(name)
+    if value == None():
+      # Hack for default values! Can't use return_if because we're inside an if block
+      if string_equal(name "child"):
+        return(ns_obj.child)
+      return(instance_attrib(name receiver searcher))
+    return(`value)
+
+ns_bind_colon <- fun[func]:
+  name = input.next_token()
+  current_ns . set(name func)
+  # current_ns should have a __name__? __ns_name__?
+  set_mem_hint(func str_cat(name "ns." 2))
+
+current_ns <- hashtable(100)
+ns_obj_class <- ns_obj.child(current_ns boot_obj)
+ns_obj <- closure(ns_obj.child ns_obj_class)
+current_ns . set("attrib" ns_obj.attrib)
+current_ns . set("child" ns_obj.child)
+current_ns . set("set_attr" ns_obj.set_attr)
+current_ns . set("print" ns_obj.print)
+current_ns . set("type" "ns_obj")
+
+new_ns_class <- fun[name]:
+  # Contains hard-coded names semantics!
+  #hashtable.set("current_ns" hashtable(100) names2())
+  hashtable.set("type" name current_ns)
+  class_name = str_cat("_class" name 2)
+  hashtable.set(class_name ns_obj.child(current_ns ns_obj_class) names2())
+  new_class = names.get(class_name)
+  # Problem: need the child class to create a closure!
+  instance_creator = closure(new_class . child new_class)
+  hashtable.set(name instance_creator names2())
+  set_mem_hint(current_ns str_cat(".attr" class_name 2))
+  set_mem_hint(instance_creator str_cat(" instance creator" class_name 2))
+
+String <- ns_class[]:
+  child <- fun[str parent]:
+    # parent . parent . child(hashtable(100)) but with "self" set
+    # as parent instead of parent . parent
+    new_obj = call(hashtable(100) parent parent . parent . child)
+    # Could parse ints here?
+    new_obj . attr . set("str" str)
+    return(new_obj)
+
+  len <- fun[self]:
+    return(str_len(self . str))
+
+  slice <- fun[start end self]:
+    return(self . parent . child(sub_str(self . str start end)))
+
+  get <- fun[index self]:
+    return(self . slice(index index + 1))
+
+  index <- fun[c self]:
+    i = self . len()
+    repeat_if:
+      i = `i - 1
+      if string_equal(self . get(i) . str c):
+        return(`i)
+    return(None())
+
+  index2 <- fun[c self]:
+    simple_for(self . len() 0 fast_fun[index]:
+      if string_equal(self . get(index) . str c):
+        # Problem: This compiles to return3, which gets us to the stack frame of the for, but not beyond.
+        # Maybe we should just have newfunc stack separators. Not sure.
+        # Might just be that simple_for needs return increased by 1.
+        return(index))
+    return(None())
+
+  endswith <- fun[suffix self]:
+    return(str_endswith(suffix self . str))
+
+  # Assumes arr is an array of str but really want String?
+  join <- fun[arr class]:
+    return(class . child(str_join(arr arr . length)))
+
+  print <- fun[self]:
+    print("s\q")
+    print(self . str)
+    print("\q")
+
+File <- ns_class[]:
+  # child should be instance here? Since this isn't good for subclassing
+  child <- fun[filename parent]:
+    fd = file.open("r" filename)
+    new_obj = call(hashtable(100) parent parent . parent . child)
+    new_obj . attr . set("fd" fd)
+    return(new_obj)
+
+  # Don't remember why I put this here. Not obvious how to call this class method anymore.
+  # Just changed child to take a filename instead of fd. Might as well?
+  open <- fun[filename class]:
+    return(class . child(file.open("r" filename)))
+
+  write <- fun[value self]:
+    return(fd_write(value self . fd))
+
+  # This should be a @property. Could override attrib but that solution
+  # feels kind of ugly. I guess in some sense, that's how previous
+  # classes did it.
+  position <- fun[self]:
+    return(fd_position(self . fd))
+
+  position_set <- fun[value self]:
+    return(fd_position_set(self . fd))
+
+  startswith <- fun[value self]:
+    return(fd_startswith(self . fd))
+
+  next_token <- fun[self]:
+    return(fd_next_token(self . fd))
+
+  next_char <- fun[self]:
+    return(fd_next_char(self . fd))
+
+  next_line <- fun[self]:
+    return(fd_next_line(self . fd))
+
+  close <- fun[self]:
+    return(file.close(self . fd))
+
+StringIO <- ns_class[]:
+  child <- fun[str parent]:
+    # parent . parent . child(hashtable(100)) but with "self" set
+    # as parent instead of parent . parent
+    new_obj = call(hashtable(100) parent parent . parent . child)
+    new_obj . attr . set("str" str)
+    new_obj . attr . set("pos" 0)
+    return(new_obj)
+
+  next_token <- fun[self]:
+    new_pos token = str_next_token(self . pos self . str)
+    self . attr . set("pos" new_pos)
+    return(String(token))
+
+  reset <- fun[self]:
+    self . attr . set("pos" 0)
+
+  to_res <- fun[self]:
+    self . reset()
+    new_resizable = resizable(0)
+    repeat:
+      token = self . next_token()
+      if token . len() == 0:
+        return(new_resizable)
+      new_resizable . append(`token)
+
+string_test <- fun[]:
+  s = String("hello world")
+  tprint(s)
+  printeol()
+  tprint(s . slice(1 3))
+  printeol()
+  tprint(s . get(1))
+
+# string_test()
+
+top_level_exception_handler <- fun[error]:
+  error_handler_index = 0
+  cond = True
+  repeat_if:
+    drop1(`cond)
+    handler = all_data_stack_pick(error_handler_index "exception_handler")
+    if handler == None():
+      drop1(`handler)
+      debugger() # unhandled error
+    else:
+      result = call(error handler)
+    cond = (result == None())
+    result cond error_handler_index = shuffle("412")
+    error_handler_index = `error_handler_index + 1
+    error_handler_index cond = s21()
+  return(result)
+
+error_handler_set(top_level_exception_handler)

@@ -6,7 +6,7 @@ lookup_error <- fun[]:
   error("lookup_error")
 
 functions.append <- fun[value]:
-  memory.set(`value functions.end())
+  memory.set(functions.end() s21()) # pos value
   functions.end.increase()
 
 # Need to make this hyperstatic again later on
@@ -28,7 +28,7 @@ write_loop <- fun[]:
     token = input.next_token()
     mempos_append(names.get(token))
     if string_equal(token "push:"):
-      memory.append(input.next_token())
+      memory.append(string_unescape(input.next_token()))
     if string_equal(token "attr:"):
       memory.append(input.next_token())
     if string_equal(token "attr_call:"):

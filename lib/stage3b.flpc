@@ -4,7 +4,7 @@ base.rules.SAME_INDENT <- fun[]:
     if parseg . get("indentation") . top() == str_len(s):
         return(None())
     source . position_set(saved)
-    return(MatchError("Different_indent"))
+    return(MatchError("Different indent"))
 
 base.rules.DEDENT <- fun[]:
     parseg . get("indentation") . pop()
@@ -14,7 +14,7 @@ base.rules.INDENT <- fun[]:
     saved = source . position()
     if is_instance(apply('NEWLINE') MatchError_class):
         source . position_set(saved)
-        return(MatchError("Missing_newline_before_indent"))
+        return(MatchError("Missing newline before indent"))
     s = make_string(apply('hspaces'))
     source . position_set(saved)
     parseg . get("indentation") . append(str_len(s))
@@ -32,14 +32,14 @@ token <- fun[s]:
     else:
         output = source . startswith(s)
         if output == None():
-            return(MatchError("Not_token_or_EOF"))
+            return(MatchError("Not token or EOF"))
         return(`output)
     if is_instance(output MatchError_class):
         return(output)
     if output == None():
-        return(MatchError("End_of_file"))
+        return(MatchError("End of file"))
     if not(string_equal(output s)):
-        return(MatchError("Not_exactly_token"))
+        return(MatchError("Not exactly token"))
     return(output)
 
 # names.set doesn't work well with pick: caching.
@@ -51,8 +51,8 @@ token <- fun[s]:
 #print("Regenerating_")
 #print(rules . len)
 #printeol()
-#memory.set(boot_array(rules . len) rules + 1)
-#memory.set(boot_array(rules . len) rules + 2)
+#memory.set(rules + 1 boot_array(rules . len))
+#memory.set(rules + 2 boot_array(rules . len))
 
 #names.set("rules" boot_dict(100))
 #names.set("rules" cheat_dict())

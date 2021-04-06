@@ -72,9 +72,9 @@ For technical reasons, all of the above need to be prepended with the line (this
 Run FlpcPython programs precompiled to FlpcForth with
 
     gcc flpc_all.c -o flpc
-    ./flpc precompiled/flpc-all.f
+    ./flpc precompiled/interpreter.f
 
-(or `precompiled/flpc-partial.f` or `precompiled/flpc-gen.f`). Alternatively, run in [tcc](https://bellard.org/tcc/).
+(or one of `precompiled/self.f`, `precompiled/flpc-gen.f`, `precompiled/compiler.f`, ). Alternatively, run in [tcc](https://bellard.org/tcc/).
 
     tcc -run -DTCC flpc_all.c precompiled/flpc-all.f
 
@@ -86,12 +86,10 @@ Recompile `.f` files with
 
 The existing precompiled files were created with
 
-    python compiler.py lib/stage{0,1{a,b,b2,b3,c,d}}.flpc lib/grammar.flpc lib/stage{2,3{a,b}}.flpc lib/flpc_grammar.flpc lib/stage{4,5,6a,6b}.flpc > precompiled/flpc-all.f
-    python compiler.py lib/stage{0,1{a,b,b2,b3,c,d},3{a,b}}.flpc lib/flpc_grammar.flpc lib/stage{4,5}.flpc > precompiled/flpc-partial.f
-    python compiler.py lib/stage{0,1{a,b,b2,b3,c,d}}.flpc lib/grammar.flpc lib/stage{2,3a}.flpc test/stage3-test.flpc > precompiled/flpc-gen.f
+    python compiler.py lib/stage{0,1{a,b,b2,b3,c,d},3{a,b}}.flpc lib/flpc_grammar.flpc lib/stage{6{a,b},7a2,7a}.flpc > precompiled/interpreter.f
     python compiler.py lib/stage{0,1{a,b,b2,b3,c,d},3{a,b}}.flpc lib/flpc_grammar.flpc lib/stage6{a,b}.flpc > precompiled/compiler.f
+    python compiler.py lib/stage{0,1{a,b,b2,b3,c,d}}.flpc lib/grammar.flpc lib/stage{2,3a}.flpc test/stage3-test.flpc > precompiled/flpc-gen.f
     python compiler.py lib/stage{0,1{a,b,b2,b3,c,d},3{a,b}}.flpc lib/flpc_grammar.flpc lib/stage6{a,b}.flpc test/self.flpc > precompiled/self.f
-    python compiler.py lib/stage{0,1{a,b,b2,b3,c,d},3{a,b}}.flpc lib/flpc_grammar.flpc lib/stage{6{a,b},7a}.flpc > precompiled/compiler.f
 
 To run tests (in `test/`), compile up to the needed test and append the test.
 

@@ -2,18 +2,18 @@ MatchError <- class[]:
   instance <- fun[message self]:
     new_obj = minobj.instance(boot_obj)
     # parent, attrib, message
-    memory.set(self new_obj - 2)
-    memory.set(message new_obj)
+    memory.set(new_obj - 2 self)
+    memory.set(new_obj message)
     memory.append(names.get("]"))
     return(new_obj)
 
   print <- fun[self]:
-    print("Match_error:")
+    print("Match error:")
     print(memory.get(`self))
 
   attrib <- fun[name receiver searcher]:
     if lookup_print:
-      print("MatchError_looking_up_")
+      print("MatchError looking up ")
       print(name)
       printeol()
     return_if(string_equal(name "instance") MatchError.instance)
@@ -29,25 +29,25 @@ MatchError <- closure(MatchError_class . instance MatchError_class)
 exactly <- fun[char]:
   input_char = source . next_char()
   if input_char == None():
-    return(MatchError("End_of_file"))
+    return(MatchError("End of file"))
   if not(string_equal(char input_char)):
-    return(MatchError("Not_exactly"))
+    return(MatchError("Not exactly"))
   return(`input_char)
 
 between <- fun[start end]:
   input_char = source . next_char()
   if input_char == None():
-    return(MatchError("End_of_file"))
+    return(MatchError("End of file"))
   if not(char_between(start end input_char)):
-    return(MatchError("Not_between"))
+    return(MatchError("Not between"))
   return(`input_char)
 
 token <- fun[char]:
   input_char = source . next()
   if input_char == None():
-    return(MatchError("End_of_file"))
+    return(MatchError("End of file"))
   if not(string_equal(char input_char)):
-    return(MatchError("Not_exactly"))
+    return(MatchError("Not exactly"))
   return(`input_char)
 
 next_child <- fun[children]:
@@ -66,7 +66,7 @@ or <- fun[children]:
     drop1(`output)
     source . position_set(saved)
     children child = next_child(`children)
-  return(MatchError("No_OR_child_matches"))
+  return(MatchError("No OR child matches"))
 
 out <- fun[child]:
   output = call(`child)
@@ -109,7 +109,7 @@ and <- fun[init_children]:
     output = call(`child)
     if is_instance(output MatchError_class):
       source . position_set(saved)
-      return(MatchError("And_match_failed"))
+      return(MatchError("And match failed"))
     # debugger()
     if output_mode:
       if is_output(output):
@@ -137,7 +137,7 @@ get_bounds <- fun[quantifier]:
     return_two(1 c.infinity())
   if string_equal(quantifier "?"):
     return_two(0 1)
-  error("Unknown_quantifier")
+  error("Unknown quantifier")
 
 quantified <- fun[child quantifier]:
   lower upper = get_bounds(`quantifier)
@@ -150,7 +150,7 @@ quantified <- fun[child quantifier]:
     if is_instance(output MatchError_class):
       if count < lower:
         source . position_set(start_saved)
-        return(MatchError("Quantified_undermatch"))
+        return(MatchError("Quantified undermatch"))
       source . position_set(saved)
       return(make_string(outputs))
     outputs . append_array(`output)
@@ -166,7 +166,7 @@ negation <- fun[child]:
   source . position_set(saved)
   if is_instance(output MatchError_class):
     return(None())
-  return(MatchError("Negation_is_true"))
+  return(MatchError("Negation is true"))
 
 bound <- fun[child name]:
   output = call(child)
@@ -227,7 +227,7 @@ _apply <- fun[name]:
     print(name)
     printspace()
     tprint(source . position())
-    print("_->_")
+    print(" -> ")
     tprint(output)
     printeol()
   if string_equal(name "statement"):
@@ -236,13 +236,13 @@ _apply <- fun[name]:
       printspace()
       i = `i - 1
     print(name)
-    print("_->_")
+    print(" -> ")
     tprint(output)
     printeol()
   if is_instance(output MatchError_class):
     return(output)
   if should_make_node(output):
-    print("Making_node_")
+    print("Making node ")
     printraw(name)
     printeol()
     return(node(name output))
@@ -265,7 +265,7 @@ apply <- fun[name]:
 base.rules.anything <- fun[]:
   char = source . next_char()
   if char == None():
-    return(MatchError("End_of_file"))
+    return(MatchError("End of file"))
   return(`char)
 
 base.rules.void <- fun[]:
@@ -296,7 +296,7 @@ base.rules.wrapped_escaped_char <- fun[]:
       return("'")
     if string_equal(output '"'):
       return('"')
-    error("Unknown_escaped_char")
+    error("Unknown escaped char")
 
 add_base_rules <- fun[rules]:
   hashtable.set("letter" base.rules.letter rules)

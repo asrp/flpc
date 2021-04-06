@@ -1,0 +1,6 @@
+# Note: needs size at the end at the moment!
+make_resizable! = "{" spaces {expr (spacesp {expr})* | void} "}"
+make_dict! = "{" spaces {expr} ":" {expr} {("," spaces {expr} ":" {expr})*} "|" {expr} "}"
+non_block_non_infix = make_dict | make_resizable | forth | func_call
+                    | name_quote | quote | parenthesis
+                    | NUMBER | TRIPLE_QUOTE | STRING | variable

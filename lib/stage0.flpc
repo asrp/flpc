@@ -4,23 +4,23 @@ F' [ input.next_token functions.add ] input.next_token bind: functions.add 'F
 # Should overwrite position too!
 rebind_colon <- fun[func]:
   location = names.get(input.next_token())
-  memory.set(names.get("]") location + 1)
+  memory.set(location + 1 names.get("]"))
   # Need to invert check order when writing forth...
-  memory.set() #`func `location
+  memory.set(s21()) #`location `func
 
 pushn_colon <- fun[]:
   return(input.next_token())
 
-ps <- inline[]:
+ps <- fast_fun[]:
   print_state()
 
-# Need to not drop other values upon return. Should be an inline?
-# but inline still drops (only it does so in the outer function).
-# I guess a forth debugger doesn't make much sense in the current
+# Need to not drop other values upon return. Should be a local_fun?
+# but local_fun still drops (only it does so in the outer function).
+# I guess a forth debugger, it doesn't make much sense in the current
 # model. So maybe dropping isn't too bad.
 debugger_inner <- fun[]:
   repeat:
-    print("(dbg)_")
+    print("(dbg) ")
     name = stdin.next_token()
     # In all cases, should also remove name from stack
     if string_equal(name "s"):
@@ -39,7 +39,7 @@ debugger_inner <- fun[]:
       # TODO
       print_state()
     if not(string_equal(name "i")):
-      print("Running_")
+      print("Running ")
       print(name)
       # Needs a clean stack before running!
       call(names.get(`name))
@@ -48,7 +48,7 @@ debugger <- fun[]:
   print_state()
   debugger_waitlen_set(debugger_inner())
 
-multi-if <- inline[i]:
+multi-if <- local_fun[i]:
   repeat_if:
     i = `i - 1
     i block cond = shuffle("231")

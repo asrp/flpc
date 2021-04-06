@@ -2,7 +2,7 @@
 load("stage2.pkl")
 
 to_flpc2 <- fun[root]:
-  error("Dummy_function_should_not_be_called")
+  error("Dummy function should not be called")
 
 to_flpc2 <- fun[root]:
     # print(root . type)
@@ -17,14 +17,14 @@ to_flpc2 <- fun[root]:
     if (string_equal(name "exactly") || string_equal(name "token")) && is_instance(root . get(0) node_class):
         if not(string_equal(root . get(0) . name "escaped_char")):
             tprint(root . get(0))
-            error("Unexpected_child_of_exactly._Was_expecting_a_escaped_chart.")
+            error("Unexpected child of exactly. Was expecting a escaped chart.")
         # printrepr(to_flpc2(root . get(0) . get(0)))
         return_no_value2(to_flpc2(node(root . name root . get(0) . get(0))))
     if string_equal(name "rule"):
         printraw(parseg . get("prefix"))
         print(".rules.")
         printraw(root . get(0) . get(0))
-        print("_<-_fun[]:\n____return(")
+        print(" <- fun[]:\n    return(")
         to_flpc2(root . get(3))
         print(")")
         return_no_value2()
@@ -58,7 +58,7 @@ to_flpc2 <- fun[root]:
             print("]")
         i = `i - 1
         if i > 0:
-            print("_")
+            print(" ")
     if string_equal(name "and"):
         print("]")
     if string_equal(name "or"):
@@ -87,41 +87,41 @@ print_ruleset <- fun[ruleset]:
 print_grammar_obj <- fun[]:
     prefix = parseg . get("prefix")
     printraw(prefix)
-    print(".base_<-_resizable(0)")
+    print(".base <- resizable(0)")
     printeol()
     l = parseg . get("base_rules") . len
     i = l
     repeat_if:
         printraw(prefix)
-        print('.base_._append("')
+        print('.base . append("')
         printraw(parseg . get("base_rules") . get(l - i))
         print('")')
         printeol()
         i = `i - 1
     printraw(prefix)
-    print("_<-_resizable(0)")
+    print(" <- resizable(0)")
     printeol()
 
     printraw(prefix)
-    print('_._append("')
+    print(' . append("')
     printraw(prefix)
     print('")')
     printeol()
 
     printraw(prefix)
-    print('_._append(')
+    print(' . append(')
     printraw(prefix)
     print('.rules)')
     printeol()
 
     printraw(prefix)
-    print('_._append(')
+    print(' . append(')
     printraw(prefix)
     print('.flagged)')
     printeol()
 
     printraw(prefix)
-    print('_._append(')
+    print(' . append(')
     printraw(prefix)
     print('.base)')
     printeol()
@@ -130,17 +130,17 @@ print_child_setter <- fun[child]:
         name = child . get(0) . get(0)
         print('hashtable.set("')
         printraw(name)
-        print('"_')
+        print('" ')
         printraw(parseg . get("prefix"))
         print(".rules.")
         printraw(name)
-        print('_')
+        print(' ')
         printraw(parseg . get("prefix"))
         print('.rules)')
         printeol()
         if child . get(1) . len > 0:
             printraw(parseg . get("prefix"))
-            print('.flagged_._append("')
+            print('.flagged . append("')
             printraw(name)
             print('")')
             printeol()
@@ -148,12 +148,12 @@ print_child_setter <- fun[child]:
 print_grammar_setters <- fun[root]:
     l = root . len
     printraw(parseg . get("prefix"))
-    print('.rules_<-_hashtable(')
+    print('.rules <- hashtable(')
     print(int_to_str(l + l + l + l))
     print(')')
     printeol()
     printraw(parseg . get("prefix"))
-    print('.flagged_<-_resizable(0)')
+    print('.flagged <- resizable(0)')
     printeol()
     i = l
     repeat_if:
@@ -175,6 +175,7 @@ parse_grammar <- fun[grammar_obj input_filename]:
     names2() . set("source" Input(input_filename))
     init_parseg(grammar_obj)
     print(parseg)
+    printeol()
     output = apply("grammar")
     return(output)
 
@@ -182,7 +183,7 @@ write_parsed_funcs <- fun[grammar_obj input_filename output_filename]:
     output = parse_grammar(grammar_obj input_filename)
     output . print()
     printeol()
-    print("Writing_")
+    print("Writing ")
     printraw(output_filename)
     printeol()
     print(output . name)
@@ -207,7 +208,7 @@ write_parsed <- fun[grammar_obj input_filename output_filename]:
     output = parse_grammar(grammar_obj input_filename)
     output . print()
     printeol()
-    print("Writing_")
+    print("Writing ")
     printraw(output_filename)
     printeol()
     outf = file.open("w" output_filename)

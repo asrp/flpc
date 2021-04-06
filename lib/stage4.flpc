@@ -1,6 +1,6 @@
 
 load("flpc_grammar.pkl")
-# memory.set(Input("lib/stage1.flpc") source_index)
+# memory.set(source_index Input("lib/stage1.flpc"))
 source <- Input("lib/stage1a.flpc")
 # names.set("source" Input("lib/stage1.flpc"))
 # rules . print()

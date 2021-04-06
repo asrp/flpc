@@ -3,10 +3,11 @@ resizable <- class[]:
     _array = boot_array.instance(length + length + 3 boot_array_class)
     new_obj = minobj.instance(boot_obj)
     # parent, attrib, len, array
-    memory.set(self new_obj - 2)
-    memory.set(length new_obj)
+    memory.set(new_obj - 2 self)
+    memory.set(new_obj length)
     memory.append(_array)
     memory.append(names.get("]"))
+    # set_mem_hint(new_obj "resizable instance")
     return(new_obj)
 
   get <- fun[key self]:
@@ -22,15 +23,15 @@ resizable <- class[]:
     length = memory.get(self)
     new_array = boot_array.instance(length + length + 3 boot_array_class)
     boot_array.copy_to(new_array memory.get(self + 1))
-    memory.set(new_array self + 1)
+    memory.set(self + 1 new_array)
 
   reset <- fun[self]:
     length = memory.get(self)
     new_array = boot_array.instance(length boot_array_class)
-    memory.set(new_array self + 1)
+    memory.set(self + 1 new_array)
 
   increase <- fun[self]:
-    memory.set(memory.get(self) + 1 self)
+    memory.set(self memory.get(self) + 1)
 
   max_len <- fun[self]:
     # self . array . len
@@ -63,7 +64,7 @@ resizable <- class[]:
       resizable.append(value self)
 
   pop <- fun[self]:
-    memory.set(memory.get(self) - 1 self)
+    memory.set(self memory.get(self) - 1)
     return(resizable.get(memory.get(self) self))
 
   top <- fun[self]:
@@ -81,9 +82,12 @@ resizable <- class[]:
     print("]")
     # printeol()
 
+  join <- fun[self]:
+    return(str_join(self . array + 1 self . len))
+
   attrib <- fun[name receiver searcher]:
     if lookup_print:
-      print("Resizable_looking_up_")
+      print("Resizable looking up ")
       print(name)
       printeol()
     return_if(string_equal(name "get")      resizable.get)
@@ -100,6 +104,7 @@ resizable <- class[]:
     return_if(string_equal(name "pop")      resizable.pop)
     return_if(string_equal(name "top")      resizable.top)
     return_if(string_equal(name "max_len")  resizable.max_len)
+    return_if(string_equal(name "join")     resizable.join)
     return_if(string_equal(name "len")      memory.get(receiver))
     return_if(string_equal(name "array")    memory.get(receiver + 1))
     return_if(string_equal(name "type")     "resizable")
@@ -109,8 +114,8 @@ resizable_class <- boot_obj . subclass(resizable.attrib)
 resizable <- closure(resizable_class . instance resizable_class)
 
 resizable.hash <- convert_attr(resizable_class)
-# Not real inline since "hash_header" calls newfunc3
-resizable.attrib <- inline[]:
+# Not real fast_fun since "hash_header" calls newfunc3
+resizable.attrib <- fast_fun[]:
   hash_header()
   call(hashtable.get(name resizable.hash))
 
@@ -118,10 +123,11 @@ node <- class[]:
   instance <- fun[name children self]:
     new_obj = minobj.instance(boot_obj)
     # parent, attrib, name, children
-    memory.set(self new_obj - 2)
-    memory.set(name new_obj)
+    memory.set(new_obj - 2 self)
+    memory.set(new_obj name)
     memory.append(children)
     memory.append(names.get("]"))
+    # set_mem_hint(new_obj "node instance")
     return(`new_obj)
 
   get <- fun[key self]:
@@ -131,7 +137,7 @@ node <- class[]:
     else:
       if key == 0:
         return(children)
-      error("Out_of_bound_index")
+      error("Out of bound index")
 
   print <- fun[self]:
     printraw(memory.get(self))
@@ -147,14 +153,14 @@ node <- class[]:
       return(1)
 
   set_name <- fun[new_name self]:
-    memory.set(new_name self)
+    memory.set(self new_name)
 
   set_children <- fun[new_children self]:
-    memory.set(new_children self + 1)
+    memory.set(self + 1 new_children)
 
   attrib <- fun[name receiver searcher]:
     if lookup_print:
-      print("Node_looking_up_")
+      print("Node looking up ")
       print(name)
       printeol()
     return_if(string_equal(name "get")      node.get)
@@ -173,8 +179,8 @@ node_class <- boot_obj . subclass(node.attrib)
 node <- closure(node_class . instance node_class)
 
 node.hash <- convert_attr(node_class)
-# Not real inline since "hash_header" calls newfunc3
-node.attrib <- inline[]:
+# Not real fast_fun since "hash_header" calls newfunc3
+node.attrib <- fast_fun[]:
   hash_header()
   call(hashtable.get(name node.hash))
 
@@ -182,10 +188,11 @@ Input <- class[]:
   instance <- fun[filename self]:
     new_obj = minobj.instance(boot_obj)
     # parent, attrib, file (descriptor), position
-    memory.set(self new_obj - 2)
-    memory.set(file.open("r" filename) new_obj)
+    memory.set(new_obj - 2 self)
+    memory.set(new_obj file.open("r" filename))
     memory.append(0)
     memory.append(names.get("]"))
+    # set_mem_hint(new_obj "Input instance")
     return(new_obj)
 
   next <- fun[self]:
@@ -208,7 +215,7 @@ Input <- class[]:
 
   attrib <- fun[name receiver searcher]:
     if lookup_print:
-      print("Input_looking_up_")
+      print("Input looking up ")
       print(name)
       printeol()
     return_if(string_equal(name "instance") Input.instance)
@@ -226,22 +233,23 @@ Input_class <- boot_obj . subclass(Input.attrib)
 Input <- closure(Input_class . instance Input_class)
 
 Input.hash <- convert_attr(Input_class)
-# Not real inline since "hash_header" calls newfunc3
-Input.attrib <- inline[]:
+# Not real fast_fun since "hash_header" calls newfunc3
+Input.attrib <- fast_fun[]:
   hash_header()
   call(hashtable.get(name Input.hash))
 
 cheat_dict <- class[]:
   instance <- fun[self]:
     new_obj = minobj.instance(boot_obj)
-    memory.set(self new_obj - 2)
-    memory.set(_cheat_dict.new() new_obj)
+    memory.set(new_obj - 2 self)
+    memory.set(new_obj _cheat_dict.new())
     memory.append(names.get("]"))
+    # set_mem_hint(new_obj "cheat_dict instance")
     return(new_obj)
 
   attrib <- fun[name receiver searcher]:
     if lookup_print:
-      print("CheatDict_looking_up_")
+      print("CheatDict looking up ")
       print(name)
       printeol()
     return_if(string_equal(name "instance") cheat_dict.instance)

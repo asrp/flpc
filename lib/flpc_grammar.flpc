@@ -23,7 +23,7 @@ flpcg.rules.NUMBER <- fun[]:
     return(and([[apply("hspaces")] [out([and([[quantified([exactly("-")] "?")] [quantified([apply("digit")] "+")]])])]]))
 
 flpcg.rules.STRING <- fun[]:
-    return(and([[apply("hspaces")] [or([[and([[exactly("\q")] [out([quantified([and([[negation([exactly("\q")])] [apply("anything")]])] "*")])] [exactly("\q")]])] [and([[exactly("'")] [out([quantified([and([[negation([exactly("'")])] [apply("anything")]])] "*")])] [exactly("'")]])]])]]))
+    return(and([[apply("hspaces")] [out([or([[and([[exactly("\q")] [out([quantified([and([[negation([exactly("\q")])] [apply("anything")]])] "*")])] [exactly("\q")]])] [and([[exactly("'")] [out([quantified([and([[negation([exactly("'")])] [apply("anything")]])] "*")])] [exactly("'")]])]])])]]))
 
 flpcg.rules.NAME <- fun[]:
     return(and([[apply("hspaces")] [out([and([[or([[apply("letter")] [exactly("_")]])] [quantified([and([[negation([apply("space")])] [negation([exactly("(")])] [negation([exactly("=")])] [negation([exactly(")")])] [negation([exactly("[")])] [negation([exactly("]")])] [negation([exactly("<")])] [negation([exactly(":")])] [negation([exactly("'")])] [apply("anything")]])] "*")]])])]]))

@@ -23,8 +23,8 @@ hashtable <- class[]:
     keys = boot_array.instance(plength boot_array_class)
     values = boot_array.instance(plength boot_array_class)
     new_obj = minobj.instance(boot_obj)
-    memory.set(self new_obj - 2)
-    memory.set(plength new_obj)
+    memory.set(new_obj - 2 self)
+    memory.set(new_obj plength)
     memory.append(keys)
     memory.append(values)
     memory.append(names.get("]"))
@@ -39,27 +39,28 @@ hashtable <- class[]:
   set <- fun[key value self]:
     start = mod(hash(key) memory.get(self))
     if memory.get(self) < start:
-      error("Index_too_big")
+      error("Index too big")
     if memory.get(self) == start:
-      error("Index_still_too_big")
+      error("Index still too big")
     if start < 0:
-      error("Negative_index")
+      error("Negative index")
+    # An index out of range error here probably means a hash table ran out of space.
     l = boot_array.hash_index(key start memory.get(self + 1))
     if l == None():
       drop1()
       l = boot_array.none_index(start memory.get(self + 1))
-    #print("Setting_index_")
+    #print("Setting index ")
     #tprint(l)
     #printeol()
     boot_array.set(l key memory.get(self + 1))
     boot_array.set(l value memory.get(self + 2))
     # Should remove to speed up
     if not(boot_array.hash_index(key start memory.get(self + 1)) == l):
-      error("Error_reading_new_key")
-    # memory.set(memory.get(self) + 1 self)
+      error("Error reading new key")
+    # memory.set(self memory.get(self) + 1)
 
   print <- fun[self]:
-    print("{_")
+    print("{ ")
     l = memory.get(self)
     keys = memory.get(self + 1)
     values = memory.get(self + 2)
@@ -68,9 +69,9 @@ hashtable <- class[]:
       key = boot_array.get(l - i keys)
       if (key > 0):
         tprint(key)
-        print(":_")
+        print(": ")
         print(boot_array.get(l - i values))
-        print(",_")
+        print(", ")
       drop1()
       i = `i - 1
     print("}")
@@ -91,7 +92,7 @@ hashtable <- class[]:
 
   attrib <- fun[name receiver searcher]:
     if lookup_print:
-      print("Dict_looking_up_")
+      print("Dict looking up ")
       print(name)
       printeol()
     return_if(string_equal(name "get")      hashtable.get)

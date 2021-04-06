@@ -10,14 +10,14 @@ compile_temp <- fun[filename temp_filename]:
   compile_file(filename)
   file.close(g . get("file"))
 
-run_file <- inline[]: # filename
+run_file <- fast_fun[filename]:
   current_input_file()
   shuffle("4123")
   switch_input_file() # filename
   continue_from_file() # implicit means continue from previous file
 
 run_temp <- fun[filename temp_filename]:
-  compile_temp(temp_filename filename)
+  compile_temp(filename temp_filename)
   run_file(temp_filename)
 
 run <- fun[filename]:
@@ -29,7 +29,7 @@ outf <- 1 # Dummy value
 write_file <- fun[str filename]:
   file.open_at("w" filename outf)
   set_output(outf)
-  print("#_Generated")
+  print("# Generated")
   printeol()
   printraw(str)
   printeol()
@@ -45,14 +45,14 @@ append_file <- fun[str filename]:
   file.close(outf)
 
 eval_one <- fun[]:
-  print(">>_")
+  print(">> ")
   source = stdin.next_line()
   write_file(source "gen/eval.flpc")
   run("gen/eval.flpc")
 
 eval_repl <- fun[]:
   repeat:
-    print(">>_")
+    print(">> ")
     source = stdin.next_line()
     if source == None() || string_equal(source "q"):
       return()
@@ -61,7 +61,7 @@ eval_repl <- fun[]:
 
 debug_separator <- "debug_separator" # make_resizable(0)
 
-print_until_sep <- inline[]:
+print_until_sep <- fast_fun[]:
   cond = not(pick1() == debug_separator)
   repeat_if:
     drop1(`cond)
@@ -73,12 +73,29 @@ print_until_sep <- inline[]:
 debug_g <- hashtable(20)
 
 help <- fun[func]:
-  print_frame(True 3 func)
+  # Prints the source of the function
+  # For example help(help) or help(for_in)
+  if is_basic(func):
+    print(func)
+  else:
+    if str_endswith("instance creator" get_mem_hint(func)):
+      # Todo get the . attr once all this string stuff is fixed.
+      class_name = StringIO(get_mem_hint(func)) . next_token() . str
+      print(class_name)
+      print(" with keys\n")
+      tprint(names2() . get(class_name) . attr)
+      printeol()
+      print("Type help(")
+      print(class_name)
+      print(" . method) to get help on specific methods of this class.")
+    else:
+      print_frame(True 3 func)
+  printeol()
 
 look <- fun[]:
   print_frame(False debug_g . get("context") call_stack.len() - (debug_g . get("height")))
 
-run_and_print <- inline[]: # filename
+run_and_print <- fast_fun[filename]:
   current_input_file()
   debug_separator
   shuffle("51234")
@@ -91,12 +108,12 @@ run_and_print <- inline[]: # filename
   print_until_sep()
   continue_from_file()
 
-debuggerv2 <- inline[]:
+debuggerv2 <- fast_fun[]:
   debug_g . set("height" 8)
   debug_g . set("context" 2)
   debug_g . set("multiline" False)
   repeat:
-    print(">>_")
+    print(">> ")
     source = stdin.next_line()
     if source == None() || string_equal(source "q"):
       # Doesn't work in a multi-if because count is wrong!
@@ -146,28 +163,87 @@ error_handler_set(debuggerv2)
 
 grammar_eval_file <- fun[filename]:
   bootg . set(0 "flpcg")
-  #print(">>_")
-  #source = stdin.next_line()
-  #write_file(`source "gen/temp.grammar")
   write_parsed_funcs(bootg filename "gen/grammar_temp.flpc")
   run("gen/grammar_temp.flpc")
 
+grammar_eval_file_with_out <- fun[filename output_prefix]:
+  bootg . set(0 "flpcg")
+  write_parsed_funcs(bootg filename str_cat(".flpc" output_prefix 2))
+  run_temp(str_cat(".flpc" output_prefix 2) str_cat(".f" output_prefix 2))
+
+add_getter_syntax <- fun[]:
+  g . set("autogen_name" "getter_gen")
+  grammar_eval_file_with_out("grammar/getter.grammar" "gen/getter_syntax")
+
+get <- fun[obj index]:
+  return(obj . get(index))
+
+names2() . set("!" get)
+
 to_forth_conv.TRIPLE_QUOTE <- fun[root]:
-  return(changed_class(FList_class make_resizable(forthe("FCall" "'''") forthe("FStr" root . get(0)) forthe("FCall" "'''") 3)))
+  return(changed_class(FList_class make_resizable(forthe("FCall" "'''")
+                                                  forthe("FStr" root . get(0))
+                                                  forthe("FCall" "'''")
+                                                  3)))
 
 add_triple_quote <- fun[]:
-  grammar_eval_file("grammar/triple_quote.grammar")
+  g . set("autogen_name" "triple_quote_gen")
+  grammar_eval_file_with_out("grammar/triple_quote.grammar" "gen/triple_quote")
   to_forth_conv_hash . set("TRIPLE_QUOTE" to_forth_conv.TRIPLE_QUOTE)
+
+to_forth_conv.make_resizable <- fun[root]:
+  output = list_comp([to_forth(elem)] root)
+  output = flatten(`output FList_class)
+  output . append(forthe("FCall" "pushi:"))
+  output . append(forthe("FStr" int_to_str(root . len)))
+  output . append(forthe("FCall" root . name))
+  return(changed_class(FList_class output))
+
+add_resizable_syntax <- fun[]:
+  g . set("autogen_name" "resizable_syntax_gen")
+  grammar_eval_file_with_out("grammar/resizable.grammar" "gen/resizable_syntax")
+  to_forth_conv_hash . set("make_resizable" to_forth_conv.make_resizable)
+
+add_list_comp_syntax <- fun[]:
+  g . set("autogen_name" "list_comp_syntax_gen")
+  grammar_eval_file_with_out("grammar/list_comp.grammar" "gen/list_comp_syntax")
+  to_forth_conv_hash . set("list_comp_var" to_forth_conv.list_comp_var)
+
+to_forth_conv.list_comp_var <- fun[root]:
+  #output = list_comp([to_forth(elem)] root)
+  output = make_resizable(to_forth(root . get(2))
+                          forthe("FStr" root . get(1) . get(0))
+                          forthe("FCall" "push:")
+                          FQuote(" " to_forth(root . get(0)))
+                          4)
+  output = flatten(`output FList_class)
+  output . append(forthe("FCall" root . name))
+  return(changed_class(FList_class output))
 
 dv2loop <- fun[]:
   repeat:
     print("debugger_v2")
     printeol()
+    #return(None())
     debuggerv2()
-    run("lib/stage7b.flpc")
+    run(names2() . get("dv2loop_file"))
 
-# Uncomment to (re)generate gen/triple_quote.f
-# add_triple_quote()
+# Uncomment to (re)generate FlpcForth for extra syntax
+#add_triple_quote()
+#add_resizable_syntax()
+#add_list_comp_syntax()
+#add_getter_syntax()
+
 run_file("gen/triple_quote.f")
 to_forth_conv_hash . set("TRIPLE_QUOTE" to_forth_conv.TRIPLE_QUOTE)
+run_file("gen/resizable_syntax.f")
+to_forth_conv_hash . set("make_resizable" to_forth_conv.make_resizable)
+run_file("gen/list_comp_syntax.f")
+to_forth_conv_hash . set("list_comp_var" to_forth_conv.list_comp_var)
+#run_file("gen/split_grammar.f")
+run_file("gen/getter_syntax.f")
+
+dv2loop_file <- "lib/stage7b.flpc"
+#dv2loop_file <- "gen/grammar_temp.flpc"
+#dv2loop_file <- "lib/stage7c.flpc"
 dv2loop()

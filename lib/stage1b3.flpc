@@ -21,7 +21,7 @@ add_attrib <- fun[attrib attrib_hash]:
     if index > end:
       return(None())
     tprint(memory.get(index + 3))
-    print("_")
+    print(" ")
     tprint(memory.get(index + 6))
     printeol()
     if attrib_hash . get(memory.get(index + 3)) == None():
@@ -35,7 +35,7 @@ obj_total_len <- fun[obj]:
   len = func_len(obj . attrib_raw)
   repeat:
     if obj == nullobj_cached:
-      print("Total_len:_")
+      print("Total len: ")
       print(len)
       printeol()
       return(len)
@@ -68,7 +68,7 @@ convert_attr <- fun[obj]:
 F' [ newfunc3 assign: searcher assign: receiver assign: name
      pick: True ] bind: hash_header 'F
 
-print("obj_total_len_")
+print("obj total len ")
 print(boot_array.attrib)
 printeol()
 print(boot_array_class . attrib_raw)
@@ -85,24 +85,24 @@ print(boot_array_class)
 print(boot_array_class . parent)
 print(boot_array_class . parent . parent)
 printeol()
-print("total_len_is_")
+print("total len is ")
 print(obj_total_len(boot_array_class))
 printeol()
 
 hashtable.hash <- convert_attr(hashtable_class)
-# Not real inline since "hash_header" calls newfunc3
-hashtable.attrib <- inline[]:
+# Not real fast_fun since "hash_header" calls newfunc3
+hashtable.attrib <- fast_fun[]:
   hash_header()
   call(hashtable.get(name hashtable.hash))
 
 boot_array.hash <- convert_attr(boot_array_class)
-# Not real inline since "hash_header" calls newfunc3
-boot_array.attrib <- inline[]:
+# Not real fast_fun since "hash_header" calls newfunc3
+boot_array.attrib <- fast_fun[]:
   hash_header()
   call(hashtable.get(name boot_array.hash))
 
 boot_dict.hash <- convert_attr(boot_dict_class)
-# Not real inline since "hash_header" calls newfunc3
-boot_dict.attrib <- inline[]:
+# Not real fast_fun since "hash_header" calls newfunc3
+boot_dict.attrib <- fast_fun[]:
   hash_header()
   call(hashtable.get(name boot_dict.hash))

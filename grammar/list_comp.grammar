@@ -1,0 +1,4 @@
+list_comp_var = "{" {expr} "for" {NAME} "in" {expr} "}"
+non_block_non_infix = list_comp_var | make_dict | make_resizable | forth | func_call
+                    | name_quote | quote | parenthesis
+                    | NUMBER | TRIPLE_QUOTE | STRING | variable

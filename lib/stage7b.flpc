@@ -22,4 +22,17 @@ outer <- fun[]:
   i = 4
   inner()
 
-outer()
+#outer()
+
+print_array2 <- fun[iterable]:
+  l = iterable . len
+  simple_for(l 0 fast_fun[]:
+    tprint(iterable . get(l - index - 1)))
+
+test1 <- fun[]:
+  foo = { "Hello_" 3 "and" 4 }
+  foo . print()
+  printeol()
+  print_array2({ "Hello_" 3 "_and_" 4 "\n" })
+
+test1()
