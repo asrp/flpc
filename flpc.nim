@@ -32,10 +32,10 @@ const
   LENGTH* = -1
   TL* = 3
   TL_MAX = (1 shl TL) - 1
-  MAX_NUM_STRINGS = 10000
+  MAX_NUM_STRINGS = 1000000
   EMPTY_STR = ""
   EMPTY_MEM = 0
-  MAX_CALL_STACK_LEN = 1000
+  MAX_CALL_STACK_LEN = 10000
 
 type
   ElemType* = enum Int, Str, Pointer, Prim, Special
