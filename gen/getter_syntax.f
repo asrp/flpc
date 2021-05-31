@@ -12,5 +12,5 @@
  [ push: ! token ] bind: tempgen10
  [ pushf: tempgen0 pushf: tempgen1 pushf: tempgen2 pushf: tempgen3 pushf: tempgen4 pushf: tempgen5 pushf: tempgen6 pushf: tempgen7 pushf: tempgen8 pushf: tempgen9 pushf: tempgen10 ] bind: tempgen11
  [ newfunc0
-  pushf: tempgen11 or return1 ] bind: flpcg.rules.bin_op
- push: bin_op pick: flpcg.rules.bin_op pick: flpcg.rules hashtable.set
+  pushf: tempgen11 or func_return ] bind: flpcg.rules.bin_op
+ push: bin\uop pick: flpcg.rules.bin_op pick: flpcg.rules hashtable.set

@@ -65,8 +65,7 @@ convert_attr <- fun[obj]:
 #   call(True hashtable.get(name array_hash))
 
 # Don't have lexical scoping yet I don't think.
-F' [ newfunc3 assign: searcher assign: receiver assign: name
-     pick: True ] bind: hash_header 'F
+F' [ pick: True ] bind: hash_header 'F
 
 print("obj total len ")
 print(boot_array.attrib)
@@ -90,19 +89,16 @@ print(obj_total_len(boot_array_class))
 printeol()
 
 hashtable.hash <- convert_attr(hashtable_class)
-# Not real fast_fun since "hash_header" calls newfunc3
-hashtable.attrib <- fast_fun[]:
+hashtable.attrib <- fun[name receiver searcher]:
   hash_header()
   call(hashtable.get(name hashtable.hash))
 
 boot_array.hash <- convert_attr(boot_array_class)
-# Not real fast_fun since "hash_header" calls newfunc3
-boot_array.attrib <- fast_fun[]:
+boot_array.attrib <- fun[name receiver searcher]:
   hash_header()
   call(hashtable.get(name boot_array.hash))
 
 boot_dict.hash <- convert_attr(boot_dict_class)
-# Not real fast_fun since "hash_header" calls newfunc3
-boot_dict.attrib <- fast_fun[]:
+boot_dict.attrib <- fun[name receiver searcher]:
   hash_header()
   call(hashtable.get(name boot_dict.hash))

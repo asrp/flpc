@@ -20,7 +20,7 @@ ns_obj <- class[]:
     memory.append(child_hash)
     memory.append(names.get("]"))
     pointer = Pointer(memory.len() - 2)
-    set_mem_hint(pointer str_cat(" instance" parent . type 2))
+    set_mem_hint(pointer str_cat(Done " instance" parent . type))
     return(pointer)
 
   set_attr <- fun[key value self]:
@@ -46,7 +46,7 @@ ns_bind_colon <- fun[func]:
   name = input.next_token()
   current_ns . set(name func)
   # current_ns should have a __name__? __ns_name__?
-  set_mem_hint(func str_cat(name "ns." 2))
+  set_mem_hint(func str_cat(Done name "ns."))
 
 current_ns <- hashtable(100)
 ns_obj_class <- ns_obj.child(current_ns boot_obj)
@@ -61,14 +61,14 @@ new_ns_class <- fun[name]:
   # Contains hard-coded names semantics!
   #hashtable.set("current_ns" hashtable(100) names2())
   hashtable.set("type" name current_ns)
-  class_name = str_cat("_class" name 2)
+  class_name = str_cat(Done "_class" name)
   hashtable.set(class_name ns_obj.child(current_ns ns_obj_class) names2())
   new_class = names.get(class_name)
   # Problem: need the child class to create a closure!
   instance_creator = closure(new_class . child new_class)
   hashtable.set(name instance_creator names2())
-  set_mem_hint(current_ns str_cat(".attr" class_name 2))
-  set_mem_hint(instance_creator str_cat(" instance creator" class_name 2))
+  set_mem_hint(current_ns str_cat(Done ".attr" class_name))
+  set_mem_hint(instance_creator str_cat(Done " instance creator" class_name))
 
 String <- ns_class[]:
   child <- fun[str parent]:
@@ -211,3 +211,10 @@ top_level_exception_handler <- fun[error]:
   return(result)
 
 error_handler_set(top_level_exception_handler)
+
+yield <- fast_fun[value]:
+  # Implicit value already on stack is returned.
+  return_two(make_resizable(Done local_call_stack()))
+
+next <- local_fun[call_stack_copy]:
+  load_call_stack(call_stack_copy . array + 1 call_stack_copy . len 1)

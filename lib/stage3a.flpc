@@ -8,18 +8,18 @@ to_flpc2 <- fun[root]:
     # print(root . type)
     if not(is_instance(root node_class)):
         printrepr(root)
-        return_no_value2()
+        return_no_value()
     name = root . name
     if string_equal(name "quantifier"):
-        return_no_value2(to_flpc2(root . get(0)))
+        return_no_value(to_flpc2(root . get(0)))
     if string_equal(name "inline"):
-        return_no_value2(to_flpc2(root . get(0)))
+        return_no_value(to_flpc2(root . get(0)))
     if (string_equal(name "exactly") || string_equal(name "token")) && is_instance(root . get(0) node_class):
         if not(string_equal(root . get(0) . name "escaped_char")):
             tprint(root . get(0))
             error("Unexpected child of exactly. Was expecting a escaped chart.")
         # printrepr(to_flpc2(root . get(0) . get(0)))
-        return_no_value2(to_flpc2(node(root . name root . get(0) . get(0))))
+        return_no_value(to_flpc2(node(root . name root . get(0) . get(0))))
     if string_equal(name "rule"):
         printraw(parseg . get("prefix"))
         print(".rules.")
@@ -27,7 +27,7 @@ to_flpc2 <- fun[root]:
         print(" <- fun[]:\n    return(")
         to_flpc2(root . get(3))
         print(")")
-        return_no_value2()
+        return_no_value()
 
     if string_equal(name "output"):
         print("out")

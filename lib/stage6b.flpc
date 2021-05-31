@@ -21,7 +21,7 @@ simplify <- fun[root]:
       drop1(`cond)
       i = `i + 2
       output = node(root . get(i - 1) . get(0)
-                    make_resizable(simplify(root . get(i)) simplify(output) 2))
+                    make_resizable(Done simplify(root . get(i)) simplify(output)))
       # TODO: Add this once we have pos added.
       # output.pos = root[i].pos
       output i = shuffle("214")
@@ -45,9 +45,9 @@ simplify <- fun[root]:
         if string_equal(last_child . name "if"):
           # Doesn't work because we actually need to change last_child's
           # parent pointer
-          # last_child = node("multi_if" make_resizable(last_child 1))
+          # last_child = node("multi_if" make_resizable(Done last_child))
           last_child . set_name("multi_if")
-          last_child . set_children(make_resizable(node("if" last_child . children) 1))
+          last_child . set_children(make_resizable(Done node("if" last_child . children)))
         last_child . children . append(child)
         # dprint("child:_" child)
         # dprint("last_child:_" last_child)
@@ -91,7 +91,7 @@ simplify <- fun[root]:
 newfunc_str <- fun[i]:
   if not(i < 4):
     error("newfunc called with unexpected argument")
-  return(str_cat(int_to_str(i) "newfunc" 2))
+  return(str_cat(Done int_to_str(i) "newfunc"))
 
 to_flist <- fun[array]:
   change_class(array FList_class)
@@ -146,16 +146,16 @@ to_forth_conv <- class[]:
     return(forthe("FComment" children))
 
   variable <- fun[root]:
-    return(changed_class(FList_class make_resizable(to_forth(root . get(0)) forthe("FCall" "pick:") 2)))
+    return(changed_class(FList_class make_resizable(Done to_forth(root . get(0)) forthe("FCall" "pick:"))))
 
   NAME <- fun[root]:
     return(forthe("FStr" root . get(0)))
 
   name_quote <- fun[root]:
-    return(changed_class(FList_class make_resizable(to_forth(root . get(0)) forthe("FCall" "check:") 2)))
+    return(changed_class(FList_class make_resizable(Done to_forth(root . get(0)) forthe("FCall" "check:"))))
 
   STRING <- fun[root]:
-    return(changed_class(FList_class make_resizable(forthe("FStr" string_escape(root . get(0))) forthe("FCall" "push:") 2)))
+    return(changed_class(FList_class make_resizable(Done forthe("FStr" string_escape(root . get(0))) forthe("FCall" "push:"))))
 
   NUMBER <- fun[root]:
     child = root . children . get(0)
@@ -167,7 +167,7 @@ to_forth_conv <- class[]:
     if string_equal(child "0") || string_equal(child "1") || string_equal(child "2"):
       output = forthe("FStr" child)
     else:
-      output = changed_class(FList_class make_resizable(forthe("FStr" child) forthe("FCall" "pushi:") 2))
+      output = changed_class(FList_class make_resizable(Done forthe("FStr" child) forthe("FCall" "pushi:")))
     print("NUMBER out: ")
     # Broken for some reason
     # Maybe change_class doens't work that well?
@@ -182,7 +182,7 @@ to_forth_conv <- class[]:
   assign <- fun[root]:
     output = to_forth(root . get(1))
     if not(is_instance(output FList_class)):
-      output = changed_class(FList_class make_resizable(output 1))
+      output = changed_class(FList_class make_resizable(Done output))
     assignments = resizable(0)
     names = root . get(0)
     i = names . len
@@ -209,17 +209,17 @@ to_forth_conv <- class[]:
         names = output . get(0) . slice(1 -1 2)
       if is_fun:
         if names . len < 4:
-          decl = make_resizable(forthe("FCall" newfunc_str(names . len)) 1)
+          decl = make_resizable(Done forthe("FCall" newfunc_str(names . len)))
         else:
-          decl = make_resizable(forthe("FCall" "newfunc")
+          decl = make_resizable(Done
+                                forthe("FCall" "newfunc")
                                 forthe("FStr" int_to_str(names . len))
-                                forthe("FCall" "pushi:")
-                                3)
+                                forthe("FCall" "pushi:"))
       if is_local_fun:
-        decl = make_resizable(forthe("FCall" "remove_top_names")
+        decl = make_resizable(Done
+                              forthe("FCall" "remove_top_names")
                               forthe("FStr" int_to_str(names . len))
-                              forthe("FCall" "pushi:")
-                              3)
+                              forthe("FCall" "pushi:"))
       if is_fast_fun || is_inline:
         decl = resizable(0)
       change_class(decl FList_class)
@@ -266,7 +266,7 @@ to_forth_conv <- class[]:
     dprint("root name:" root . name)
     debugger2() # bind start
     if not(is_instance(output FList_class)):
-      output = make_resizable(`output 1)
+      output = make_resizable(`output Done s21())
       change_class(output FList_class)
     output . append(forthe("FCall" "bind:"))
     output . append(to_forth(root . get(0) . get(0)))
@@ -279,16 +279,16 @@ to_forth_conv <- class[]:
   # "." node
   dot <- fun[root]:
     if string_equal(root . get(1) . name "variable"):
-      children = make_resizable(to_forth(root . get(1) . get(0))
+      children = make_resizable(Done
+                                to_forth(root . get(1) . get(0))
                                 forthe("FCall" "attr:")
-                                to_forth(root . get(0))
-                                3)
+                                to_forth(root . get(0)))
     else:
       children = list_comp([to_forth(elem)] root . get(1))
-      calls = make_resizable(forthe("FStr" root . get(1) . name)
+      calls = make_resizable(Done
+                             forthe("FStr" root . get(1) . name)
                              forthe("FCall" "attr_call:")
-                             to_forth(root . get(0))
-                             3)
+                             to_forth(root . get(0)))
       extend(`calls children)
     return(changed_class(FList_class flatten(children FList_class)))
 
@@ -421,7 +421,7 @@ write_string_body <- fun[root depth]:
     elif string_equal(root . name "FCall"):
       # Need special case for return
       if string_equal(root . value "return") || string_equal(root . value "return_two"):
-        write_sep(str_cat(int_to_str(depth) root . value 2))
+        write_sep(str_cat(Done root . value "func_"))
       else:
         write_sep(root . value)
     elif string_equal(root . name "FStr"):
@@ -469,13 +469,13 @@ write_blocks <- fun[root depth]:
     # dprint("g:_" g)
     debugger2() # write_blocks fquote
     if string_equal(root . name " "):
-      # name_array = make_resizable(int_to_str(g . get("autogen_count")) "autogen" 2)
+      # name_array = make_resizable(Done int_to_str(g . get("autogen_count")) "autogen")
       # dprint("name_array:_" name_array)
       # name = str_join(name_array  . array + 1 name_array . len)
-      name = str_cat(int_to_str(g . get("autogen_count")) g . get("autogen_name") 2)
+      name = str_cat(Done int_to_str(g . get("autogen_count")) g . get("autogen_name"))
       # dprint("name:_" name)
       root . set_name(name)
-      # root . set_name(str_join(make_resizable(int_to_str(g . get("autogen_count")) "autogen" 2) . array 2))
+      # root . set_name(str_join(make_resizable(Done int_to_str(g . get("autogen_count")) "autogen" 2) . array))
       g . set("autogen_count" g . get("autogen_count") + 1)
     g . set("nesting" 0)
     write_sep("[")
@@ -512,7 +512,7 @@ replace_name <- fun[s]:
     # dprint("sub:_" sub_str(s str_len(s) - 6 str_len(s)))
     debugger2()
   if lazy_and([string_equal(sub_str(s str_len(s) - 6 str_len(s)) "_colon")] str_len(s) > 6):
-    return(str_cat(":" sub_str(s 0 str_len(s) - 6) 2))
+    return(str_cat(Done ":" sub_str(s 0 str_len(s) - 6)))
   return(s)
 
 write_suite <- fun[root prefix]:
@@ -542,7 +542,7 @@ write_child <- fun[child prefix]:
         if prefix == None():
           func_name = child . get(child . len - 1) . value
         else:
-          func_name = str_cat(child . get(child . len - 1) . value "." prefix 3)
+          func_name = str_cat(Done child . get(child . len - 1) . value "." prefix)
         func_name = replace_name(`func_name)
         body . set_name(func_name)
         # dprint("func_name:_" func_name)

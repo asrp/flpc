@@ -30,7 +30,22 @@ simple_for <- fast_fun[end start block]:
   drop1(`end)
   drop1(`block)
 
+# Use memory location as Singleton
+memory.append(None())
+Done <- Pointer(memory.len() - 1)
+
 make_resizable <- fast_fun[num]:
+  new_resizable = resizable(0)
+  new_resizable elem = s21()
+  not(pick1() == Done)
+  repeat_if:
+    drop1() # Condition
+    new_resizable . append(`elem)
+    new_resizable elem = s21()
+    not(pick1() == Done)
+  shuffle("23") # return(new_resizable) and drop elem = Done
+
+make_resizable_len <- fast_fun[num]:
   new_resizable = resizable(0)
   new_resizable num = s21()
   simple_for(`num 0 fast_fun[index]:
@@ -157,8 +172,7 @@ FQuote_class <- boot_obj . subclass(FQuote.attrib)
 FQuote <- closure(FQuote_class . instance FQuote_class)
 
 FQuote.hash <- convert_attr(FQuote_class)
-# Not a real fast_fun since "hash_header" calls newfunc3
-FQuote.attrib <- fast_fun[]:
+FQuote.attrib <- fun[name receiver searcher]:
   hash_header()
   call(hashtable.get(name FQuote.hash))
 

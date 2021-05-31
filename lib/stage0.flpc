@@ -26,9 +26,9 @@ debugger_inner <- fun[]:
     if string_equal(name "s"):
       return(None())
     if string_equal(name "n"):
-      return(call_stack.len() - 4)
-    if string_equal(name "r"):
       return(call_stack.len() - 5)
+    if string_equal(name "r"):
+      return(call_stack.len() - 6)
     if string_equal(name "c"):
       return(0)
     if string_equal(name "i"):

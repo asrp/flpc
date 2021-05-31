@@ -24,7 +24,7 @@ print_child <- fun[indent child]:
 pprint <- fun[indent self]:
   if string_equal(self . name "exprsp"):
     pprint(indent self . children . get(0))
-    return_no_value2()
+    return_no_value()
   bad = False
   if is_instance(self . children resizable_class):
     if self . children . len == 2:

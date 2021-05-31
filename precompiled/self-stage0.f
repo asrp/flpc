@@ -2259,6 +2259,6 @@ push: Generated_from_lib/stage0.flpc_lib/stage1a.flpc_lib/stage1b.flpc_lib/stage
    None set_output 
    pick: filenames pushf: autogen670 for_in return_no_value ] bind: compile_all 
 [ newfunc0 
-   pick: Done push: test/self.flpc push: lib/stage6b.flpc push: lib/stage6a.flpc push: lib/flpc\ugrammar.flpc push: lib/stage3b.flpc push: lib/stage3a.flpc push: lib/stage1d.flpc push: lib/stage1c.flpc push: lib/stage1b3.flpc push: lib/stage1b2.flpc push: lib/stage1b.flpc push: lib/stage1a.flpc push: lib/stage0.flpc make_resizable assign: filenames 
+   pick: Done push: lib/stage0.flpc make_resizable assign: filenames 
    pick: filenames push: gen/output.f compile_all return_no_value ] bind: compile_self 
  compile_self 

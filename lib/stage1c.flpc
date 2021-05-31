@@ -52,7 +52,7 @@ resizable <- class[]:
 
   append_array <- fun[value self]:
     if value == None():
-      return_no_value2()
+      return_no_value()
     # tprint(value)
     # if is_instance(node_class value):
     #   value = value . children
@@ -114,8 +114,7 @@ resizable_class <- boot_obj . subclass(resizable.attrib)
 resizable <- closure(resizable_class . instance resizable_class)
 
 resizable.hash <- convert_attr(resizable_class)
-# Not real fast_fun since "hash_header" calls newfunc3
-resizable.attrib <- fast_fun[]:
+resizable.attrib <- fun[name receiver searcher]:
   hash_header()
   call(hashtable.get(name resizable.hash))
 
@@ -179,8 +178,7 @@ node_class <- boot_obj . subclass(node.attrib)
 node <- closure(node_class . instance node_class)
 
 node.hash <- convert_attr(node_class)
-# Not real fast_fun since "hash_header" calls newfunc3
-node.attrib <- fast_fun[]:
+node.attrib <- fun[name receiver searcher]:
   hash_header()
   call(hashtable.get(name node.hash))
 
@@ -233,8 +231,7 @@ Input_class <- boot_obj . subclass(Input.attrib)
 Input <- closure(Input_class . instance Input_class)
 
 Input.hash <- convert_attr(Input_class)
-# Not real fast_fun since "hash_header" calls newfunc3
-Input.attrib <- fast_fun[]:
+Input.attrib <- fun[name receiver searcher]:
   hash_header()
   call(hashtable.get(name Input.hash))
 

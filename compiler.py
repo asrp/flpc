@@ -266,7 +266,7 @@ def write_string_body(root, depth):
         write_sep(root.func_name, pos=root.pos)
     elif isinstance(root, FCall):
         if str(root) in ["return", "return_two"]:
-            write_sep("%s%s" % (root, depth), pos=root.pos)
+            write_sep("func_%s" % root, pos=root.pos)
         else:
             write_sep(str(root), pos=root.pos)
     elif isinstance(root, FStr):

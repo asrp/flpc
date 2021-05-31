@@ -2,6 +2,10 @@ This file lists backwards incompatible changes. If this becomes heavily used, mi
 
 # Changes
 
+## Mid April 2021
+
+- Call stack use explicit separators to delimit function calls. `newfunc`/`return` changed drastically as a result.
+
 ## April 2021
 
 - Reversed order of args of `memory.set` so it matches other `. set` functions.

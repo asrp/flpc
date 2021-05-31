@@ -5,13 +5,13 @@ push: Generated_from_lib/stage0.flpc_lib/stage1a.flpc_lib/stage1b.flpc_lib/stage
    pick: location 1 + push: ] names.get memory.set 
    s21 memory.set return_no_value ] bind: rebind: 
 [ newfunc0 
-  input.next_token return1 ] bind: pushn: 
+  input.next_token func_return ] bind: pushn: 
 [ 
   print_state ] bind: ps 
-[ None return3 ] bind: autogen0 
-[ call_stack.len pushi: 4 - return3 ] bind: autogen1 
-[ call_stack.len pushi: 5 - return3 ] bind: autogen2 
-[ 0 return3 ] bind: autogen3 
+[ None func_return ] bind: autogen0 
+[ call_stack.len pushi: 5 - func_return ] bind: autogen1 
+[ call_stack.len pushi: 6 - func_return ] bind: autogen2 
+[ 0 func_return ] bind: autogen3 
 [ print_state ] bind: autogen4 
 [ print_state ] bind: autogen5 
 [ push: Running_ print 
@@ -73,7 +73,7 @@ push: Generated_from_lib/stage0.flpc_lib/stage1a.flpc_lib/stage1b.flpc_lib/stage
    check: parent memory.append 
    check: attrib memory.append 
    push: ] names.get memory.append 
-   memory.len 1 - Pointer return1 ] bind: subclass 
+   memory.len 1 - Pointer func_return ] bind: subclass 
  pick: nullobj.attrib None subclass bind: nullobj 
 [ push: Cannot_find_ print 
   pick: name print 
@@ -84,11 +84,11 @@ push: Generated_from_lib/stage0.flpc_lib/stage1a.flpc_lib/stage1b.flpc_lib/stage
    pick: searcher attr: parent assign: parent 
    pick: parent pick: nullobj == pushf: autogen13 if 
    pick: name pick: receiver pick: parent pick1 assign: parent_copy 
-   check: parent_copy 1 - memory.get call return1 ] bind: instance_attrib 
+   check: parent_copy 1 - memory.get call func_return ] bind: instance_attrib 
 [ newfunc1 assign: self 
-   push: Boot_object_at_ return1 ] bind: minobj.str 
+   push: Boot_object_at_ func_return ] bind: minobj.str 
 [ newfunc1 assign: parent 
-  pick: instance_attrib pick: parent subclass return1 ] bind: minobj.instance 
+  pick: instance_attrib pick: parent subclass func_return ] bind: minobj.instance 
 [ newfunc3 assign: searcher assign: receiver assign: name 
   push: Dummy_function_should_not_be_called error return_no_value ] bind: minobj.attrib 
 [ push: Boot_looking_up_ print 
@@ -102,7 +102,7 @@ push: Generated_from_lib/stage0.flpc_lib/stage1a.flpc_lib/stage1b.flpc_lib/stage
    pick: name push: subclass string_equal pick: subclass return_if 
    pick: name push: str string_equal pick: minobj.str return_if 
    pick: name push: type string_equal push: minobj return_if 
-   pick: name pick: receiver pick: searcher instance_attrib return1 ] rebind: minobj.attrib 
+   pick: name pick: receiver pick: searcher instance_attrib func_return ] rebind: minobj.attrib 
  pick: minobj.attrib pick: nullobj subclass bind: boot_obj 
 [ 0 memory.append 
   check: i 1 - assign: i ] bind: autogen15 
@@ -120,7 +120,7 @@ push: Generated_from_lib/stage0.flpc_lib/stage1a.flpc_lib/stage1b.flpc_lib/stage
    pick: new_obj pick: length memory.set 
    pick: length memory.extend 
    push: ] names.get memory.append 
-   pick: new_obj return1 ] bind: boot_array.instance 
+   pick: new_obj func_return ] bind: boot_array.instance 
 [ push: Index_out_of_range error ] bind: autogen20 
 [ push: Index_out_of_range error ] bind: autogen21 
 [ newfunc2 assign: self assign: key 
@@ -128,7 +128,7 @@ push: Generated_from_lib/stage0.flpc_lib/stage1a.flpc_lib/stage1b.flpc_lib/stage
    pick: key pick: self memory.get < not pushf: autogen21 if return_no_value ] bind: boot_array.in_range 
 [ newfunc2 assign: self assign: key 
    pick: key pick: self boot_array.in_range 
-   pick: self pick: key + 1 + memory.get return1 ] bind: boot_array.get 
+   pick: self pick: key + 1 + memory.get func_return ] bind: boot_array.get 
 [ newfunc3 assign: self assign: value assign: key 
    pick: key pick: self boot_array.in_range 
    pick: self pick: key + 1 + pick: value memory.set return_no_value ] bind: boot_array.set 
@@ -141,15 +141,15 @@ push: Generated_from_lib/stage0.flpc_lib/stage1a.flpc_lib/stage1b.flpc_lib/stage
    pick: l assign: i 
    pushf: autogen22 repeat_if 
    push: } print return_no_value ] bind: boot_array.print 
-[ check: i return3 ] bind: autogen23 
+[ check: i func_return ] bind: autogen23 
 [ check: i 1 - assign: i 
   pick: value pick: i pick: self boot_array.get string_equal pushf: autogen23 if ] bind: autogen24 
 [ newfunc2 assign: self assign: value 
    pick: self memory.get assign: i 
    pushf: autogen24 repeat_if 
-   None return1 ] bind: boot_array.string_index 
-[ check: i return3 ] bind: autogen25 
-[ None return3 ] bind: autogen26 
+   None func_return ] bind: boot_array.string_index 
+[ check: i func_return ] bind: autogen25 
+[ None func_return ] bind: autogen26 
 [ drop1 
   pick: self memory.get assign: i ] bind: autogen27 
 [ pick: key pick: i pick: self boot_array.get string_equal pushf: autogen25 if 
@@ -159,7 +159,7 @@ push: Generated_from_lib/stage0.flpc_lib/stage1a.flpc_lib/stage1b.flpc_lib/stage
 [ newfunc3 assign: self assign: i assign: key 
    s21 assign: i assign: self 
    pushf: autogen28 repeat return_no_value ] bind: boot_array.hash_index 
-[ check: i return3 ] bind: autogen29 
+[ check: i func_return ] bind: autogen29 
 [ drop1 
   pick: self memory.get assign: i ] bind: autogen30 
 [ pick: i pick: self boot_array.get 0 == pushf: autogen29 if 
@@ -189,7 +189,7 @@ push: Generated_from_lib/stage0.flpc_lib/stage1a.flpc_lib/stage1b.flpc_lib/stage
    pick: name push: copy\uto string_equal pick: boot_array.copy_to return_if 
    pick: name push: len string_equal pick: receiver memory.get return_if 
    pick: name push: type string_equal push: boot\uarray return_if 
-   pick: name pick: receiver pick: searcher instance_attrib return1 ] bind: boot_array.attrib 
+   pick: name pick: receiver pick: searcher instance_attrib func_return ] bind: boot_array.attrib 
  pick: boot_array.attrib pick: boot_obj attr_call: subclass bind: boot_array_class 
  pick: boot_array_class attr: instance pick: boot_array_class closure bind: boot_array 
 [ newfunc2 assign: self assign: length 
@@ -201,11 +201,11 @@ push: Generated_from_lib/stage0.flpc_lib/stage1a.flpc_lib/stage1b.flpc_lib/stage
    pick: keys memory.append 
    pick: values memory.append 
    push: ] names.get memory.append 
-   pick: new_obj return1 ] bind: boot_dict.instance 
+   pick: new_obj func_return ] bind: boot_dict.instance 
 [ newfunc2 assign: self assign: key 
    pick: key pick: self 1 + memory.get boot_array.string_index assign: index 
    pick: index None == None return_if 
-   pick: index pick: self 2 + memory.get boot_array.get return1 ] bind: boot_dict.get 
+   pick: index pick: self 2 + memory.get boot_array.get func_return ] bind: boot_dict.get 
 [ newfunc3 assign: self assign: value assign: key 
    pick: self memory.get assign: l 
    pick: l pick: key pick: self 1 + memory.get boot_array.set 
@@ -240,15 +240,15 @@ push: Generated_from_lib/stage0.flpc_lib/stage1a.flpc_lib/stage1b.flpc_lib/stage
    pick: name push: keys string_equal pick: receiver 1 + memory.get return_if 
    pick: name push: values string_equal pick: receiver 2 + memory.get return_if 
    pick: name push: type string_equal push: boot\udict return_if 
-   pick: name pick: receiver pick: searcher instance_attrib return1 ] bind: boot_dict.attrib 
+   pick: name pick: receiver pick: searcher instance_attrib func_return ] bind: boot_dict.attrib 
  pick: boot_dict.attrib pick: boot_obj attr_call: subclass bind: boot_dict_class 
  pick: boot_dict_class attr: instance pick: boot_dict_class closure bind: boot_dict 
-[ pick: False return2 ] bind: autogen36 
+[ pick: False func_return ] bind: autogen36 
 [ newfunc2 assign: class assign: other 
    pick: other is_basic pushf: autogen36 if 
-   check: class pick: other 2 - memory.get == return1 ] bind: is_instance 
+   check: class pick: other 2 - memory.get == func_return ] bind: is_instance 
  memory.len Pointer bind: obj_boundary 
-[ pick: False return3 ] bind: autogen37 
+[ pick: False func_return ] bind: autogen37 
 [ drop1 
   pick: n pick: i mod 0 == pushf: autogen37 if 
   check: i 1 + assign: i 
@@ -257,8 +257,8 @@ push: Generated_from_lib/stage0.flpc_lib/stage1a.flpc_lib/stage1b.flpc_lib/stage
    2 assign: i 
    pick: i pick: n < assign: cond 
    pushf: autogen38 repeat_if 
-   pick: True return1 ] bind: is_prime 
-[ check: n return3 ] bind: autogen39 
+   pick: True func_return ] bind: is_prime 
+[ check: n func_return ] bind: autogen39 
 [ pick: n is_prime pushf: autogen39 if 
   check: n 1 + assign: n ] bind: autogen40 
 [ newfunc1 assign: n 
@@ -273,12 +273,12 @@ push: Generated_from_lib/stage0.flpc_lib/stage1a.flpc_lib/stage1b.flpc_lib/stage
    pick: keys memory.append 
    pick: values memory.append 
    push: ] names.get memory.append 
-   pick: new_obj return1 ] bind: hashtable.instance 
+   pick: new_obj func_return ] bind: hashtable.instance 
 [ newfunc2 assign: self assign: key 
    pick: key hash pick: self memory.get mod assign: start 
    pick: key pick: start pick: self 1 + memory.get boot_array.hash_index assign: index 
    pick: index None == None return_if 
-   pick: index pick: self 2 + memory.get boot_array.get return1 ] bind: hashtable.get 
+   pick: index pick: self 2 + memory.get boot_array.get func_return ] bind: hashtable.get 
 [ push: Index_too_big error ] bind: autogen41 
 [ push: Index_still_too_big error ] bind: autogen42 
 [ push: Negative_index error ] bind: autogen43 
@@ -322,7 +322,7 @@ push: Generated_from_lib/stage0.flpc_lib/stage1a.flpc_lib/stage1b.flpc_lib/stage
    0 assign: count 
    pick: self memory.get assign: i 
    pushf: autogen49 repeat_if 
-   pick: count return1 ] bind: hashtable.num_elems 
+   pick: count func_return ] bind: hashtable.num_elems 
 [ push: Dict_looking_up_ print 
   pick: name print 
   printeol ] bind: autogen50 
@@ -336,7 +336,7 @@ push: Generated_from_lib/stage0.flpc_lib/stage1a.flpc_lib/stage1b.flpc_lib/stage
    pick: name push: keys string_equal pick: receiver 1 + memory.get return_if 
    pick: name push: values string_equal pick: receiver 2 + memory.get return_if 
    pick: name push: type string_equal push: hashtable return_if 
-   pick: name pick: receiver pick: searcher instance_attrib return1 ] bind: hashtable.attrib 
+   pick: name pick: receiver pick: searcher instance_attrib func_return ] bind: hashtable.attrib 
  pick: hashtable.attrib pick: boot_obj attr_call: subclass bind: hashtable_class 
  pick: hashtable_class attr: instance pick: hashtable_class closure bind: hashtable 
  pushi: 2131 hashtable bind: names 
@@ -346,7 +346,7 @@ push: Generated_from_lib/stage0.flpc_lib/stage1a.flpc_lib/stage1b.flpc_lib/stage
    pick: index int_to_str pick: hint pick: mem_value hashtable.set 
    pick: hint pick: index memory_hint.set return_no_value ] bind: set_mem_hint 
 [ newfunc1 assign: index 
-  pick: index int_to_str pick: mem_value hashtable.get return1 ] bind: get_mem_hint 
+  pick: index int_to_str pick: mem_value hashtable.get func_return ] bind: get_mem_hint 
 [ pick: index pushi: 3 + memory.get pick: index memory.get set_mem_hint ] bind: autogen51 
 [ check: cond drop1 
   pick: index memory.get pick: index pushi: 3 + memory.get pick: names attr_call: set 
@@ -366,7 +366,7 @@ push: Generated_from_lib/stage0.flpc_lib/stage1a.flpc_lib/stage1b.flpc_lib/stage
 [ newfunc1 assign: name 
    pick: name names2 hashtable.get assign: value 
    pick: value None == pushf: autogen54 if 
-   pick: value return1 ] bind: names.get 
+   pick: value func_return ] bind: names.get 
 [ newfunc1 assign: value 
    input.next_token assign: name 
    pick: name pick: value names2 hashtable.set 
@@ -375,18 +375,18 @@ push: Generated_from_lib/stage0.flpc_lib/stage1a.flpc_lib/stage1b.flpc_lib/stage
  push: bind: push: new.bind names2 hashtable.get names2 hashtable.set 
   push: bind: names2 hashtable.get rebind: bind: 
   push: names.get names2 hashtable.get rebind: names.get 
-[ pick: index pick: func - return3 ] bind: autogen55 
+[ pick: index pick: func - func_return ] bind: autogen55 
 [ pick: index memory.get pick: end_of_func == pushf: autogen55 if 
   check: index 1 + assign: index ] bind: autogen56 
 [ newfunc1 assign: func 
    pick: func assign: index 
    pushf: autogen56 repeat return_no_value ] bind: func_len 
-[ check: index return3 ] bind: autogen57 
+[ check: index func_return ] bind: autogen57 
 [ check: index 1 + assign: index 
   pick: index memory.get pick: return_if == pushf: autogen57 if ] bind: autogen58 
 [ newfunc1 assign: index 
   pushf: autogen58 repeat return_no_value ] bind: read_to_return_if 
-[ None return3 ] bind: autogen59 
+[ None func_return ] bind: autogen59 
 [ pick: index pushi: 3 + memory.get pick: index pushi: 5 + pick: attrib_hash attr_call: set ] bind: autogen60 
 [ pick: index pick: end > pushf: autogen59 if 
   pick: index pushi: 3 + memory.get tprint 
@@ -404,7 +404,7 @@ push: Generated_from_lib/stage0.flpc_lib/stage1a.flpc_lib/stage1b.flpc_lib/stage
 [ push: Total_len:_ print 
   pick: len print 
   printeol 
-  pick: len return3 ] bind: autogen62 
+  pick: len func_return ] bind: autogen62 
 [ pick: obj pick: nullobj_cached == pushf: autogen62 if 
   check: len pick: obj attr: attrib_raw func_len + assign: len 
   pick: obj attr: parent assign: parent 
@@ -414,7 +414,7 @@ push: Generated_from_lib/stage0.flpc_lib/stage1a.flpc_lib/stage1b.flpc_lib/stage
    s21 assign: obj assign: nullobj_cached 
    pick: obj attr: attrib_raw func_len assign: len 
    pushf: autogen63 repeat return_no_value ] bind: obj_total_len 
-[ pick: attrib_hash return3 ] bind: autogen64 
+[ pick: attrib_hash func_return ] bind: autogen64 
 [ pick: obj pick: nullobj_cached == pushf: autogen64 if 
   pick: obj attr: attrib_raw pick: attrib_hash add_attrib assign: attrib_hash 
   pick: obj attr: parent assign: parent 
@@ -425,8 +425,7 @@ push: Generated_from_lib/stage0.flpc_lib/stage1a.flpc_lib/stage1b.flpc_lib/stage
    pick: obj obj_total_len assign: len 
    check: len hashtable assign: attrib_hash 
    pushf: autogen65 repeat return_no_value ] bind: convert_attr 
-  [ newfunc3 assign: searcher assign: receiver assign: name 
-  pick: True ] bind: hash_header 
+  [ pick: True ] bind: hash_header 
  push: obj_total_len_ print 
  pick: boot_array.attrib print 
  printeol 
@@ -448,17 +447,17 @@ push: Generated_from_lib/stage0.flpc_lib/stage1a.flpc_lib/stage1b.flpc_lib/stage
  pick: boot_array_class obj_total_len print 
  printeol 
  pick: hashtable_class convert_attr bind: hashtable.hash 
-[ 
+[ newfunc3 assign: searcher assign: receiver assign: name 
    hash_header 
-   pick: name pick: hashtable.hash hashtable.get call ] rebind: hashtable.attrib 
+   pick: name pick: hashtable.hash hashtable.get call return_no_value ] rebind: hashtable.attrib 
  pick: boot_array_class convert_attr bind: boot_array.hash 
-[ 
+[ newfunc3 assign: searcher assign: receiver assign: name 
    hash_header 
-   pick: name pick: boot_array.hash hashtable.get call ] rebind: boot_array.attrib 
+   pick: name pick: boot_array.hash hashtable.get call return_no_value ] rebind: boot_array.attrib 
  pick: boot_dict_class convert_attr bind: boot_dict.hash 
-[ 
+[ newfunc3 assign: searcher assign: receiver assign: name 
    hash_header 
-   pick: name pick: boot_dict.hash hashtable.get call ] rebind: boot_dict.attrib 
+   pick: name pick: boot_dict.hash hashtable.get call return_no_value ] rebind: boot_dict.attrib 
 [ newfunc2 assign: self assign: length 
    pick: length pick: length + pushi: 3 + pick: boot_array_class boot_array.instance assign: _array 
    pick: boot_obj minobj.instance assign: new_obj 
@@ -466,13 +465,13 @@ push: Generated_from_lib/stage0.flpc_lib/stage1a.flpc_lib/stage1b.flpc_lib/stage
    pick: new_obj pick: length memory.set 
    pick: _array memory.append 
    push: ] names.get memory.append 
-   pick: new_obj return1 ] bind: resizable.instance 
+   pick: new_obj func_return ] bind: resizable.instance 
 [ newfunc2 assign: self assign: key 
-  pick: key pick: self 1 + memory.get boot_array.get return1 ] bind: resizable.get 
+  pick: key pick: self 1 + memory.get boot_array.get func_return ] bind: resizable.get 
 [ newfunc3 assign: self assign: value assign: key 
   pick: key pick: value pick: self 1 + memory.get boot_array.set return_no_value ] bind: resizable.set 
 [ newfunc2 assign: self assign: name 
-  pick: name pick: self 1 + memory.get boot_array.string_index return1 ] bind: resizable.string_index 
+  pick: name pick: self 1 + memory.get boot_array.string_index func_return ] bind: resizable.string_index 
 [ newfunc1 assign: self 
    pick: self memory.get assign: length 
    pick: length pick: length + pushi: 3 + pick: boot_array_class boot_array.instance assign: new_array 
@@ -485,7 +484,7 @@ push: Generated_from_lib/stage0.flpc_lib/stage1a.flpc_lib/stage1b.flpc_lib/stage
 [ newfunc1 assign: self 
   pick: self pick: self memory.get 1 + memory.set return_no_value ] bind: resizable.increase 
 [ newfunc1 assign: self 
-   pick: self 1 + memory.get memory.get return1 ] bind: resizable.max_len 
+   pick: self 1 + memory.get memory.get func_return ] bind: resizable.max_len 
 [ pick: self resizable.double ] bind: autogen66 
 [ newfunc2 assign: self assign: value 
    pick: self memory.get pick: self resizable.max_len < not pushf: autogen66 if 
@@ -497,7 +496,7 @@ push: Generated_from_lib/stage0.flpc_lib/stage1a.flpc_lib/stage1b.flpc_lib/stage
    pick: other attr: len assign: l 
    pick: l assign: i 
    pushf: autogen67 repeat_if return_no_value ] bind: resizable.extend 
-[ return_no_value2 ] bind: autogen68 
+[ return_no_value ] bind: autogen68 
 [ pick: value pick: self resizable.extend ] bind: autogen69 
 [ pick: value pick: self resizable.append ] bind: autogen70 
 [ newfunc2 assign: self assign: value 
@@ -505,9 +504,9 @@ push: Generated_from_lib/stage0.flpc_lib/stage1a.flpc_lib/stage1b.flpc_lib/stage
    pick: value pick: resizable_class is_instance pushf: autogen69 pushf: autogen70 if-else return_no_value ] bind: resizable.append_array 
 [ newfunc1 assign: self 
    pick: self pick: self memory.get 1 - memory.set 
-   pick: self memory.get pick: self resizable.get return1 ] bind: resizable.pop 
+   pick: self memory.get pick: self resizable.get func_return ] bind: resizable.pop 
 [ newfunc1 assign: self 
-  pick: self memory.get 1 - pick: self resizable.get return1 ] bind: resizable.top 
+  pick: self memory.get 1 - pick: self resizable.get func_return ] bind: resizable.top 
 [ printspace ] bind: autogen71 
 [ pick: l pick: i - pick: self resizable.get tprint 
   pick: i 1 > pushf: autogen71 if 
@@ -519,7 +518,7 @@ push: Generated_from_lib/stage0.flpc_lib/stage1a.flpc_lib/stage1b.flpc_lib/stage
    pushf: autogen72 repeat_if 
    push: ] print return_no_value ] bind: resizable.print 
 [ newfunc1 assign: self 
-  pick: self attr: array 1 + pick: self attr: len str_join return1 ] bind: resizable.join 
+  pick: self attr: array 1 + pick: self attr: len str_join func_return ] bind: resizable.join 
 [ push: Resizable_looking_up_ print 
   pick: name print 
   printeol ] bind: autogen73 
@@ -543,22 +542,22 @@ push: Generated_from_lib/stage0.flpc_lib/stage1a.flpc_lib/stage1b.flpc_lib/stage
    pick: name push: len string_equal pick: receiver memory.get return_if 
    pick: name push: array string_equal pick: receiver 1 + memory.get return_if 
    pick: name push: type string_equal push: resizable return_if 
-   pick: name pick: receiver pick: searcher instance_attrib return1 ] bind: resizable.attrib 
+   pick: name pick: receiver pick: searcher instance_attrib func_return ] bind: resizable.attrib 
  pick: resizable.attrib pick: boot_obj attr_call: subclass bind: resizable_class 
  pick: resizable_class attr: instance pick: resizable_class closure bind: resizable 
  pick: resizable_class convert_attr bind: resizable.hash 
-[ 
+[ newfunc3 assign: searcher assign: receiver assign: name 
    hash_header 
-   pick: name pick: resizable.hash hashtable.get call ] rebind: resizable.attrib 
+   pick: name pick: resizable.hash hashtable.get call return_no_value ] rebind: resizable.attrib 
 [ newfunc3 assign: self assign: children assign: name 
    pick: boot_obj minobj.instance assign: new_obj 
    pick: new_obj 2 - pick: self memory.set 
    pick: new_obj pick: name memory.set 
    pick: children memory.append 
    push: ] names.get memory.append 
-   check: new_obj return1 ] bind: node.instance 
-[ pick: key pick: children resizable.get return2 ] bind: autogen74 
-[ pick: children return3 ] bind: autogen75 
+   check: new_obj func_return ] bind: node.instance 
+[ pick: key pick: children resizable.get func_return ] bind: autogen74 
+[ pick: children func_return ] bind: autogen75 
 [ pick: key 0 == pushf: autogen75 if 
   push: Out_of_bound_index error ] bind: autogen76 
 [ newfunc2 assign: self assign: key 
@@ -569,8 +568,8 @@ push: Generated_from_lib/stage0.flpc_lib/stage1a.flpc_lib/stage1b.flpc_lib/stage
    push: { print 
    pick: self 1 + memory.get tprint 
    push: } print return_no_value ] bind: node.print 
-[ pick: children memory.get return2 ] bind: autogen77 
-[ 1 return2 ] bind: autogen78 
+[ pick: children memory.get func_return ] bind: autogen77 
+[ 1 func_return ] bind: autogen78 
 [ newfunc1 assign: self 
    pick: self 1 + memory.get assign: children 
    pick: children pick: resizable_class is_instance pushf: autogen77 pushf: autogen78 if-else return_no_value ] bind: node.len 
@@ -592,32 +591,32 @@ push: Generated_from_lib/stage0.flpc_lib/stage1a.flpc_lib/stage1b.flpc_lib/stage
    pick: name push: name string_equal pick: receiver memory.get return_if 
    pick: name push: children string_equal pick: receiver 1 + memory.get return_if 
    pick: name push: type string_equal push: node return_if 
-   pick: name pick: receiver pick: searcher instance_attrib return1 ] bind: node.attrib 
+   pick: name pick: receiver pick: searcher instance_attrib func_return ] bind: node.attrib 
  pick: node.attrib pick: boot_obj attr_call: subclass bind: node_class 
  pick: node_class attr: instance pick: node_class closure bind: node 
  pick: node_class convert_attr bind: node.hash 
-[ 
+[ newfunc3 assign: searcher assign: receiver assign: name 
    hash_header 
-   pick: name pick: node.hash hashtable.get call ] rebind: node.attrib 
+   pick: name pick: node.hash hashtable.get call return_no_value ] rebind: node.attrib 
 [ newfunc2 assign: self assign: filename 
    pick: boot_obj minobj.instance assign: new_obj 
    pick: new_obj 2 - pick: self memory.set 
    pick: new_obj push: r pick: filename file.open memory.set 
    0 memory.append 
    push: ] names.get memory.append 
-   pick: new_obj return1 ] bind: Input.instance 
+   pick: new_obj func_return ] bind: Input.instance 
 [ newfunc1 assign: self 
-  pick: self memory.get fd_next_token return1 ] bind: Input.next 
+  pick: self memory.get fd_next_token func_return ] bind: Input.next 
 [ newfunc1 assign: self 
-  pick: self memory.get fd_next_char return1 ] bind: Input.next_char 
+  pick: self memory.get fd_next_char func_return ] bind: Input.next_char 
 [ newfunc2 assign: self assign: s 
-  pick: s pick: self memory.get fd_startswith return1 ] bind: Input.startswith 
+  pick: s pick: self memory.get fd_startswith func_return ] bind: Input.startswith 
 [ newfunc1 assign: self 
-  check: self memory.get fd_position return1 ] bind: Input.position 
+  check: self memory.get fd_position func_return ] bind: Input.position 
 [ newfunc2 assign: self assign: value 
   check: self memory.get pick: value fd_position_set return_no_value ] bind: Input.position_set 
 [ newfunc1 assign: self 
-  check: self memory.get fd_ended return1 ] bind: Input.ended 
+  check: self memory.get fd_ended func_return ] bind: Input.ended 
 [ push: Input_looking_up_ print 
   pick: name print 
   printeol ] bind: autogen80 
@@ -632,19 +631,19 @@ push: Generated_from_lib/stage0.flpc_lib/stage1a.flpc_lib/stage1b.flpc_lib/stage
    pick: name push: position\uset string_equal pick: Input.position_set return_if 
    pick: name push: file string_equal pick: receiver memory.get return_if 
    pick: name push: type string_equal push: Input return_if 
-   pick: name pick: receiver pick: searcher instance_attrib return1 ] bind: Input.attrib 
+   pick: name pick: receiver pick: searcher instance_attrib func_return ] bind: Input.attrib 
  pick: Input.attrib pick: boot_obj attr_call: subclass bind: Input_class 
  pick: Input_class attr: instance pick: Input_class closure bind: Input 
  pick: Input_class convert_attr bind: Input.hash 
-[ 
+[ newfunc3 assign: searcher assign: receiver assign: name 
    hash_header 
-   pick: name pick: Input.hash hashtable.get call ] rebind: Input.attrib 
+   pick: name pick: Input.hash hashtable.get call return_no_value ] rebind: Input.attrib 
 [ newfunc1 assign: self 
    pick: boot_obj minobj.instance assign: new_obj 
    pick: new_obj 2 - pick: self memory.set 
    pick: new_obj _cheat_dict.new memory.set 
    push: ] names.get memory.append 
-   pick: new_obj return1 ] bind: cheat_dict.instance 
+   pick: new_obj func_return ] bind: cheat_dict.instance 
 [ push: CheatDict_looking_up_ print 
   pick: name print 
   printeol ] bind: autogen81 
@@ -653,7 +652,7 @@ push: Generated_from_lib/stage0.flpc_lib/stage1a.flpc_lib/stage1b.flpc_lib/stage
    pick: name push: instance string_equal pick: cheat_dict.instance return_if 
    pick: name push: get string_equal pick: _cheat_dict.get return_if 
    pick: name push: set string_equal pick: _cheat_dict.set return_if 
-   pick: name pick: receiver pick: searcher instance_attrib return1 ] bind: cheat_dict.attrib 
+   pick: name pick: receiver pick: searcher instance_attrib func_return ] bind: cheat_dict.attrib 
  pick: cheat_dict.attrib pick: boot_obj attr_call: subclass bind: cheat_dict_class 
  pick: cheat_dict_class attr: instance pick: cheat_dict_class closure bind: cheat_dict 
 [ newfunc2 assign: self assign: message 
@@ -661,7 +660,7 @@ push: Generated_from_lib/stage0.flpc_lib/stage1a.flpc_lib/stage1b.flpc_lib/stage
    pick: new_obj 2 - pick: self memory.set 
    pick: new_obj pick: message memory.set 
    push: ] names.get memory.append 
-   pick: new_obj return1 ] bind: MatchError.instance 
+   pick: new_obj func_return ] bind: MatchError.instance 
 [ newfunc1 assign: self 
    push: Match_error: print 
    check: self memory.get print return_no_value ] bind: MatchError.print 
@@ -673,35 +672,35 @@ push: Generated_from_lib/stage0.flpc_lib/stage1a.flpc_lib/stage1b.flpc_lib/stage
    pick: name push: instance string_equal pick: MatchError.instance return_if 
    pick: name push: print string_equal pick: MatchError.print return_if 
    pick: name push: type string_equal push: MatchError return_if 
-   pick: name pick: receiver pick: searcher instance_attrib return1 ] bind: MatchError.attrib 
+   pick: name pick: receiver pick: searcher instance_attrib func_return ] bind: MatchError.attrib 
  pick: MatchError.attrib pick: boot_obj attr_call: subclass bind: MatchError_class 
  pick: MatchError_class attr: instance pick: MatchError_class closure bind: MatchError 
-[ push: End_of_file MatchError return2 ] bind: autogen83 
-[ push: Not_exactly MatchError return2 ] bind: autogen84 
+[ push: End_of_file MatchError func_return ] bind: autogen83 
+[ push: Not_exactly MatchError func_return ] bind: autogen84 
 [ newfunc1 assign: char 
    pick: source attr_call: next_char assign: input_char 
     pick: input_char None == pushf: autogen83 if 
     pick: char pick: input_char string_equal not pushf: autogen84 if 
-   check: input_char return1 ] bind: exactly 
-[ push: End_of_file MatchError return2 ] bind: autogen85 
-[ push: Not_between MatchError return2 ] bind: autogen86 
+   check: input_char func_return ] bind: exactly 
+[ push: End_of_file MatchError func_return ] bind: autogen85 
+[ push: Not_between MatchError func_return ] bind: autogen86 
 [ newfunc2 assign: end assign: start 
    pick: source attr_call: next_char assign: input_char 
     pick: input_char None == pushf: autogen85 if 
     pick: start pick: end pick: input_char char_between not pushf: autogen86 if 
-   check: input_char return1 ] bind: between 
-[ push: End_of_file MatchError return2 ] bind: autogen87 
-[ push: Not_exactly MatchError return2 ] bind: autogen88 
+   check: input_char func_return ] bind: between 
+[ push: End_of_file MatchError func_return ] bind: autogen87 
+[ push: Not_exactly MatchError func_return ] bind: autogen88 
 [ newfunc1 assign: char 
    pick: source attr_call: next assign: input_char 
     pick: input_char None == pushf: autogen87 if 
     pick: char pick: input_char string_equal not pushf: autogen88 if 
-   check: input_char return1 ] bind: token 
-[ 0 0 return_two2 ] bind: autogen89 
+   check: input_char func_return ] bind: token 
+[ 0 0 func_return_two ] bind: autogen89 
 [ newfunc1 assign: children 
    pick: children memory.get pick: end_of_func == pushf: autogen89 if 
-   pick: children 2 + pick: children 1 + memory.get return_two1 return_no_value ] bind: next_child 
-[ check: output return3 ] bind: autogen90 
+   pick: children 2 + pick: children 1 + memory.get func_return_two return_no_value ] bind: next_child 
+[ check: output func_return ] bind: autogen90 
 [ check: child call assign: output 
   pick: output pick: MatchError_class is_instance not pushf: autogen90 if 
   check: output drop1 
@@ -712,33 +711,33 @@ push: Generated_from_lib/stage0.flpc_lib/stage1a.flpc_lib/stage1b.flpc_lib/stage
    s21 assign: children assign: saved 
    check: children next_child assign: child assign: children 
    pushf: autogen91 repeat_if 
-   push: No_OR_child_matches MatchError return1 ] bind: or 
-[ check: output return2 ] bind: autogen92 
+   push: No_OR_child_matches MatchError func_return ] bind: or 
+[ check: output func_return ] bind: autogen92 
 [ newfunc1 assign: child 
    check: child call assign: output 
    pick: output pick: MatchError_class is_instance pushf: autogen92 if 
-   push: out pick: output node return1 ] bind: out 
-[ pick: output attr: name push: out string_equal return2 ] bind: autogen93 
+   push: out pick: output node func_return ] bind: out 
+[ pick: output attr: name push: out string_equal func_return ] bind: autogen93 
 [ newfunc1 assign: output 
    pick: output pick: node_class is_instance pushf: autogen93 if 
-   pick: False return1 ] bind: is_output 
-[ pick: outputs return3 ] bind: autogen94 
-[ pick: outputs attr: array 1 + pick: length str_join return4 ] bind: autogen95 
+   pick: False func_return ] bind: is_output 
+[ pick: outputs func_return ] bind: autogen94 
+[ pick: outputs attr: array 1 + pick: length str_join func_return ] bind: autogen95 
 [ pick: output str_len 1 == pushf: autogen95 if ] bind: autogen96 
-[ pick: output return3 ] bind: autogen97 
+[ pick: output func_return ] bind: autogen97 
 [ pick: outputs attr: len assign: length 
   pick: length 0 == pushf: autogen94 if 
   0 pick: outputs attr_call: get assign: output 
    pick: output is_str pushf: autogen96 if 
    pick: length 1 == pushf: autogen97 if ] bind: autogen98 
-[ pick: outputs attr: children return4 ] bind: autogen99 
+[ pick: outputs attr: children func_return ] bind: autogen99 
 [ pick: outputs attr: children is_str pushf: autogen99 if ] bind: autogen100 
 [ pick: outputs pick: node_class is_instance pushf: autogen100 if ] bind: autogen101 
 [ newfunc1 assign: outputs 
    pick: outputs pick: resizable_class is_instance pushf: autogen98 pushf: autogen101 if-else 
-   pick: outputs return1 ] bind: make_string 
+   pick: outputs func_return ] bind: make_string 
 [ pick: saved pick: source attr_call: position_set 
-  push: And_match_failed MatchError return3 ] bind: autogen102 
+  push: And_match_failed MatchError func_return ] bind: autogen102 
 [ pick: output attr: children pick: outputs attr_call: append_array ] bind: autogen103 
 [ pick: output is_output pushf: autogen103 if 
   check: output drop1 ] bind: autogen104 
@@ -760,21 +759,21 @@ push: Generated_from_lib/stage0.flpc_lib/stage1a.flpc_lib/stage1b.flpc_lib/stage
    pick: init_children assign: children 
    check: children next_child assign: child assign: children 
    pushf: autogen108 repeat_if 
-   pick: outputs make_string return1 ] bind: and 
-[ 0 c.infinity return_two2 ] bind: autogen109 
-[ 1 c.infinity return_two2 ] bind: autogen110 
-[ 0 1 return_two2 ] bind: autogen111 
+   pick: outputs make_string func_return ] bind: and 
+[ 0 c.infinity func_return_two ] bind: autogen109 
+[ 1 c.infinity func_return_two ] bind: autogen110 
+[ 0 1 func_return_two ] bind: autogen111 
 [ newfunc1 assign: quantifier 
     pick: quantifier push: * string_equal pushf: autogen109 if 
     pick: quantifier push: + string_equal pushf: autogen110 if 
     pick: quantifier push: ? string_equal pushf: autogen111 if 
    push: Unknown_quantifier error return_no_value ] bind: get_bounds 
 [ pick: start_saved pick: source attr_call: position_set 
-  push: Quantified_undermatch MatchError return4 ] bind: autogen112 
+  push: Quantified_undermatch MatchError func_return ] bind: autogen112 
 [ pick: count pick: lower < pushf: autogen112 if 
   pick: saved pick: source attr_call: position_set 
-  pick: outputs make_string return3 ] bind: autogen113 
-[ pick: outputs make_string return3 ] bind: autogen114 
+  pick: outputs make_string func_return ] bind: autogen113 
+[ pick: outputs make_string func_return ] bind: autogen114 
 [ pick: source attr_call: position assign: saved 
   pick: child call assign: output 
   pick: output pick: MatchError_class is_instance pushf: autogen113 if 
@@ -788,23 +787,23 @@ push: Generated_from_lib/stage0.flpc_lib/stage1a.flpc_lib/stage1b.flpc_lib/stage
    pick: source attr_call: position assign: start_saved 
    0 assign: count 
    pushf: autogen115 repeat return_no_value ] bind: quantified 
-[ None return2 ] bind: autogen116 
+[ None func_return ] bind: autogen116 
 [ newfunc1 assign: child 
    pick: source attr_call: position assign: saved 
    s21 assign: child assign: saved 
    check: child call assign: output 
    pick: saved pick: source attr_call: position_set 
    pick: output pick: MatchError_class is_instance pushf: autogen116 if 
-   push: Negation_is_true MatchError return1 ] bind: negation 
-[ pick: output return2 ] bind: autogen117 
+   push: Negation_is_true MatchError func_return ] bind: negation 
+[ pick: output func_return ] bind: autogen117 
 [ newfunc2 assign: name assign: child 
    pick: child call assign: output 
    pick: output pick: MatchError_class is_instance pushf: autogen117 if 
-   pick: name pick: output node return1 ] bind: bound 
-[ pick: output attr: len 1 > return2 ] bind: autogen118 
+   pick: name pick: output node func_return ] bind: bound 
+[ pick: output attr: len 1 > func_return ] bind: autogen118 
 [ newfunc1 assign: output 
    pick: output pick: resizable_class is_instance pushf: autogen118 if 
-   pick: False return1 ] bind: should_make_node 
+   pick: False func_return ] bind: should_make_node 
  pushi: 40 hashtable bind: parseg 
 [ newfunc0 
   push: apply\uprint pick: True pick: parseg attr_call: set return_no_value ] bind: debug_parse 
@@ -846,12 +845,12 @@ push: Generated_from_lib/stage0.flpc_lib/stage1a.flpc_lib/stage1b.flpc_lib/stage
   push: _->_ print 
   pick: output tprint 
   printeol ] bind: autogen124 
-[ pick: output return2 ] bind: autogen125 
+[ pick: output func_return ] bind: autogen125 
 [ push: Making_node_ print 
   pick: name printraw 
   printeol 
-  pick: name pick: output node return2 ] bind: autogen126 
-[ pick: output return2 ] bind: autogen127 
+  pick: name pick: output node func_return ] bind: autogen126 
+[ pick: output func_return ] bind: autogen127 
 [ newfunc1 assign: name 
    push: nest pick: parseg attr_call: get assign: nesting 
    push: apply\uprint pick: parseg attr_call: get pushf: autogen120 if 
@@ -863,30 +862,30 @@ push: Generated_from_lib/stage0.flpc_lib/stage1a.flpc_lib/stage1b.flpc_lib/stage
     pick: output pick: MatchError_class is_instance pushf: autogen125 if 
     pick: output should_make_node pushf: autogen126 if 
     pick: name push: flagged pick: parseg attr_call: get attr_call: string_index None == pushf: autogen127 if 
-   pick: name pick: output node return1 ] rebind: _apply 
+   pick: name pick: output node func_return ] rebind: _apply 
 [ check: new_pos pick: source attr_call: position_set 
-  check: mem_out return2 ] bind: autogen128 
+  check: mem_out func_return ] bind: autogen128 
 [ pick: source attr_call: position assign: saved 
   pick: name _apply assign: output 
   pick: name pick: saved push: indentation pick: parseg attr_call: get pick: output pick: source attr_call: position memoizer.set 
-  check: output return2 ] bind: autogen129 
+  check: output func_return ] bind: autogen129 
 [ newfunc1 assign: name 
    pick: name pick: source attr_call: position push: indentation pick: parseg attr_call: get memoizer.get assign: memoized assign: new_pos assign: mem_out 
    check: memoized pushf: autogen128 pushf: autogen129 if-else return_no_value ] bind: apply 
-[ push: End_of_file MatchError return2 ] bind: autogen130 
+[ push: End_of_file MatchError func_return ] bind: autogen130 
 [ newfunc0 
    pick: source attr_call: next_char assign: char 
    pick: char None == pushf: autogen130 if 
-   check: char return1 ] bind: base.rules.anything 
+   check: char func_return ] bind: base.rules.anything 
 [ newfunc0 
-  None return1 ] bind: base.rules.void 
+  None func_return ] bind: base.rules.void 
 [ push: a push: z between ] bind: autogen131 
 [ push: A push: Z between ] bind: autogen132 
 [ pushf: autogen131 pushf: autogen132 ] bind: autogen133 
 [ newfunc0 
-  pushf: autogen133 or return1 ] bind: base.rules.letter 
+  pushf: autogen133 or func_return ] bind: base.rules.letter 
 [ newfunc0 
-  push: 0 push: 9 between return1 ] bind: base.rules.digit 
+  push: 0 push: 9 between func_return ] bind: base.rules.digit 
 [ push: rule.letter apply ] bind: autogen134 
 [ push: \u exactly ] bind: autogen135 
 [ pushf: autogen134 pushf: autogen135 ] bind: autogen136 
@@ -899,14 +898,14 @@ push: Generated_from_lib/stage0.flpc_lib/stage1a.flpc_lib/stage1b.flpc_lib/stage
 [ pushf: autogen142 push: * quantified ] bind: autogen143 
 [ pushf: autogen137 pushf: autogen143 ] bind: autogen144 
 [ newfunc0 
-  pushf: autogen144 and return1 ] bind: base.rules.name 
-[ pick: output return2 ] bind: autogen145 
-[ push: \t return2 ] bind: autogen146 
-[ push: \n return2 ] bind: autogen147 
-[ push: \r return2 ] bind: autogen148 
-[ push: \\ return2 ] bind: autogen149 
-[ push: ' return2 ] bind: autogen150 
-[ push: " return2 ] bind: autogen151 
+  pushf: autogen144 and func_return ] bind: base.rules.name 
+[ pick: output func_return ] bind: autogen145 
+[ push: \t func_return ] bind: autogen146 
+[ push: \n func_return ] bind: autogen147 
+[ push: \r func_return ] bind: autogen148 
+[ push: \\ func_return ] bind: autogen149 
+[ push: ' func_return ] bind: autogen150 
+[ push: " func_return ] bind: autogen151 
 [ newfunc0 
    push: raw\uescaped\uchar apply assign: output 
     pick: output pick: MatchError_class is_instance pushf: autogen145 if 
@@ -929,21 +928,19 @@ push: Generated_from_lib/stage0.flpc_lib/stage1a.flpc_lib/stage1b.flpc_lib/stage
  push: stage2.pkl load 
 [ newfunc1 assign: root 
   push: Dummy_function_should_not_be_called error return_no_value ] bind: to_flpc2 
-[ pick: root printrepr 
-  return_no_value2 ] bind: autogen152 
-[ 0 pick: root attr_call: get to_flpc2 return_no_value2 ] bind: autogen153 
-[ 0 pick: root attr_call: get to_flpc2 return_no_value2 ] bind: autogen154 
+[ pick: root printrepr return_no_value ] bind: autogen152 
+[ 0 pick: root attr_call: get to_flpc2 return_no_value ] bind: autogen153 
+[ 0 pick: root attr_call: get to_flpc2 return_no_value ] bind: autogen154 
 [ 0 pick: root attr_call: get tprint 
   push: Unexpected_child_of_exactly._Was_expecting_a_escaped_chart. error ] bind: autogen155 
 [ 0 pick: root attr_call: get attr: name push: escaped\uchar string_equal not pushf: autogen155 if 
-  pick: root attr: name 0 0 pick: root attr_call: get attr_call: get node to_flpc2 return_no_value2 ] bind: autogen156 
+  pick: root attr: name 0 0 pick: root attr_call: get attr_call: get node to_flpc2 return_no_value ] bind: autogen156 
 [ push: prefix pick: parseg attr_call: get printraw 
   push: .rules. print 
   0 0 pick: root attr_call: get attr_call: get printraw 
   push: _<-_fun[]:\n____return( print 
   pushi: 3 pick: root attr_call: get to_flpc2 
-  push: ) print 
-  return_no_value2 ] bind: autogen157 
+  push: ) print return_no_value ] bind: autogen157 
 [ push: out print ] bind: autogen158 
 [ pick: name printraw ] bind: autogen159 
 [ push: [ print ] bind: autogen160 
@@ -1082,7 +1079,7 @@ push: Generated_from_lib/stage0.flpc_lib/stage1a.flpc_lib/stage1b.flpc_lib/stage
    pick: parseg print 
    printeol 
    push: grammar apply assign: output 
-   pick: output return1 ] bind: parse_grammar 
+   pick: output func_return ] bind: parse_grammar 
 [ 1 resizable assign: wrapped 
   0 pick: output pick: wrapped attr_call: set ] bind: autogen177 
 [ pick: output assign: wrapped ] bind: autogen178 
@@ -1118,35 +1115,35 @@ push: Generated_from_lib/stage0.flpc_lib/stage1a.flpc_lib/stage1b.flpc_lib/stage
    pick: output print_grammar_all 
    None set_output 
    pick: outf file.close return_no_value ] bind: write_parsed 
-[ None return2 ] bind: autogen180 
+[ None func_return ] bind: autogen180 
 [ newfunc0 
    pick: source attr_call: position assign: saved 
    push: hspaces apply make_string assign: s 
    push: indentation pick: parseg attr_call: get attr_call: top pick: s str_len == pushf: autogen180 if 
    pick: saved pick: source attr_call: position_set 
-   push: Different_indent MatchError return1 ] bind: base.rules.SAME_INDENT 
+   push: Different_indent MatchError func_return ] bind: base.rules.SAME_INDENT 
 [ newfunc0 
    push: indentation pick: parseg attr_call: get attr_call: pop 
-   None return1 ] bind: base.rules.DEDENT 
+   None func_return ] bind: base.rules.DEDENT 
 [ pick: saved pick: source attr_call: position_set 
-  push: Missing_newline_before_indent MatchError return2 ] bind: autogen181 
+  push: Missing_newline_before_indent MatchError func_return ] bind: autogen181 
 [ newfunc0 
    pick: source attr_call: position assign: saved 
    push: NEWLINE apply pick: MatchError_class is_instance pushf: autogen181 if 
    push: hspaces apply make_string assign: s 
    pick: saved pick: source attr_call: position_set 
    pick: s str_len push: indentation pick: parseg attr_call: get attr_call: append 
-   None return1 ] bind: base.rules.INDENT 
+   None func_return ] bind: base.rules.INDENT 
 [ check: output 1 + memory.get make_string assign: output ] bind: autogen182 
 [ push: NAME apply assign: output 
   pick: output pick: node_class is_instance pushf: autogen182 if ] bind: autogen183 
-[ push: Not_token_or_EOF MatchError return3 ] bind: autogen184 
+[ push: Not_token_or_EOF MatchError func_return ] bind: autogen184 
 [ pick: s pick: source attr_call: startswith assign: output 
   pick: output None == pushf: autogen184 if 
-  check: output return2 ] bind: autogen185 
-[ pick: output return2 ] bind: autogen186 
-[ push: End_of_file MatchError return2 ] bind: autogen187 
-[ push: Not_exactly_token MatchError return2 ] bind: autogen188 
+  check: output func_return ] bind: autogen185 
+[ pick: output func_return ] bind: autogen186 
+[ push: End_of_file MatchError func_return ] bind: autogen187 
+[ push: Not_exactly_token MatchError func_return ] bind: autogen188 
 [ newfunc1 assign: s 
    pick: source attr_call: position assign: saved 
    push: spaces apply drop1 
@@ -1154,7 +1151,7 @@ push: Generated_from_lib/stage0.flpc_lib/stage1a.flpc_lib/stage1b.flpc_lib/stage
     pick: output pick: MatchError_class is_instance pushf: autogen186 if 
     pick: output None == pushf: autogen187 if 
     pick: output pick: s string_equal not pushf: autogen188 if 
-   pick: output return1 ] rebind: token 
+   pick: output func_return ] rebind: token 
 [ newfunc1 assign: rules 
    push: INDENT pick: base.rules.INDENT pick: rules hashtable.set 
    push: DEDENT pick: base.rules.DEDENT pick: rules hashtable.set 
@@ -1171,32 +1168,32 @@ push: Generated_from_lib/stage0.flpc_lib/stage1a.flpc_lib/stage1b.flpc_lib/stage
 [ pushf: autogen189 pushf: autogen197 ] bind: autogen198 
 [ pushf: autogen198 and ] bind: autogen199 
 [ newfunc0 
-  pushf: autogen199 push: comment bound return1 ] bind: flpcg.rules.comment 
+  pushf: autogen199 push: comment bound func_return ] bind: flpcg.rules.comment 
 [ push: \n exactly ] bind: autogen200 
 [ push: \r exactly ] bind: autogen201 
 [ push: \s exactly ] bind: autogen202 
 [ push: \t exactly ] bind: autogen203 
 [ pushf: autogen200 pushf: autogen201 pushf: autogen202 pushf: autogen203 ] bind: autogen204 
 [ newfunc0 
-  pushf: autogen204 or return1 ] bind: flpcg.rules.space 
+  pushf: autogen204 or func_return ] bind: flpcg.rules.space 
 [ push: space apply ] bind: autogen205 
 [ newfunc0 
-  pushf: autogen205 push: * quantified return1 ] bind: flpcg.rules.spaces 
+  pushf: autogen205 push: * quantified func_return ] bind: flpcg.rules.spaces 
 [ push: space apply ] bind: autogen206 
 [ newfunc0 
-  pushf: autogen206 push: + quantified return1 ] bind: flpcg.rules.spacesp 
+  pushf: autogen206 push: + quantified func_return ] bind: flpcg.rules.spacesp 
 [ push: \s exactly ] bind: autogen207 
 [ push: \t exactly ] bind: autogen208 
 [ pushf: autogen207 pushf: autogen208 ] bind: autogen209 
 [ pushf: autogen209 or ] bind: autogen210 
 [ newfunc0 
-  pushf: autogen210 push: * quantified return1 ] bind: flpcg.rules.hspaces 
+  pushf: autogen210 push: * quantified func_return ] bind: flpcg.rules.hspaces 
 [ push: \s exactly ] bind: autogen211 
 [ push: \t exactly ] bind: autogen212 
 [ pushf: autogen211 pushf: autogen212 ] bind: autogen213 
 [ pushf: autogen213 or ] bind: autogen214 
 [ newfunc0 
-  pushf: autogen214 push: + quantified return1 ] bind: flpcg.rules.hspacesp 
+  pushf: autogen214 push: + quantified func_return ] bind: flpcg.rules.hspacesp 
 [ push: hspaces apply ] bind: autogen215 
 [ push: comment apply ] bind: autogen216 
 [ pushf: autogen216 push: ? quantified ] bind: autogen217 
@@ -1207,7 +1204,7 @@ push: Generated_from_lib/stage0.flpc_lib/stage1a.flpc_lib/stage1b.flpc_lib/stage
 [ pushf: autogen215 pushf: autogen217 pushf: autogen221 ] bind: autogen222 
 [ pushf: autogen222 and ] bind: autogen223 
 [ newfunc0 
-  pushf: autogen223 push: EMPTY\uLINE bound return1 ] bind: flpcg.rules.EMPTY_LINE 
+  pushf: autogen223 push: EMPTY\uLINE bound func_return ] bind: flpcg.rules.EMPTY_LINE 
 [ push: hspaces apply ] bind: autogen224 
 [ push: - exactly ] bind: autogen225 
 [ pushf: autogen225 push: ? quantified ] bind: autogen226 
@@ -1218,7 +1215,7 @@ push: Generated_from_lib/stage0.flpc_lib/stage1a.flpc_lib/stage1b.flpc_lib/stage
 [ pushf: autogen230 out ] bind: autogen231 
 [ pushf: autogen224 pushf: autogen231 ] bind: autogen232 
 [ newfunc0 
-  pushf: autogen232 and return1 ] bind: flpcg.rules.NUMBER 
+  pushf: autogen232 and func_return ] bind: flpcg.rules.NUMBER 
 [ push: hspaces apply ] bind: autogen233 
 [ push: \q exactly ] bind: autogen234 
 [ push: \q exactly ] bind: autogen235 
@@ -1247,7 +1244,7 @@ push: Generated_from_lib/stage0.flpc_lib/stage1a.flpc_lib/stage1b.flpc_lib/stage
 [ pushf: autogen257 out ] bind: autogen258 
 [ pushf: autogen233 pushf: autogen258 ] bind: autogen259 
 [ newfunc0 
-  pushf: autogen259 and return1 ] bind: flpcg.rules.STRING 
+  pushf: autogen259 and func_return ] bind: flpcg.rules.STRING 
 [ push: hspaces apply ] bind: autogen260 
 [ push: letter apply ] bind: autogen261 
 [ push: \u exactly ] bind: autogen262 
@@ -1280,7 +1277,7 @@ push: Generated_from_lib/stage0.flpc_lib/stage1a.flpc_lib/stage1b.flpc_lib/stage
 [ pushf: autogen288 out ] bind: autogen289 
 [ pushf: autogen260 pushf: autogen289 ] bind: autogen290 
 [ newfunc0 
-  pushf: autogen290 and return1 ] bind: flpcg.rules.NAME 
+  pushf: autogen290 and func_return ] bind: flpcg.rules.NAME 
 [ push: hspacesp apply ] bind: autogen291 
 [ push: 'F token ] bind: autogen292 
 [ pushf: autogen292 negation ] bind: autogen293 
@@ -1293,7 +1290,7 @@ push: Generated_from_lib/stage0.flpc_lib/stage1a.flpc_lib/stage1b.flpc_lib/stage
 [ pushf: autogen299 out ] bind: autogen300 
 [ pushf: autogen291 pushf: autogen293 pushf: autogen300 ] bind: autogen301 
 [ newfunc0 
-  pushf: autogen301 and return1 ] bind: flpcg.rules.FORTH_NAME 
+  pushf: autogen301 and func_return ] bind: flpcg.rules.FORTH_NAME 
 [ push: + token ] bind: autogen302 
 [ push: - token ] bind: autogen303 
 [ push: / token ] bind: autogen304 
@@ -1306,18 +1303,18 @@ push: Generated_from_lib/stage0.flpc_lib/stage1a.flpc_lib/stage1b.flpc_lib/stage
 [ push: && token ] bind: autogen311 
 [ pushf: autogen302 pushf: autogen303 pushf: autogen304 pushf: autogen305 pushf: autogen306 pushf: autogen307 pushf: autogen308 pushf: autogen309 pushf: autogen310 pushf: autogen311 ] bind: autogen312 
 [ newfunc0 
-  pushf: autogen312 or return1 ] bind: flpcg.rules.bin_op 
+  pushf: autogen312 or func_return ] bind: flpcg.rules.bin_op 
 [ push: NAME apply ] bind: autogen313 
 [ newfunc0 
-  pushf: autogen313 push: * quantified return1 ] bind: flpcg.rules.names 
+  pushf: autogen313 push: * quantified func_return ] bind: flpcg.rules.names 
 [ newfunc0 
-  push: NAME apply return1 ] bind: flpcg.rules.variable 
+  push: NAME apply func_return ] bind: flpcg.rules.variable 
 [ push: ` token ] bind: autogen314 
 [ push: NAME apply ] bind: autogen315 
 [ pushf: autogen315 out ] bind: autogen316 
 [ pushf: autogen314 pushf: autogen316 ] bind: autogen317 
 [ newfunc0 
-  pushf: autogen317 and return1 ] bind: flpcg.rules.name_quote 
+  pushf: autogen317 and func_return ] bind: flpcg.rules.name_quote 
 [ push: [ token ] bind: autogen318 
 [ push: ] token ] bind: autogen319 
 [ pushf: autogen319 negation ] bind: autogen320 
@@ -1331,7 +1328,7 @@ push: Generated_from_lib/stage0.flpc_lib/stage1a.flpc_lib/stage1b.flpc_lib/stage
 [ push: ] token ] bind: autogen328 
 [ pushf: autogen318 pushf: autogen327 pushf: autogen328 ] bind: autogen329 
 [ newfunc0 
-  pushf: autogen329 and return1 ] bind: flpcg.rules.quote 
+  pushf: autogen329 and func_return ] bind: flpcg.rules.quote 
 [ push: F' token ] bind: autogen330 
 [ push: forth\uline apply ] bind: autogen331 
 [ push: hspaces apply ] bind: autogen332 
@@ -1351,25 +1348,25 @@ push: Generated_from_lib/stage0.flpc_lib/stage1a.flpc_lib/stage1b.flpc_lib/stage
 [ push: 'F token ] bind: autogen346 
 [ pushf: autogen330 pushf: autogen344 pushf: autogen345 pushf: autogen346 ] bind: autogen347 
 [ newfunc0 
-  pushf: autogen347 and return1 ] bind: flpcg.rules.forth 
+  pushf: autogen347 and func_return ] bind: flpcg.rules.forth 
 [ push: FORTH\uNAME apply ] bind: autogen348 
 [ pushf: autogen348 push: NAME bound ] bind: autogen349 
 [ newfunc0 
-  pushf: autogen349 push: * quantified return1 ] bind: flpcg.rules.forth_line 
+  pushf: autogen349 push: * quantified func_return ] bind: flpcg.rules.forth_line 
 [ push: [ token ] bind: autogen350 
 [ push: names apply ] bind: autogen351 
 [ pushf: autogen351 out ] bind: autogen352 
 [ push: ] token ] bind: autogen353 
 [ pushf: autogen350 pushf: autogen352 pushf: autogen353 ] bind: autogen354 
 [ newfunc0 
-  pushf: autogen354 and return1 ] bind: flpcg.rules.simple_quote 
+  pushf: autogen354 and func_return ] bind: flpcg.rules.simple_quote 
 [ push: ( token ] bind: autogen355 
 [ push: expr apply ] bind: autogen356 
 [ pushf: autogen356 out ] bind: autogen357 
 [ push: ) token ] bind: autogen358 
 [ pushf: autogen355 pushf: autogen357 pushf: autogen358 ] bind: autogen359 
 [ newfunc0 
-  pushf: autogen359 and return1 ] bind: flpcg.rules.parenthesis 
+  pushf: autogen359 and func_return ] bind: flpcg.rules.parenthesis 
 [ push: NAME apply ] bind: autogen360 
 [ push: bin\uop apply ] bind: autogen361 
 [ pushf: autogen361 push: NAME bound ] bind: autogen362 
@@ -1383,7 +1380,7 @@ push: Generated_from_lib/stage0.flpc_lib/stage1a.flpc_lib/stage1b.flpc_lib/stage
 [ push: ) token ] bind: autogen370 
 [ pushf: autogen365 pushf: autogen366 pushf: autogen369 pushf: autogen370 ] bind: autogen371 
 [ newfunc0 
-  pushf: autogen371 and return1 ] bind: flpcg.rules.func_call 
+  pushf: autogen371 and func_return ] bind: flpcg.rules.func_call 
 [ push: NAME apply ] bind: autogen372 
 [ push: simple\uquote apply ] bind: autogen373 
 [ push: non\ublock apply ] bind: autogen374 
@@ -1400,7 +1397,7 @@ push: Generated_from_lib/stage0.flpc_lib/stage1a.flpc_lib/stage1b.flpc_lib/stage
 [ pushf: autogen384 push: parameters bound ] bind: autogen385 
 [ pushf: autogen372 pushf: autogen385 ] bind: autogen386 
 [ newfunc0 
-  pushf: autogen386 and return1 ] bind: flpcg.rules.block_call 
+  pushf: autogen386 and func_return ] bind: flpcg.rules.block_call 
 [ push: block\ucall apply ] bind: autogen387 
 [ push: NEWLINE apply ] bind: autogen388 
 [ pushf: autogen388 push: + quantified ] bind: autogen389 
@@ -1412,7 +1409,7 @@ push: Generated_from_lib/stage0.flpc_lib/stage1a.flpc_lib/stage1b.flpc_lib/stage
 [ pushf: autogen394 push: + quantified ] bind: autogen395 
 [ pushf: autogen387 pushf: autogen395 ] bind: autogen396 
 [ newfunc0 
-  pushf: autogen396 and return1 ] bind: flpcg.rules.multi_block_call 
+  pushf: autogen396 and func_return ] bind: flpcg.rules.multi_block_call 
 [ push: forth apply ] bind: autogen397 
 [ push: func\ucall apply ] bind: autogen398 
 [ push: name\uquote apply ] bind: autogen399 
@@ -1423,12 +1420,12 @@ push: Generated_from_lib/stage0.flpc_lib/stage1a.flpc_lib/stage1b.flpc_lib/stage
 [ push: variable apply ] bind: autogen404 
 [ pushf: autogen397 pushf: autogen398 pushf: autogen399 pushf: autogen400 pushf: autogen401 pushf: autogen402 pushf: autogen403 pushf: autogen404 ] bind: autogen405 
 [ newfunc0 
-  pushf: autogen405 or return1 ] bind: flpcg.rules.non_block_non_infix 
+  pushf: autogen405 or func_return ] bind: flpcg.rules.non_block_non_infix 
 [ push: infix apply ] bind: autogen406 
 [ push: non\ublock\unon\uinfix apply ] bind: autogen407 
 [ pushf: autogen406 pushf: autogen407 ] bind: autogen408 
 [ newfunc0 
-  pushf: autogen408 or return1 ] bind: flpcg.rules.non_block 
+  pushf: autogen408 or func_return ] bind: flpcg.rules.non_block 
 [ push: non\ublock\unon\uinfix apply ] bind: autogen409 
 [ push: bin\uop apply ] bind: autogen410 
 [ pushf: autogen410 push: op bound ] bind: autogen411 
@@ -1438,17 +1435,17 @@ push: Generated_from_lib/stage0.flpc_lib/stage1a.flpc_lib/stage1b.flpc_lib/stage
 [ pushf: autogen414 push: + quantified ] bind: autogen415 
 [ pushf: autogen409 pushf: autogen415 ] bind: autogen416 
 [ newfunc0 
-  pushf: autogen416 and return1 ] bind: flpcg.rules.infix 
+  pushf: autogen416 and func_return ] bind: flpcg.rules.infix 
 [ push: block\ucall apply ] bind: autogen417 
 [ push: non\ublock\unon\uinfix apply ] bind: autogen418 
 [ pushf: autogen417 pushf: autogen418 ] bind: autogen419 
 [ newfunc0 
-  pushf: autogen419 or return1 ] bind: flpcg.rules.non_infix 
+  pushf: autogen419 or func_return ] bind: flpcg.rules.non_infix 
 [ push: infix apply ] bind: autogen420 
 [ push: non\uinfix apply ] bind: autogen421 
 [ pushf: autogen420 pushf: autogen421 ] bind: autogen422 
 [ newfunc0 
-  pushf: autogen422 or return1 ] bind: flpcg.rules.expr 
+  pushf: autogen422 or func_return ] bind: flpcg.rules.expr 
 [ push: expr apply ] bind: autogen423 
 [ push: spacesp apply ] bind: autogen424 
 [ push: expr apply ] bind: autogen425 
@@ -1461,7 +1458,7 @@ push: Generated_from_lib/stage0.flpc_lib/stage1a.flpc_lib/stage1b.flpc_lib/stage
 [ push: void apply ] bind: autogen432 
 [ pushf: autogen431 pushf: autogen432 ] bind: autogen433 
 [ newfunc0 
-  pushf: autogen433 or return1 ] bind: flpcg.rules.exprs 
+  pushf: autogen433 or func_return ] bind: flpcg.rules.exprs 
 [ push: expr apply ] bind: autogen434 
 [ push: hspacesp apply ] bind: autogen435 
 [ push: expr apply ] bind: autogen436 
@@ -1471,7 +1468,7 @@ push: Generated_from_lib/stage0.flpc_lib/stage1a.flpc_lib/stage1b.flpc_lib/stage
 [ pushf: autogen439 push: * quantified ] bind: autogen440 
 [ pushf: autogen434 pushf: autogen440 ] bind: autogen441 
 [ newfunc0 
-  pushf: autogen441 and return1 ] bind: flpcg.rules.exprsp 
+  pushf: autogen441 and func_return ] bind: flpcg.rules.exprsp 
 [ push: names apply ] bind: autogen442 
 [ pushf: autogen442 out ] bind: autogen443 
 [ push: = token ] bind: autogen444 
@@ -1484,7 +1481,7 @@ push: Generated_from_lib/stage0.flpc_lib/stage1a.flpc_lib/stage1b.flpc_lib/stage
 [ push: exprsp apply ] bind: autogen451 
 [ pushf: autogen450 pushf: autogen451 ] bind: autogen452 
 [ newfunc0 
-  pushf: autogen452 and return1 ] bind: flpcg.rules.assign 
+  pushf: autogen452 and func_return ] bind: flpcg.rules.assign 
 [ push: names apply ] bind: autogen453 
 [ pushf: autogen453 out ] bind: autogen454 
 [ push: <- token ] bind: autogen455 
@@ -1492,13 +1489,13 @@ push: Generated_from_lib/stage0.flpc_lib/stage1a.flpc_lib/stage1b.flpc_lib/stage
 [ pushf: autogen456 out ] bind: autogen457 
 [ pushf: autogen454 pushf: autogen455 pushf: autogen457 ] bind: autogen458 
 [ newfunc0 
-  pushf: autogen458 and return1 ] bind: flpcg.rules.bind 
+  pushf: autogen458 and func_return ] bind: flpcg.rules.bind 
 [ push: multi\ublock\ucall apply ] bind: autogen459 
 [ push: bind apply ] bind: autogen460 
 [ push: assign apply ] bind: autogen461 
 [ pushf: autogen459 pushf: autogen460 pushf: autogen461 ] bind: autogen462 
 [ newfunc0 
-  pushf: autogen462 or return1 ] bind: flpcg.rules.statement 
+  pushf: autogen462 or func_return ] bind: flpcg.rules.statement 
 [ push: INDENT apply ] bind: autogen463 
 [ push: NEWLINE apply ] bind: autogen464 
 [ pushf: autogen464 push: + quantified ] bind: autogen465 
@@ -1513,7 +1510,7 @@ push: Generated_from_lib/stage0.flpc_lib/stage1a.flpc_lib/stage1b.flpc_lib/stage
 [ push: statement apply ] bind: autogen474 
 [ pushf: autogen473 pushf: autogen474 ] bind: autogen475 
 [ newfunc0 
-  pushf: autogen475 or return1 ] bind: flpcg.rules.suite 
+  pushf: autogen475 or func_return ] bind: flpcg.rules.suite 
 [ push: hspaces apply ] bind: autogen476 
 [ push: \n exactly ] bind: autogen477 
 [ push: \r exactly ] bind: autogen478 
@@ -1525,7 +1522,7 @@ push: Generated_from_lib/stage0.flpc_lib/stage1a.flpc_lib/stage1b.flpc_lib/stage
 [ push: COMMENT\uLINE apply ] bind: autogen484 
 [ pushf: autogen483 pushf: autogen484 ] bind: autogen485 
 [ newfunc0 
-  pushf: autogen485 or return1 ] bind: flpcg.rules.NEWLINE 
+  pushf: autogen485 or func_return ] bind: flpcg.rules.NEWLINE 
 [ push: hspaces apply ] bind: autogen486 
 [ push: comment apply ] bind: autogen487 
 [ pushf: autogen487 out ] bind: autogen488 
@@ -1536,7 +1533,7 @@ push: Generated_from_lib/stage0.flpc_lib/stage1a.flpc_lib/stage1b.flpc_lib/stage
 [ pushf: autogen492 or ] bind: autogen493 
 [ pushf: autogen486 pushf: autogen488 pushf: autogen489 pushf: autogen493 ] bind: autogen494 
 [ newfunc0 
-  pushf: autogen494 and return1 ] bind: flpcg.rules.COMMENT_LINE 
+  pushf: autogen494 and func_return ] bind: flpcg.rules.COMMENT_LINE 
 [ push: NEWLINE apply ] bind: autogen495 
 [ pushf: autogen495 push: * quantified ] bind: autogen496 
 [ push: SAME\uINDENT apply ] bind: autogen497 
@@ -1555,7 +1552,7 @@ push: Generated_from_lib/stage0.flpc_lib/stage1a.flpc_lib/stage1b.flpc_lib/stage
 [ pushf: autogen509 push: suite bound ] bind: autogen510 
 [ pushf: autogen508 pushf: autogen510 ] bind: autogen511 
 [ newfunc0 
-  pushf: autogen511 or return1 ] bind: flpcg.rules.grammar 
+  pushf: autogen511 or func_return ] bind: flpcg.rules.grammar 
  pushi: 148 hashtable bind: flpcg.rules 
  0 resizable bind: flpcg.flagged 
  push: comment pick: flpcg.rules.comment pick: flpcg.rules hashtable.set 
@@ -1638,81 +1635,93 @@ push: Generated_from_lib/stage0.flpc_lib/stage1a.flpc_lib/stage1b.flpc_lib/stage
    check: index drop1 
    check: end drop1 
    check: block drop1 ] bind: simple_for 
+ None memory.append 
+ memory.len 1 - Pointer bind: Done 
+[ drop1 
+  check: elem pick: new_resizable attr_call: append 
+  s21 assign: elem assign: new_resizable 
+  pick1 pick: Done == not ] bind: autogen515 
+[ 
+   0 resizable assign: new_resizable 
+   s21 assign: elem assign: new_resizable 
+   pick1 pick: Done == not 
+   pushf: autogen515 repeat_if 
+   push: 23 shuffle ] bind: make_resizable 
 [ 
    push: 51234 shuffle assign: elem assign: index assign: end assign: block assign: new_resizable 
-   check: elem pick: new_resizable attr_call: append ] bind: autogen515 
+   check: elem pick: new_resizable attr_call: append ] bind: autogen516 
 [ 
    0 resizable assign: new_resizable 
    s21 assign: num assign: new_resizable 
-   check: num 0 pushf: autogen515 simple_for 
-   push: 12 shuffle ] bind: make_resizable 
+   check: num 0 pushf: autogen516 simple_for 
+   push: 12 shuffle ] bind: make_resizable_len 
 [ 
    make_resizable assign: arr 
    pick: arr attr: array 1 + pick: arr attr: len str_join assign: joined 
    push: 13 shuffle ] bind: str_cat 
 [ 
    pick: index pick: iterable attr_call: get assign: elem 
-   pick: block2 call ] bind: autogen516 
+   pick: block2 call ] bind: autogen517 
 [ pushi: 2 remove_top_names assign: block2 assign: iterable 
-   pick: iterable attr: len 0 pushf: autogen516 simple_for 
+   pick: iterable attr: len 0 pushf: autogen517 simple_for 
    check: block2 drop1 
    check: iterable drop1 ] bind: for_in 
 [ 
    pick: block3 call pick: list_comp_out attr_call: append 
-   check: elem drop1 ] bind: autogen517 
+   check: elem drop1 ] bind: autogen518 
 [ pushi: 2 remove_top_names assign: iterable assign: block3 
    0 resizable assign: list_comp_out 
-   pick: iterable pushf: autogen517 for_in 
+   pick: iterable pushf: autogen518 for_in 
    push: 14 shuffle ] bind: list_comp 
 [ 
    pick: elem pick: var_name assign2 
    pick: block3 call pick: list_comp_out attr_call: append 
    drop1 
-   check: elem drop1 ] bind: autogen518 
+   check: elem drop1 ] bind: autogen519 
 [ pushi: 3 remove_top_names assign: iterable assign: var_name assign: block3 
    0 resizable assign: list_comp_out 
-   pick: iterable pushf: autogen518 for_in 
+   pick: iterable pushf: autogen519 for_in 
    push: 15 shuffle ] bind: list_comp_var 
-[ pick: block3 call pick: list_comp_out attr_call: append ] bind: autogen519 
+[ pick: block3 call pick: list_comp_out attr_call: append ] bind: autogen520 
 [ 
-   pick: condition call pushf: autogen519 if 
-   check: elem drop1 ] bind: autogen520 
+   pick: condition call pushf: autogen520 if 
+   check: elem drop1 ] bind: autogen521 
 [ pushi: 3 remove_top_names assign: condition assign: iterable assign: block3 
    0 resizable assign: list_comp_out 
-   pick: iterable pushf: autogen520 for_in 
+   pick: iterable pushf: autogen521 for_in 
    push: 14 shuffle ] bind: list_comp_cond 
 [ newfunc1 assign: bar 
-  1 return1 ] bind: flist.foo 
+  1 func_return ] bind: flist.foo 
 [ push: FList_looking_up_ print 
   pick: name print 
-  printeol ] bind: autogen521 
+  printeol ] bind: autogen522 
 [ newfunc3 assign: searcher assign: receiver assign: name 
-   pick: lookup_print pushf: autogen521 if 
+   pick: lookup_print pushf: autogen522 if 
    pick: name push: pos string_equal 0 return_if 
-   pick: name pick: receiver pick: searcher instance_attrib return1 ] bind: flist.attrib 
+   pick: name pick: receiver pick: searcher instance_attrib func_return ] bind: flist.attrib 
  pick: resizable.attrib pick: boot_obj attr_call: subclass bind: FList_class 
  pick: FList_class attr: instance pick: FList_class closure bind: FList 
 [ newfunc2 assign: new_class assign: obj 
   pick: obj 2 - pick: new_class memory.set return_no_value ] bind: change_class 
 [ 
-  check: elem pick: out_list attr_call: append ] bind: autogen522 
+  check: elem pick: out_list attr_call: append ] bind: autogen523 
 [ newfunc2 assign: out_list assign: in_list 
-  pick: in_list pushf: autogen522 for_in return_no_value ] bind: extend 
-[ check: elem pick: out_list extend ] bind: autogen523 
-[ check: elem pick: out_list attr_call: append ] bind: autogen524 
+  pick: in_list pushf: autogen523 for_in return_no_value ] bind: extend 
+[ check: elem pick: out_list extend ] bind: autogen524 
+[ check: elem pick: out_list attr_call: append ] bind: autogen525 
 [ 
-  pick: elem pick: class is_instance pushf: autogen523 pushf: autogen524 if-else ] bind: autogen525 
+  pick: elem pick: class is_instance pushf: autogen524 pushf: autogen525 if-else ] bind: autogen526 
 [ newfunc2 assign: class assign: in_list 
    0 resizable assign: out_list 
-   pick: in_list pushf: autogen525 for_in 
-   check: out_list return1 ] bind: flatten 
+   pick: in_list pushf: autogen526 for_in 
+   check: out_list func_return ] bind: flatten 
 [ newfunc1 assign: self 
   pick: self 1 + memory.get tprint return_no_value ] bind: forthe.print 
 [ push: Forthe_looking_up_ print 
   pick: name print 
-  printeol ] bind: autogen526 
+  printeol ] bind: autogen527 
 [ newfunc3 assign: searcher assign: receiver assign: name 
-   pick: lookup_print pushf: autogen526 if 
+   pick: lookup_print pushf: autogen527 if 
    pick: name push: get string_equal pick: node.get return_if 
    pick: name push: instance string_equal pick: node.instance return_if 
    pick: name push: print string_equal pick: forthe.print return_if 
@@ -1720,16 +1729,16 @@ push: Generated_from_lib/stage0.flpc_lib/stage1a.flpc_lib/stage1b.flpc_lib/stage
    pick: name push: name string_equal pick: receiver memory.get return_if 
    pick: name push: value string_equal pick: receiver 1 + memory.get return_if 
    pick: name push: type string_equal push: forthe return_if 
-   pick: name pick: receiver pick: searcher instance_attrib return1 ] bind: forthe.attrib 
+   pick: name pick: receiver pick: searcher instance_attrib func_return ] bind: forthe.attrib 
  pick: forthe.attrib pick: boot_obj attr_call: subclass bind: forthe_class 
  pick: forthe_class attr: instance pick: forthe_class closure bind: forthe 
 [ newfunc2 assign: self assign: new_name 
   s21 memory.set return_no_value ] bind: FQuote.set_name 
 [ push: FQuote_looking_up_ print 
   pick: name print 
-  printeol ] bind: autogen527 
+  printeol ] bind: autogen528 
 [ newfunc3 assign: searcher assign: receiver assign: name 
-   pick: lookup_print pushf: autogen527 if 
+   pick: lookup_print pushf: autogen528 if 
    pick: name push: get string_equal pick: node.get return_if 
    pick: name push: instance string_equal pick: node.instance return_if 
    pick: name push: print string_equal pick: node.print return_if 
@@ -1738,216 +1747,216 @@ push: Generated_from_lib/stage0.flpc_lib/stage1a.flpc_lib/stage1b.flpc_lib/stage
    pick: name push: name string_equal pick: receiver memory.get return_if 
    pick: name push: value string_equal pick: receiver 1 + memory.get return_if 
    pick: name push: type string_equal push: FQuote return_if 
-   pick: name pick: receiver pick: searcher instance_attrib return1 ] bind: FQuote.attrib 
+   pick: name pick: receiver pick: searcher instance_attrib func_return ] bind: FQuote.attrib 
  pick: FQuote.attrib pick: boot_obj attr_call: subclass bind: FQuote_class 
  pick: FQuote_class attr: instance pick: FQuote_class closure bind: FQuote 
  pick: FQuote_class convert_attr bind: FQuote.hash 
-[ 
+[ newfunc3 assign: searcher assign: receiver assign: name 
    hash_header 
-   pick: name pick: FQuote.hash hashtable.get call ] rebind: FQuote.attrib 
+   pick: name pick: FQuote.hash hashtable.get call return_no_value ] rebind: FQuote.attrib 
 [ newfunc1 assign: array 
    pick: array pick: FList_class change_class 
-   check: array return1 ] bind: to_flist 
+   check: array func_return ] bind: to_flist 
 [ pick: self pick: i + 1 + 0 memory.set 
-  check: i 1 - assign: i ] bind: autogen528 
+  check: i 1 - assign: i ] bind: autogen529 
 [ newfunc1 assign: self 
    pick: self memory.get assign: i 
-   pushf: autogen528 repeat_if return_no_value ] bind: array.clear 
+   pushf: autogen529 repeat_if return_no_value ] bind: array.clear 
 [ newfunc1 assign: root 
   push: Dummy_function error return_no_value ] bind: simplify 
-[ pick: elem simplify ] bind: autogen529 
-[ pick: root attr: name pushf: autogen529 pick: root list_comp node assign: output ] bind: autogen530 
-[ pick: True ] bind: autogen531 
-[ 0 resizable assign: output ] bind: autogen532 
-[ pick: True ] bind: autogen533 
-[ pick: elem simplify ] bind: autogen534 
-[ pushf: autogen534 pick: root attr: children list_comp assign: output ] bind: autogen535 
-[ pick: root attr: children None == not ] bind: autogen536 
-[ pick: root attr: children simplify assign: output ] bind: autogen537 
-[ pick: root attr: children pick: node_class is_instance ] bind: autogen538 
-[ pushf: autogen532 pushf: autogen533 pushf: autogen535 pushf: autogen536 pushf: autogen537 pushf: autogen538 pushi: 3 multi-if ] bind: autogen539 
-[ pick: root attr: name push: parameters string_equal pick: root attr: name push: exprs string_equal || ] bind: autogen540 
-[ 0 pick: root attr_call: get simplify assign: output ] bind: autogen541 
-[ 0 pick: root attr_call: get attr: name push: exprs string_equal ] bind: autogen542 
-[ pushf: autogen542 pick: root attr: len 1 == 0 pick: root attr_call: get pick: node_class is_instance && lazy_and ] bind: autogen543 
-[ pick: elem simplify ] bind: autogen544 
-[ pick: True assign: cond ] bind: autogen545 
-[ pick: elem attr: name push: EMPTY\uLINE string_equal not assign: cond ] bind: autogen546 
+[ pick: elem simplify ] bind: autogen530 
+[ pick: root attr: name pushf: autogen530 pick: root list_comp node assign: output ] bind: autogen531 
+[ pick: True ] bind: autogen532 
+[ 0 resizable assign: output ] bind: autogen533 
+[ pick: True ] bind: autogen534 
+[ pick: elem simplify ] bind: autogen535 
+[ pushf: autogen535 pick: root attr: children list_comp assign: output ] bind: autogen536 
+[ pick: root attr: children None == not ] bind: autogen537 
+[ pick: root attr: children simplify assign: output ] bind: autogen538 
+[ pick: root attr: children pick: node_class is_instance ] bind: autogen539 
+[ pushf: autogen533 pushf: autogen534 pushf: autogen536 pushf: autogen537 pushf: autogen538 pushf: autogen539 pushi: 3 multi-if ] bind: autogen540 
+[ pick: root attr: name push: parameters string_equal pick: root attr: name push: exprs string_equal || ] bind: autogen541 
+[ 0 pick: root attr_call: get simplify assign: output ] bind: autogen542 
+[ 0 pick: root attr_call: get attr: name push: exprs string_equal ] bind: autogen543 
+[ pushf: autogen543 pick: root attr: len 1 == 0 pick: root attr_call: get pick: node_class is_instance && lazy_and ] bind: autogen544 
+[ pick: elem simplify ] bind: autogen545 
+[ pick: True assign: cond ] bind: autogen546 
+[ pick: elem attr: name push: EMPTY\uLINE string_equal not assign: cond ] bind: autogen547 
 [ 
-  pick: elem pick: node_class is_instance not pushf: autogen545 pushf: autogen546 if-else ] bind: autogen547 
-[ pushf: autogen544 pick: root pushf: autogen547 list_comp_cond assign: children 
-  pick: root attr: name pick: children node assign: output ] bind: autogen548 
-[ pick: root attr: name push: suite string_equal ] bind: autogen549 
-[ 0 pick: root attr_call: get simplify assign: output ] bind: autogen550 
-[ pick: root attr: name push: suite string_equal pick: root attr: len 1 == && ] bind: autogen551 
-[ pick: child pick: children attr_call: append ] bind: autogen552 
-[ pick: True ] bind: autogen553 
+  pick: elem pick: node_class is_instance not pushf: autogen546 pushf: autogen547 if-else ] bind: autogen548 
+[ pushf: autogen545 pick: root pushf: autogen548 list_comp_cond assign: children 
+  pick: root attr: name pick: children node assign: output ] bind: autogen549 
+[ pick: root attr: name push: suite string_equal ] bind: autogen550 
+[ 0 pick: root attr_call: get simplify assign: output ] bind: autogen551 
+[ pick: root attr: name push: suite string_equal pick: root attr: len 1 == && ] bind: autogen552 
+[ pick: child pick: children attr_call: append ] bind: autogen553 
+[ pick: True ] bind: autogen554 
 [ push: multi\uif pick: last_child attr_call: set_name 
-  push: if pick: last_child attr: children node 1 make_resizable pick: last_child attr_call: set_children ] bind: autogen554 
+  pick: Done push: if pick: last_child attr: children node make_resizable pick: last_child attr_call: set_children ] bind: autogen555 
 [ debugger2 
-  pick: last_child attr: name push: if string_equal pushf: autogen554 if 
+  pick: last_child attr: name push: if string_equal pushf: autogen555 if 
   pick: child pick: last_child attr: children attr_call: append 
   debugger2 
   check: child drop1 
-  pick: last_child assign: bring_to_top ] bind: autogen555 
-[ pick: child attr: name push: elif string_equal ] bind: autogen556 
+  pick: last_child assign: bring_to_top ] bind: autogen556 
+[ pick: child attr: name push: elif string_equal ] bind: autogen557 
 [ pick: child attr: children pick: last_child attr: children attr_call: append 
-  push: if-else pick: last_child attr_call: set_name ] bind: autogen557 
-[ pick: last_child attr: name push: if string_equal pick: child attr: name push: else string_equal && ] bind: autogen558 
+  push: if-else pick: last_child attr_call: set_name ] bind: autogen558 
+[ pick: last_child attr: name push: if string_equal pick: child attr: name push: else string_equal && ] bind: autogen559 
 [ 
    pick: index pick: root attr_call: get simplify assign: child 
-   pushf: autogen552 pushf: autogen553 pushf: autogen555 pushf: autogen556 pushf: autogen557 pushf: autogen558 pushi: 3 multi-if 
+   pushf: autogen553 pushf: autogen554 pushf: autogen556 pushf: autogen557 pushf: autogen558 pushf: autogen559 pushi: 3 multi-if 
    debugger2 
-   push: 23416 shuffle assign: index assign: end assign: block assign: last_child ] bind: autogen559 
+   push: 23416 shuffle assign: index assign: end assign: block assign: last_child ] bind: autogen560 
 [ push: multi-block-root:_ pick: root dprint 
   debugger2 
   0 resizable assign: children 
   push: dummy None node assign: last_child 
-  pick: root attr: len 0 pushf: autogen559 simple_for 
-  push: suite pick: children node assign: output ] bind: autogen560 
-[ pick: root attr: name push: multi\ublock\ucall string_equal ] bind: autogen561 
+  pick: root attr: len 0 pushf: autogen560 simple_for 
+  push: suite pick: children node assign: output ] bind: autogen561 
+[ pick: root attr: name push: multi\ublock\ucall string_equal ] bind: autogen562 
 [ check: cond drop1 
   check: i 2 + assign: i 
-  0 pick: i 1 - pick: root attr_call: get attr_call: get pick: i pick: root attr_call: get simplify pick: output simplify 2 make_resizable node assign: output 
+  0 pick: i 1 - pick: root attr_call: get attr_call: get pick: Done pick: i pick: root attr_call: get simplify pick: output simplify make_resizable node assign: output 
   push: 214 shuffle assign: i assign: output 
-  pick: i pick: l < assign: cond ] bind: autogen562 
+  pick: i pick: l < assign: cond ] bind: autogen563 
 [ pick: root attr: len 2 - assign: l 
   0 pick: root attr_call: get assign: output 
   0 assign: i 
   pick: i pick: l < assign: cond 
-  pushf: autogen562 repeat_if 
-  check: i drop1 ] bind: autogen563 
-[ pick: root attr: name push: infix string_equal ] bind: autogen564 
-[ 0 0 pick: root attr_call: get attr_call: get 1 pick: root attr_call: get simplify node assign: output ] bind: autogen565 
-[ pick: root attr: name push: func\ucall string_equal pick: root attr: name push: block\ucall string_equal || ] bind: autogen566 
-[ pick: root assign: output ] bind: autogen567 
-[ pick: root pick: node_class is_instance not ] bind: autogen568 
+  pushf: autogen563 repeat_if 
+  check: i drop1 ] bind: autogen564 
+[ pick: root attr: name push: infix string_equal ] bind: autogen565 
+[ 0 0 pick: root attr_call: get attr_call: get 1 pick: root attr_call: get simplify node assign: output ] bind: autogen566 
+[ pick: root attr: name push: func\ucall string_equal pick: root attr: name push: block\ucall string_equal || ] bind: autogen567 
+[ pick: root assign: output ] bind: autogen568 
+[ pick: root pick: node_class is_instance not ] bind: autogen569 
 [ newfunc1 assign: root 
-   pushf: autogen530 pushf: autogen531 pushf: autogen539 pushf: autogen540 pushf: autogen541 pushf: autogen543 pushf: autogen548 pushf: autogen549 pushf: autogen550 pushf: autogen551 pushf: autogen560 pushf: autogen561 pushf: autogen563 pushf: autogen564 pushf: autogen565 pushf: autogen566 pushf: autogen567 pushf: autogen568 pushi: 9 multi-if 
-   check: output return1 ] rebind: simplify 
-[ push: newfunc_called_with_unexpected_argument error ] bind: autogen569 
+   pushf: autogen531 pushf: autogen532 pushf: autogen540 pushf: autogen541 pushf: autogen542 pushf: autogen544 pushf: autogen549 pushf: autogen550 pushf: autogen551 pushf: autogen552 pushf: autogen561 pushf: autogen562 pushf: autogen564 pushf: autogen565 pushf: autogen566 pushf: autogen567 pushf: autogen568 pushf: autogen569 pushi: 9 multi-if 
+   check: output func_return ] rebind: simplify 
+[ push: newfunc_called_with_unexpected_argument error ] bind: autogen570 
 [ newfunc1 assign: i 
-   pick: i pushi: 4 < not pushf: autogen569 if 
-   pick: i int_to_str push: newfunc 2 str_cat return1 ] bind: newfunc_str 
+   pick: i pushi: 4 < not pushf: autogen570 if 
+   pick: Done pick: i int_to_str push: newfunc str_cat func_return ] bind: newfunc_str 
 [ newfunc1 assign: array 
    pick: array pick: FList_class change_class 
-   check: array return1 ] rebind: to_flist 
+   check: array func_return ] rebind: to_flist 
 [ newfunc1 assign: root 
   push: Dummy_function error return_no_value ] bind: last_call 
-[ pick: root attr: value return3 ] bind: autogen570 
-[ push: _ return3 ] bind: autogen571 
-[ pick: root attr: name push: FCall string_equal pushf: autogen570 pushf: autogen571 if-else ] bind: autogen572 
-[ pick: root attr: len 1 - pick: root attr_call: get last_call return2 ] bind: autogen573 
-[ pick: root attr: value last_call return2 ] bind: autogen574 
+[ pick: root attr: value func_return ] bind: autogen571 
+[ push: _ func_return ] bind: autogen572 
+[ pick: root attr: name push: FCall string_equal pushf: autogen571 pushf: autogen572 if-else ] bind: autogen573 
+[ pick: root attr: len 1 - pick: root attr_call: get last_call func_return ] bind: autogen574 
+[ pick: root attr: value last_call func_return ] bind: autogen575 
 [ newfunc1 assign: root 
    debugger2 
-    pick: root pick: forthe_class is_instance pushf: autogen572 if 
-    pick: root pick: FList_class is_instance pick: root pick: resizable_class is_instance || pushf: autogen573 if 
-    pick: root pick: FQuote is_instance pushf: autogen574 if 
-   push: _ return1 ] rebind: last_call 
+    pick: root pick: forthe_class is_instance pushf: autogen573 if 
+    pick: root pick: FList_class is_instance pick: root pick: resizable_class is_instance || pushf: autogen574 if 
+    pick: root pick: FQuote is_instance pushf: autogen575 if 
+   push: _ func_return ] rebind: last_call 
 [ newfunc1 assign: root 
   push: Dummy_function error return_no_value ] bind: to_forth 
 [ newfunc2 assign: obj assign: new_class 
    pick: obj 2 - pick: new_class memory.set 
-   pick: obj return1 ] bind: changed_class 
-[ pick: elem to_forth ] bind: autogen575 
-[ newfunc1 assign: root 
-  pick: FList_class pushf: autogen575 pick: root list_comp changed_class return1 ] bind: to_forth_conv.suite 
+   pick: obj func_return ] bind: changed_class 
 [ pick: elem to_forth ] bind: autogen576 
 [ newfunc1 assign: root 
-  push: _ pushf: autogen576 pick: root list_comp pick: FList_class flatten FQuote return1 ] bind: to_forth_conv.quote 
+  pick: FList_class pushf: autogen576 pick: root list_comp changed_class func_return ] bind: to_forth_conv.suite 
 [ pick: elem to_forth ] bind: autogen577 
 [ newfunc1 assign: root 
+  push: _ pushf: autogen577 pick: root list_comp pick: FList_class flatten FQuote func_return ] bind: to_forth_conv.quote 
+[ pick: elem to_forth ] bind: autogen578 
+[ newfunc1 assign: root 
    debugger2 
-   pushf: autogen577 pick: root list_comp pick: FList_class flatten assign: children 
+   pushf: autogen578 pick: root list_comp pick: FList_class flatten assign: children 
    push: Children:_ print 
    pick: children tprint 
    printeol 
    debugger2 
    pick: children attr_call: pop drop1 
-   push: FComment pick: children forthe return1 ] bind: to_forth_conv.simple_quote 
+   push: FComment pick: children forthe func_return ] bind: to_forth_conv.simple_quote 
 [ newfunc1 assign: root 
-  pick: FList_class 0 pick: root attr_call: get to_forth push: FCall push: pick: forthe 2 make_resizable changed_class return1 ] bind: to_forth_conv.variable 
+  pick: FList_class pick: Done 0 pick: root attr_call: get to_forth push: FCall push: pick: forthe make_resizable changed_class func_return ] bind: to_forth_conv.variable 
 [ newfunc1 assign: root 
-  push: FStr 0 pick: root attr_call: get forthe return1 ] bind: to_forth_conv.NAME 
+  push: FStr 0 pick: root attr_call: get forthe func_return ] bind: to_forth_conv.NAME 
 [ newfunc1 assign: root 
-  pick: FList_class 0 pick: root attr_call: get to_forth push: FCall push: check: forthe 2 make_resizable changed_class return1 ] bind: to_forth_conv.name_quote 
+  pick: FList_class pick: Done 0 pick: root attr_call: get to_forth push: FCall push: check: forthe make_resizable changed_class func_return ] bind: to_forth_conv.name_quote 
 [ newfunc1 assign: root 
-  pick: FList_class push: FStr 0 pick: root attr_call: get string_escape forthe push: FCall push: push: forthe 2 make_resizable changed_class return1 ] bind: to_forth_conv.STRING 
-[ push: FStr pick: child forthe assign: output ] bind: autogen578 
-[ pick: FList_class push: FStr pick: child forthe push: FCall push: pushi: forthe 2 make_resizable changed_class assign: output ] bind: autogen579 
+  pick: FList_class pick: Done push: FStr 0 pick: root attr_call: get string_escape forthe push: FCall push: push: forthe make_resizable changed_class func_return ] bind: to_forth_conv.STRING 
+[ push: FStr pick: child forthe assign: output ] bind: autogen579 
+[ pick: FList_class pick: Done push: FStr pick: child forthe push: FCall push: pushi: forthe make_resizable changed_class assign: output ] bind: autogen580 
 [ newfunc1 assign: root 
    0 pick: root attr: children attr_call: get assign: child 
    push: NUMBER_in:_ print 
    pick: root tprint 
    printeol 
    debugger2 
-   pick: child push: 0 string_equal pick: child push: 1 string_equal || pick: child push: 2 string_equal || pushf: autogen578 pushf: autogen579 if-else 
+   pick: child push: 0 string_equal pick: child push: 1 string_equal || pick: child push: 2 string_equal || pushf: autogen579 pushf: autogen580 if-else 
    push: NUMBER_out:_ print 
    pick: output tprint 
    printeol 
    debugger2 
-   pick: output return1 ] bind: to_forth_conv.NUMBER 
-[ push: FCall 0 pick: elem attr_call: get forthe ] bind: autogen580 
+   pick: output func_return ] bind: to_forth_conv.NUMBER 
+[ push: FCall 0 pick: elem attr_call: get forthe ] bind: autogen581 
 [ newfunc1 assign: root 
-  pick: FList_class pushf: autogen580 pick: root list_comp changed_class return1 ] bind: to_forth_conv.forth_line 
-[ pick: FList_class pick: output 1 make_resizable changed_class assign: output ] bind: autogen581 
+  pick: FList_class pushf: autogen581 pick: root list_comp changed_class func_return ] bind: to_forth_conv.forth_line 
+[ pick: FList_class pick: Done pick: output make_resizable changed_class assign: output ] bind: autogen582 
 [ check: i 1 - assign: i 
   push: FCall push: assign: forthe pick: assignments attr_call: append 
-  pick: i pick: names attr_call: get to_forth pick: assignments attr_call: append ] bind: autogen582 
+  pick: i pick: names attr_call: get to_forth pick: assignments attr_call: append ] bind: autogen583 
 [ newfunc1 assign: root 
    1 pick: root attr_call: get to_forth assign: output 
-   pick: output pick: FList_class is_instance not pushf: autogen581 if 
+   pick: output pick: FList_class is_instance not pushf: autogen582 if 
    0 resizable assign: assignments 
    0 pick: root attr_call: get assign: names 
    pick: names attr: len assign: i 
-   pushf: autogen582 repeat_if 
+   pushf: autogen583 repeat_if 
    pick: FList_class pick: assignments changed_class pick: output attr_call: append 
-   pick: output return1 ] bind: to_forth_conv.assign 
-[ pick: elem to_forth ] bind: autogen583 
-[ 0 pick: output attr_call: get attr: value assign: names ] bind: autogen584 
+   pick: output func_return ] bind: to_forth_conv.assign 
+[ pick: elem to_forth ] bind: autogen584 
+[ 0 pick: output attr_call: get attr: value assign: names ] bind: autogen585 
 [ debugger 
-  1 1 - 2 0 pick: output attr_call: get attr_call: slice assign: names ] bind: autogen585 
-[ push: FCall pick: names attr: len newfunc_str forthe 1 make_resizable assign: decl ] bind: autogen586 
-[ push: FCall push: newfunc forthe push: FStr pick: names attr: len int_to_str forthe push: FCall push: pushi: forthe pushi: 3 make_resizable assign: decl ] bind: autogen587 
-[ pick: names attr: len pushi: 4 < pushf: autogen586 pushf: autogen587 if-else ] bind: autogen588 
-[ push: FCall push: remove\utop\unames forthe push: FStr pick: names attr: len int_to_str forthe push: FCall push: pushi: forthe pushi: 3 make_resizable assign: decl ] bind: autogen589 
-[ 0 resizable assign: decl ] bind: autogen590 
+  1 1 - 2 0 pick: output attr_call: get attr_call: slice assign: names ] bind: autogen586 
+[ pick: Done push: FCall pick: names attr: len newfunc_str forthe make_resizable assign: decl ] bind: autogen587 
+[ pick: Done push: FCall push: newfunc forthe push: FStr pick: names attr: len int_to_str forthe push: FCall push: pushi: forthe make_resizable assign: decl ] bind: autogen588 
+[ pick: names attr: len pushi: 4 < pushf: autogen587 pushf: autogen588 if-else ] bind: autogen589 
+[ pick: Done push: FCall push: remove\utop\unames forthe push: FStr pick: names attr: len int_to_str forthe push: FCall push: pushi: forthe make_resizable assign: decl ] bind: autogen590 
+[ 0 resizable assign: decl ] bind: autogen591 
 [ check: i 1 - assign: i 
   push: FCall push: assign: forthe pick: decl attr_call: append 
-  pick: i pick: names attr_call: get pick: decl attr_call: append ] bind: autogen591 
+  pick: i pick: names attr_call: get pick: decl attr_call: append ] bind: autogen592 
 [ pick: names attr: len assign: i 
-  pushf: autogen591 repeat_if ] bind: autogen592 
-[ push: FCall push: return\uno\uvalue forthe 1 pick: output attr_call: get attr: value attr_call: append ] bind: autogen593 
-[ push: FCall push: return\uno\uvalue forthe 1 pick: output attr_call: get attr_call: append ] bind: autogen594 
-[ 1 pick: output attr_call: get pick: FQuote_class is_instance pushf: autogen593 pushf: autogen594 if-else ] bind: autogen595 
+  pushf: autogen592 repeat_if ] bind: autogen593 
+[ push: FCall push: return\uno\uvalue forthe 1 pick: output attr_call: get attr: value attr_call: append ] bind: autogen594 
+[ push: FCall push: return\uno\uvalue forthe 1 pick: output attr_call: get attr_call: append ] bind: autogen595 
+[ 1 pick: output attr_call: get pick: FQuote_class is_instance pushf: autogen594 pushf: autogen595 if-else ] bind: autogen596 
 [ 1 pick: output attr_call: get last_call assign: last 
   debugger2 
-  pick: last push: return string_equal pick: last push: lookup\uerror string_equal || not pushf: autogen595 if ] bind: autogen596 
-[ 0 pick: root attr_call: get attr: name push: simple\uquote string_equal pushf: autogen584 pushf: autogen585 if-else 
-   pick: is_fun pushf: autogen588 if 
-   pick: is_local_fun pushf: autogen589 if 
-   pick: is_fast_fun pick: is_inline || pushf: autogen590 if 
+  pick: last push: return string_equal pick: last push: lookup\uerror string_equal || not pushf: autogen596 if ] bind: autogen597 
+[ 0 pick: root attr_call: get attr: name push: simple\uquote string_equal pushf: autogen585 pushf: autogen586 if-else 
+   pick: is_fun pushf: autogen589 if 
+   pick: is_local_fun pushf: autogen590 if 
+   pick: is_fast_fun pick: is_inline || pushf: autogen591 if 
   pick: decl pick: FList_class change_class 
-  pick: is_fast_fun not pushf: autogen592 if 
+  pick: is_fast_fun not pushf: autogen593 if 
   pick: decl tprint 
   printeol 
   debugger2 
   0 pick: decl pick: output attr: value attr_call: set 
   1 pick: output attr_call: get attr: value pick: FList_class change_class 
   1 1 pick: output attr_call: get attr: value pick: output attr: value attr_call: set 
-  pick: is_fun pushf: autogen596 if ] bind: autogen597 
+  pick: is_fun pushf: autogen597 if ] bind: autogen598 
 [ newfunc1 assign: root 
-   push: _ pushf: autogen583 pick: root list_comp FQuote assign: output 
+   push: _ pushf: autogen584 pick: root list_comp FQuote assign: output 
    pick: root attr: name push: inline string_equal assign: is_inline 
    pick: root attr: name push: fun string_equal assign: is_fun 
    pick: root attr: name push: local\ufun string_equal assign: is_local_fun 
    pick: root attr: name push: fast\ufun string_equal assign: is_fast_fun 
    pick: True assign: cond 
-   check: cond pushf: autogen597 if 
-   pick: output return1 ] bind: to_forth_conv.fun 
-[ check: output 1 make_resizable assign: output 
-  pick: output pick: FList_class change_class ] bind: autogen598 
+   check: cond pushf: autogen598 if 
+   pick: output func_return ] bind: to_forth_conv.fun 
+[ check: output pick: Done s21 make_resizable assign: output 
+  pick: output pick: FList_class change_class ] bind: autogen599 
 [ newfunc1 assign: root 
    push: root: pick: root dprint 
    debugger2 
@@ -1955,36 +1964,36 @@ push: Generated_from_lib/stage0.flpc_lib/stage1a.flpc_lib/stage1b.flpc_lib/stage
    push: output: pick: output dprint 
    push: root_name: pick: root attr: name dprint 
    debugger2 
-   pick: output pick: FList_class is_instance not pushf: autogen598 if 
+   pick: output pick: FList_class is_instance not pushf: autogen599 if 
    push: FCall push: bind: forthe pick: output attr_call: append 
    0 0 pick: root attr_call: get attr_call: get to_forth pick: output attr_call: append 
-   pick: output return1 ] bind: to_forth_conv.bind 
-[ push: FStr pick: elem forthe ] bind: autogen599 
+   pick: output func_return ] bind: to_forth_conv.bind 
+[ push: FStr pick: elem forthe ] bind: autogen600 
 [ newfunc1 assign: root 
-   pushf: autogen599 pick: root list_comp pick: FList_class flatten assign: children 
-   push: FComment pick: children forthe return1 ] bind: to_forth_conv.comment 
-[ 0 1 pick: root attr_call: get attr_call: get to_forth push: FCall push: attr: forthe 0 pick: root attr_call: get to_forth pushi: 3 make_resizable assign: children ] bind: autogen600 
-[ pick: elem to_forth ] bind: autogen601 
-[ pushf: autogen601 1 pick: root attr_call: get list_comp assign: children 
-  push: FStr 1 pick: root attr_call: get attr: name forthe push: FCall push: attr\ucall: forthe 0 pick: root attr_call: get to_forth pushi: 3 make_resizable assign: calls 
-  check: calls pick: children extend ] bind: autogen602 
+   pushf: autogen600 pick: root list_comp pick: FList_class flatten assign: children 
+   push: FComment pick: children forthe func_return ] bind: to_forth_conv.comment 
+[ pick: Done 0 1 pick: root attr_call: get attr_call: get to_forth push: FCall push: attr: forthe 0 pick: root attr_call: get to_forth make_resizable assign: children ] bind: autogen601 
+[ pick: elem to_forth ] bind: autogen602 
+[ pushf: autogen602 1 pick: root attr_call: get list_comp assign: children 
+  pick: Done push: FStr 1 pick: root attr_call: get attr: name forthe push: FCall push: attr\ucall: forthe 0 pick: root attr_call: get to_forth make_resizable assign: calls 
+  check: calls pick: children extend ] bind: autogen603 
 [ newfunc1 assign: root 
-   1 pick: root attr_call: get attr: name push: variable string_equal pushf: autogen600 pushf: autogen602 if-else 
-   pick: FList_class pick: children pick: FList_class flatten changed_class return1 ] bind: to_forth_conv.dot 
-[ pick: elem to_forth ] bind: autogen603 
+   1 pick: root attr_call: get attr: name push: variable string_equal pushf: autogen601 pushf: autogen603 if-else 
+   pick: FList_class pick: children pick: FList_class flatten changed_class func_return ] bind: to_forth_conv.dot 
+[ pick: elem to_forth ] bind: autogen604 
 [ newfunc1 assign: root 
-   pushf: autogen603 pick: root list_comp assign: output 
-   pick: FList_class pick: output pick: FList_class flatten changed_class return1 ] bind: to_forth_conv.grammar 
+   pushf: autogen604 pick: root list_comp assign: output 
+   pick: FList_class pick: output pick: FList_class flatten changed_class func_return ] bind: to_forth_conv.grammar 
 [ pick: i 1 - pick: root attr_call: get assign: child 
   1 pick: child attr_call: get to_forth pick: output attr_call: append 
   push: quote 0 pick: child attr_call: get node to_forth pick: output attr_call: append 
   check: child drop1 
-  check: i 1 - assign: i ] bind: autogen604 
+  check: i 1 - assign: i ] bind: autogen605 
 [ newfunc1 assign: root 
    debugger2 
    0 resizable assign: output 
    pick: root attr: len assign: i 
-   pushf: autogen604 repeat_if 
+   pushf: autogen605 repeat_if 
    debugger2 
    pick: output pick: FList_class flatten assign: output 
    debugger2 
@@ -1993,15 +2002,15 @@ push: Generated_from_lib/stage0.flpc_lib/stage1a.flpc_lib/stage1b.flpc_lib/stage
    push: FCall pick: root attr: name forthe pick: output attr_call: append 
    pick: output pick: FList_class change_class 
    debugger2 
-   pick: output return1 ] bind: to_forth_conv.multi_if 
-[ pick: elem to_forth ] bind: autogen605 
+   pick: output func_return ] bind: to_forth_conv.multi_if 
+[ pick: elem to_forth ] bind: autogen606 
 [ newfunc1 assign: root 
-   pushf: autogen605 pick: root list_comp assign: output 
+   pushf: autogen606 pick: root list_comp assign: output 
    check: output pick: FList_class flatten assign: output 
    push: FCall pick: root attr: name forthe pick: output attr_call: append 
    push: output: pick: output dprint 
    debugger2 
-   pick: FList_class pick: output changed_class return1 ] bind: to_forth_conv.default 
+   pick: FList_class pick: output changed_class func_return ] bind: to_forth_conv.default 
  pushi: 200 hashtable bind: to_forth_conv_hash 
  push: suite pick: to_forth_conv.suite pick: to_forth_conv_hash attr_call: set 
  push: forth pick: to_forth_conv.suite pick: to_forth_conv_hash attr_call: set 
@@ -2028,44 +2037,44 @@ push: Generated_from_lib/stage0.flpc_lib/stage1a.flpc_lib/stage1b.flpc_lib/stage
 [ push: root:_ pick: root dprint 
   push: type:_ pick: root attr: type dprint 
   debugger 
-  push: Unexpected_non-node_root. error ] bind: autogen606 
-[ push: default pick: to_forth_conv_hash attr_call: get assign: converter ] bind: autogen607 
+  push: Unexpected_non-node_root. error ] bind: autogen607 
+[ push: default pick: to_forth_conv_hash attr_call: get assign: converter ] bind: autogen608 
 [ newfunc1 assign: root 
    push: nest push: nest pick: parseg attr_call: get 1 + pick: parseg attr_call: set 
    push: nest pick: parseg attr_call: get 0 pick: printspace simple_for 
    pick: root attr: name print 
    push: _<- print 
    printeol 
-   pick: root pick: node_class is_instance not pushf: autogen606 if 
+   pick: root pick: node_class is_instance not pushf: autogen607 if 
    pick: root attr: name pick: to_forth_conv_hash attr_call: get assign: converter 
-   pick: converter None == pushf: autogen607 if 
+   pick: converter None == pushf: autogen608 if 
    pick: root pick: converter call assign: output 
    push: nest pick: parseg attr_call: get 0 pick: printspace simple_for 
    pick: root attr: name print 
    push: _->_ pick: output dprint 
    push: nest push: nest pick: parseg attr_call: get 1 - pick: parseg attr_call: set 
-   check: output return1 ] rebind: to_forth 
+   check: output func_return ] rebind: to_forth 
  pushi: 11 hashtable bind: g 
  push: written pushi: 5000 hashtable pick: g attr_call: set 
-[ push: file push: w pick: filename file.open pick: g attr_call: set ] bind: autogen608 
-[ push: file None pick: g attr_call: set ] bind: autogen609 
+[ push: file push: w pick: filename file.open pick: g attr_call: set ] bind: autogen609 
+[ push: file None pick: g attr_call: set ] bind: autogen610 
 [ newfunc1 assign: filename 
    push: written pick: g attr_call: get attr: keys array.clear 
    push: nesting 0 pick: g attr_call: set 
    push: last\uvalue push: _ pick: g attr_call: set 
    push: autogen\ucount 0 pick: g attr_call: set 
    push: autogen\uname push: autogen pick: g attr_call: set 
-   pick: filename None == not pushf: autogen608 pushf: autogen609 if-else 
+   pick: filename None == not pushf: autogen609 pushf: autogen610 if-else 
    push: init_g:_ pick: g dprint 
    debugger2 return_no_value ] bind: init_g 
 [ 
   push: last\uvalue None pick: g attr_call: set ] bind: write_eol 
-[ pick: value push: ] string_equal not pick: value push: return\uno\uvalue string_equal not && ] bind: autogen610 
+[ pick: value push: ] string_equal not pick: value push: return\uno\uvalue string_equal not && ] bind: autogen611 
 [ printeol 
-  push: nesting pick: g attr_call: get 1 pick: printspace simple_for ] bind: autogen611 
+  push: nesting pick: g attr_call: get 1 pick: printspace simple_for ] bind: autogen612 
 [ newfunc1 assign: value 
    push: file pick: g attr_call: get set_output 
-   pushf: autogen610 push: last\uvalue pick: g attr_call: get None == lazy_and pushf: autogen611 if 
+   pushf: autogen611 push: last\uvalue pick: g attr_call: get None == lazy_and pushf: autogen612 if 
    printspace 
    pick: value printraw 
    push: last\uvalue pick: value pick: g attr_call: set 
@@ -2076,138 +2085,138 @@ push: Generated_from_lib/stage0.flpc_lib/stage1a.flpc_lib/stage1b.flpc_lib/stage
   push: ws_depth:_ pick: depth dprint 
   push: ws_is_str:_ pick: root is_str dprint 
   push: ws_type:_ pick: root attr: type dprint 
-  debugger ] bind: autogen612 
-[ pick: True ] bind: autogen613 
+  debugger ] bind: autogen613 
+[ pick: True ] bind: autogen614 
 [ 
-  check: elem pick: depth write_string_body ] bind: autogen614 
+  check: elem pick: depth write_string_body ] bind: autogen615 
 [ push: nesting push: nesting pick: g attr_call: get 1 + pick: g attr_call: set 
   debugger2 
-  pick: root pushf: autogen614 for_in 
+  pick: root pushf: autogen615 for_in 
   debugger2 
   push: nesting push: nesting pick: g attr_call: get 1 - pick: g attr_call: set 
-  write_eol ] bind: autogen615 
-[ pick: root pick: FList_class is_instance ] bind: autogen616 
+  write_eol ] bind: autogen616 
+[ pick: root pick: FList_class is_instance ] bind: autogen617 
 [ push: pushf: write_sep 
-  pick: root attr: name write_sep ] bind: autogen617 
-[ pick: root pick: FQuote_class is_instance ] bind: autogen618 
-[ pick: root attr: value write_sep ] bind: autogen619 
-[ pick: root attr: name push: FStr string_equal ] bind: autogen620 
-[ pick: depth int_to_str pick: root attr: value 2 str_cat write_sep ] bind: autogen621 
-[ pick: root attr: value write_sep ] bind: autogen622 
-[ pick: root attr: value push: return string_equal pick: root attr: value push: return\utwo string_equal || pushf: autogen621 pushf: autogen622 if-else ] bind: autogen623 
-[ pick: root attr: name push: FCall string_equal ] bind: autogen624 
-[ printspace ] bind: autogen625 
-[ pick: root attr: name push: FComment string_equal ] bind: autogen626 
-[ pushf: autogen619 pushf: autogen620 pushf: autogen623 pushf: autogen624 pushf: autogen625 pushf: autogen626 pushi: 3 multi-if ] bind: autogen627 
-[ pick: root pick: forthe_class is_instance ] bind: autogen628 
+  pick: root attr: name write_sep ] bind: autogen618 
+[ pick: root pick: FQuote_class is_instance ] bind: autogen619 
+[ pick: root attr: value write_sep ] bind: autogen620 
+[ pick: root attr: name push: FStr string_equal ] bind: autogen621 
+[ pick: Done pick: root attr: value push: func\u str_cat write_sep ] bind: autogen622 
+[ pick: root attr: value write_sep ] bind: autogen623 
+[ pick: root attr: value push: return string_equal pick: root attr: value push: return\utwo string_equal || pushf: autogen622 pushf: autogen623 if-else ] bind: autogen624 
+[ pick: root attr: name push: FCall string_equal ] bind: autogen625 
+[ printspace ] bind: autogen626 
+[ pick: root attr: name push: FComment string_equal ] bind: autogen627 
+[ pushf: autogen620 pushf: autogen621 pushf: autogen624 pushf: autogen625 pushf: autogen626 pushf: autogen627 pushi: 3 multi-if ] bind: autogen628 
+[ pick: root pick: forthe_class is_instance ] bind: autogen629 
 [ newfunc2 assign: depth assign: root 
    debugger2 
-   pushf: autogen612 pushf: autogen613 pushf: autogen615 pushf: autogen616 pushf: autogen617 pushf: autogen618 pushf: autogen627 pushf: autogen628 pushi: 4 multi-if return_no_value ] rebind: write_string_body 
+   pushf: autogen613 pushf: autogen614 pushf: autogen616 pushf: autogen617 pushf: autogen618 pushf: autogen619 pushf: autogen628 pushf: autogen629 pushi: 4 multi-if return_no_value ] rebind: write_string_body 
 [ newfunc2 assign: depth assign: root 
   push: Dummy_function error return_no_value ] bind: write_blocks 
 [ push: root:_ pick: root dprint 
   push: root_is_quote:_ pick: root pick: FQuote_class is_instance dprint 
   push: root_is_list:_ pick: root pick: FList_class is_instance dprint 
-  push: g:_ pick: g dprint ] bind: autogen629 
-[ check: elem pick: depth 1 + write_blocks ] bind: autogen630 
-[ check: elem pick: depth write_blocks ] bind: autogen631 
+  push: g:_ pick: g dprint ] bind: autogen630 
+[ check: elem pick: depth 1 + write_blocks ] bind: autogen631 
+[ check: elem pick: depth write_blocks ] bind: autogen632 
 [ 
-  pick: elem pick: FQuote_class is_instance pushf: autogen630 pushf: autogen631 if-else ] bind: autogen632 
+  pick: elem pick: FQuote_class is_instance pushf: autogen631 pushf: autogen632 if-else ] bind: autogen633 
 [ push: nesting push: nesting pick: g attr_call: get 1 + pick: g attr_call: set 
-  pick: root pushf: autogen632 for_in 
+  pick: root pushf: autogen633 for_in 
   push: nesting push: nesting pick: g attr_call: get 1 - pick: g attr_call: set 
-  write_eol ] bind: autogen633 
-[ push: autogen\ucount pick: g attr_call: get int_to_str push: autogen\uname pick: g attr_call: get 2 str_cat assign: name 
+  write_eol ] bind: autogen634 
+[ pick: Done push: autogen\ucount pick: g attr_call: get int_to_str push: autogen\uname pick: g attr_call: get str_cat assign: name 
   pick: name pick: root attr_call: set_name 
-  push: autogen\ucount push: autogen\ucount pick: g attr_call: get 1 + pick: g attr_call: set ] bind: autogen634 
+  push: autogen\ucount push: autogen\ucount pick: g attr_call: get 1 + pick: g attr_call: set ] bind: autogen635 
 [ 
-  check: elem pick: depth write_string_body ] bind: autogen635 
+  check: elem pick: depth write_string_body ] bind: autogen636 
 [ push: bind: write_sep 
-  pick: root attr: name pick: True push: written pick: g attr_call: get attr_call: set ] bind: autogen636 
-[ push: rebind: write_sep ] bind: autogen637 
+  pick: root attr: name pick: True push: written pick: g attr_call: get attr_call: set ] bind: autogen637 
+[ push: rebind: write_sep ] bind: autogen638 
 [ push: nesting pick: g attr_call: get assign: nesting 
   debugger2 
-  pick: root attr: name push: _ string_equal pushf: autogen634 if 
+  pick: root attr: name push: _ string_equal pushf: autogen635 if 
   push: nesting 0 pick: g attr_call: set 
   push: [ write_sep 
   push: nesting 1 pick: g attr_call: set 
-  pick: root pushf: autogen635 for_in 
+  pick: root pushf: autogen636 for_in 
   push: ] write_sep 
-  pick: root attr: name push: written pick: g attr_call: get attr_call: get None == pushf: autogen636 pushf: autogen637 if-else 
+  pick: root attr: name push: written pick: g attr_call: get attr_call: get None == pushf: autogen637 pushf: autogen638 if-else 
   pick: root attr: name write_sep 
   write_eol 
-  push: nesting pick: nesting pick: g attr_call: set ] bind: autogen638 
+  push: nesting pick: nesting pick: g attr_call: set ] bind: autogen639 
 [ newfunc2 assign: depth assign: root 
-   pick: False pushf: autogen629 if 
-   pick: root pick: FQuote_class is_instance pick: root pick: FList_class is_instance || pushf: autogen633 if 
-   pick: root pick: FQuote_class is_instance pushf: autogen638 if return_no_value ] rebind: write_blocks 
-[ push: is_bind:_ pick: child attr: len 2 - pick: child attr_call: get attr: value dprint ] bind: autogen639 
-[ pick: child attr: len pushi: 4 - pick: child attr_call: get attr: value push: class string_equal ] bind: autogen640 
+   pick: False pushf: autogen630 if 
+   pick: root pick: FQuote_class is_instance pick: root pick: FList_class is_instance || pushf: autogen634 if 
+   pick: root pick: FQuote_class is_instance pushf: autogen639 if return_no_value ] rebind: write_blocks 
+[ push: is_bind:_ pick: child attr: len 2 - pick: child attr_call: get attr: value dprint ] bind: autogen640 
+[ pick: child attr: len pushi: 4 - pick: child attr_call: get attr: value push: class string_equal ] bind: autogen641 
 [ push: is_class:_ pick: child attr: len pushi: 4 - pick: child attr_call: get attr: value dprint 
   push: is_str:_ pick: child attr: len pushi: 4 - pick: child attr_call: get attr: value is_str dprint 
   push: str_eq:_ pick: child attr: len pushi: 4 - pick: child attr_call: get attr: value push: class string_equal dprint 
-  push: lazy_cond:_ pushf: autogen640 pick: child attr: len pushi: 4 > lazy_and dprint ] bind: autogen641 
+  push: lazy_cond:_ pushf: autogen641 pick: child attr: len pushi: 4 > lazy_and dprint ] bind: autogen642 
 [ printeol 
   push: child:_ pick: child dprint 
   push: child.len:_ pick: child attr: len dprint 
-   pick: child attr: len 2 > pushf: autogen639 if 
-   pick: child attr: len pushi: 5 > pushf: autogen641 if ] bind: autogen642 
+   pick: child attr: len 2 > pushf: autogen640 if 
+   pick: child attr: len pushi: 5 > pushf: autogen642 if ] bind: autogen643 
 [ 
-   pick: child pick: FList_class is_instance pushf: autogen642 if 
+   pick: child pick: FList_class is_instance pushf: autogen643 if 
    debugger2 ] bind: print_child 
-[ debugger2 ] bind: autogen643 
-[ pick: s pick: s str_len pushi: 6 - pick: s str_len sub_str push: \ucolon string_equal ] bind: autogen644 
-[ push: : pick: s 0 pick: s str_len pushi: 6 - sub_str 2 str_cat return2 ] bind: autogen645 
+[ debugger2 ] bind: autogen644 
+[ pick: s pick: s str_len pushi: 6 - pick: s str_len sub_str push: \ucolon string_equal ] bind: autogen645 
+[ pick: Done push: : pick: s 0 pick: s str_len pushi: 6 - sub_str str_cat func_return ] bind: autogen646 
 [ newfunc1 assign: s 
-    pick: s str_len pushi: 6 > pushf: autogen643 if 
-    pushf: autogen644 pick: s str_len pushi: 6 > lazy_and pushf: autogen645 if 
-   pick: s return1 ] bind: replace_name 
+    pick: s str_len pushi: 6 > pushf: autogen644 if 
+    pushf: autogen645 pick: s str_len pushi: 6 > lazy_and pushf: autogen646 if 
+   pick: s func_return ] bind: replace_name 
 [ newfunc2 assign: prefix assign: root 
   push: Dummy_function error return_no_value ] bind: write_suite 
 [ push: nesting 0 pick: g attr_call: set 
   pick: child 0 write_string_body 
-  write_eol ] bind: autogen646 
-[ pick: child pick: FList_class is_instance ] bind: autogen647 
-[ 1 drop1 ] bind: autogen648 
-[ pick: child attr: name push: FComment string_equal not ] bind: autogen649 
-[ pushf: autogen649 pick: child pick: forthe_class is_instance lazy_and ] bind: autogen650 
-[ pick: body attr: name push: FStr string_equal pick: body attr: name push: FCall string_equal || ] bind: autogen651 
+  write_eol ] bind: autogen647 
+[ pick: child pick: FList_class is_instance ] bind: autogen648 
+[ 1 drop1 ] bind: autogen649 
+[ pick: child attr: name push: FComment string_equal not ] bind: autogen650 
+[ pushf: autogen650 pick: child pick: forthe_class is_instance lazy_and ] bind: autogen651 
+[ pick: body attr: name push: FStr string_equal pick: body attr: name push: FCall string_equal || ] bind: autogen652 
 [ pick: child 0 write_string_body 
-  write_eol ] bind: autogen652 
-[ push: Unexpected_bind_body_length error ] bind: autogen653 
-[ pick: child attr: len 1 - pick: child attr_call: get attr: value assign: func_name ] bind: autogen654 
-[ pick: child attr: len 1 - pick: child attr_call: get attr: value push: . pick: prefix pushi: 3 str_cat assign: func_name ] bind: autogen655 
-[ pick: child attr: len pushi: 4 == pushf: autogen653 if 
-   pick: prefix None == pushf: autogen654 pushf: autogen655 if-else 
+  write_eol ] bind: autogen653 
+[ push: Unexpected_bind_body_length error ] bind: autogen654 
+[ pick: child attr: len 1 - pick: child attr_call: get attr: value assign: func_name ] bind: autogen655 
+[ pick: Done pick: child attr: len 1 - pick: child attr_call: get attr: value push: . pick: prefix str_cat assign: func_name ] bind: autogen656 
+[ pick: child attr: len pushi: 4 == pushf: autogen654 if 
+   pick: prefix None == pushf: autogen655 pushf: autogen656 if-else 
   check: func_name replace_name assign: func_name 
   pick: func_name pick: body attr_call: set_name 
   push: nesting 0 pick: g attr_call: set 
-  pick: body 1 write_blocks ] bind: autogen656 
+  pick: body 1 write_blocks ] bind: autogen657 
 [ debugger2 
   0 pick: child attr_call: get assign: body 
-  pushf: autogen651 pick: body pick: forthe_class is_instance lazy_and pushf: autogen652 pushf: autogen656 if-else ] bind: autogen657 
-[ pick: child attr: len 2 - pick: child attr_call: get attr: value push: bind: string_equal pick: child attr: len pushi: 3 - pick: child attr_call: get pick: FQuote_class is_instance && ] bind: autogen658 
-[ pushf: autogen658 pick: child attr: len 2 > lazy_and ] bind: autogen659 
-[ pushf: autogen659 pick: child pick: FList_class is_instance lazy_and ] bind: autogen660 
+  pushf: autogen652 pick: body pick: forthe_class is_instance lazy_and pushf: autogen653 pushf: autogen657 if-else ] bind: autogen658 
+[ pick: child attr: len 2 - pick: child attr_call: get attr: value push: bind: string_equal pick: child attr: len pushi: 3 - pick: child attr_call: get pick: FQuote_class is_instance && ] bind: autogen659 
+[ pushf: autogen659 pick: child attr: len 2 > lazy_and ] bind: autogen660 
+[ pushf: autogen660 pick: child pick: FList_class is_instance lazy_and ] bind: autogen661 
 [ debugger2 
-  pick: child attr: len pushi: 4 - pick: child attr_call: get attr: value pick: child attr: len 1 - pick: child attr_call: get attr: value write_suite ] bind: autogen661 
-[ pick: child attr: len pushi: 3 - pick: child attr_call: get attr: value push: class string_equal ] bind: autogen662 
-[ pushf: autogen662 pick: child attr: len pushi: 3 > lazy_and ] bind: autogen663 
-[ pushf: autogen663 pick: child pick: FList_class is_instance lazy_and ] bind: autogen664 
+  pick: child attr: len pushi: 4 - pick: child attr_call: get attr: value pick: child attr: len 1 - pick: child attr_call: get attr: value write_suite ] bind: autogen662 
+[ pick: child attr: len pushi: 3 - pick: child attr_call: get attr: value push: class string_equal ] bind: autogen663 
+[ pushf: autogen663 pick: child attr: len pushi: 3 > lazy_and ] bind: autogen664 
+[ pushf: autogen664 pick: child pick: FList_class is_instance lazy_and ] bind: autogen665 
 [ newfunc2 assign: prefix assign: child 
-   pushf: autogen646 pushf: autogen647 pushf: autogen648 pushf: autogen650 pushf: autogen657 pushf: autogen660 pushf: autogen661 pushf: autogen664 pushi: 4 multi-if 
+   pushf: autogen647 pushf: autogen648 pushf: autogen649 pushf: autogen651 pushf: autogen658 pushf: autogen661 pushf: autogen662 pushf: autogen665 pushi: 4 multi-if 
    debugger2 return_no_value ] bind: write_child 
 [ 
-  check: elem pick: prefix write_child ] bind: autogen665 
+  check: elem pick: prefix write_child ] bind: autogen666 
 [ newfunc2 assign: prefix assign: root 
-  pick: root pushf: autogen665 for_in return_no_value ] rebind: write_suite 
-[ push: - print ] bind: autogen666 
+  pick: root pushf: autogen666 for_in return_no_value ] rebind: write_suite 
+[ push: - print ] bind: autogen667 
 [ newfunc2 assign: filename assign: sep 
-   pushi: 50 0 pushf: autogen666 simple_for 
+   pushi: 50 0 pushf: autogen667 simple_for 
    pick: sep print 
    pick: filename print 
    printeol return_no_value ] bind: print_separator 
-[ push: Parse_error_at_simplification_step. error ] bind: autogen667 
+[ push: Parse_error_at_simplification_step. error ] bind: autogen668 
 [ newfunc1 assign: filename 
    push: compiling_file_ print 
    pick: filename printraw 
@@ -2226,7 +2235,7 @@ push: Generated_from_lib/stage0.flpc_lib/stage1a.flpc_lib/stage1b.flpc_lib/stage
    push: Simplified:_ print 
    pick: simplified attr_call: print 
    printeol 
-   pick: simplified pick: MatchError_class is_instance pushf: autogen667 if 
+   pick: simplified pick: MatchError_class is_instance pushf: autogen668 if 
    push: nest 0 pick: parseg attr_call: set 
    pick: simplified to_forth assign: forthed 
    push: ToForth:_ print 
@@ -2237,28 +2246,28 @@ push: Generated_from_lib/stage0.flpc_lib/stage1a.flpc_lib/stage1b.flpc_lib/stage
    printeol return_no_value ] bind: compile_file 
 [ 
    push: \u printraw 
-   check: elem printraw ] bind: autogen668 
-[ check: elem compile_file ] bind: autogen669 
+   check: elem printraw ] bind: autogen669 
+[ check: elem compile_file ] bind: autogen670 
 [ newfunc2 assign: output assign: filenames 
    pick: output init_g 
    push: file pick: g attr_call: get set_output 
    push: push:_ print 
    push: Generated\ufrom printraw 
-   pick: filenames pushf: autogen668 for_in 
+   pick: filenames pushf: autogen669 for_in 
    push: \uprint print 
    printeol 
    None set_output 
-   pick: filenames pushf: autogen669 for_in return_no_value ] bind: compile_all 
+   pick: filenames pushf: autogen670 for_in return_no_value ] bind: compile_all 
 [ 
    pushf: push: memory.append memory.append 
   memory.append pushf: ] memory.append 
    memory.len pushi: 4 - Pointer 
    pick1 push: closure set_mem_hint ] rebind: closure 
 [ 
-  pick: l pick: index - 1 - pick: iterable attr_call: get tprint ] bind: autogen670 
+  pick: l pick: index - 1 - pick: iterable attr_call: get tprint ] bind: autogen671 
 [ newfunc1 assign: iterable 
    pick: iterable attr: len assign: l 
-   pick: l 0 pushf: autogen670 simple_for return_no_value ] bind: print_array 
+   pick: l 0 pushf: autogen671 simple_for return_no_value ] bind: print_array 
 [ newfunc3 assign: searcher assign: receiver assign: name 
   push: Dummy error return_no_value ] bind: ns_obj.attrib 
 [ newfunc2 assign: parent assign: child_hash 
@@ -2267,26 +2276,26 @@ push: Generated_from_lib/stage0.flpc_lib/stage1a.flpc_lib/stage1b.flpc_lib/stage
    pick: child_hash memory.append 
    push: ] names.get memory.append 
    memory.len 2 - Pointer assign: pointer 
-   pick: pointer push: _instance pick: parent attr: type 2 str_cat set_mem_hint 
-   pick: pointer return1 ] bind: ns_obj.child 
+   pick: pointer pick: Done push: _instance pick: parent attr: type str_cat set_mem_hint 
+   pick: pointer func_return ] bind: ns_obj.child 
 [ newfunc3 assign: self assign: value assign: key 
-  pick: key pick: value pick: self attr: attr attr_call: set return1 ] bind: ns_obj.set_attr 
+  pick: key pick: value pick: self attr: attr attr_call: set func_return ] bind: ns_obj.set_attr 
 [ newfunc1 assign: self 
   push: ns\uobj_instance_or_subclass print return_no_value ] bind: ns_obj.print 
 [ newfunc2 assign: self assign: name 
-  pick: name pick: self attr: attr attr_call: get return1 ] bind: ns_obj.getattrib 
-[ pick: ns_obj.child return3 ] bind: autogen671 
-[ pick: name push: child string_equal pushf: autogen671 if 
-  pick: name pick: receiver pick: searcher instance_attrib return2 ] bind: autogen672 
+  pick: name pick: self attr: attr attr_call: get func_return ] bind: ns_obj.getattrib 
+[ pick: ns_obj.child func_return ] bind: autogen672 
+[ pick: name push: child string_equal pushf: autogen672 if 
+  pick: name pick: receiver pick: searcher instance_attrib func_return ] bind: autogen673 
 [ newfunc3 assign: searcher assign: receiver assign: name 
    pick: name push: attr string_equal pick: receiver memory.get return_if 
    pick: name pick: searcher attr: attr attr_call: get assign: value 
-   pick: value None == pushf: autogen672 if 
-   check: value return1 ] rebind: ns_obj.attrib 
+   pick: value None == pushf: autogen673 if 
+   check: value func_return ] rebind: ns_obj.attrib 
 [ newfunc1 assign: func 
    input.next_token assign: name 
    pick: name pick: func pick: current_ns attr_call: set 
-   pick: func pick: name push: ns. 2 str_cat set_mem_hint return_no_value ] bind: ns_bind: 
+   pick: func pick: Done pick: name push: ns. str_cat set_mem_hint return_no_value ] bind: ns_bind: 
  pushi: 100 hashtable bind: current_ns 
  pick: current_ns pick: boot_obj ns_obj.child bind: ns_obj_class 
  pick: ns_obj.child pick: ns_obj_class closure bind: ns_obj 
@@ -2297,41 +2306,41 @@ push: Generated_from_lib/stage0.flpc_lib/stage1a.flpc_lib/stage1b.flpc_lib/stage
  push: type push: ns\uobj pick: current_ns attr_call: set 
 [ newfunc1 assign: name 
    push: type pick: name pick: current_ns hashtable.set 
-   push: \uclass pick: name 2 str_cat assign: class_name 
+   pick: Done push: \uclass pick: name str_cat assign: class_name 
    pick: class_name pick: current_ns pick: ns_obj_class ns_obj.child names2 hashtable.set 
    pick: class_name names.get assign: new_class 
    pick: new_class attr: child pick: new_class closure assign: instance_creator 
    pick: name pick: instance_creator names2 hashtable.set 
-   pick: current_ns push: .attr pick: class_name 2 str_cat set_mem_hint 
-   pick: instance_creator push: _instance_creator pick: class_name 2 str_cat set_mem_hint return_no_value ] bind: new_ns_class 
+   pick: current_ns pick: Done push: .attr pick: class_name str_cat set_mem_hint 
+   pick: instance_creator pick: Done push: _instance_creator pick: class_name str_cat set_mem_hint return_no_value ] bind: new_ns_class 
 pushi: 100 hashtable bind: current_ns 
 [ newfunc2 assign: parent assign: str 
    pushi: 100 hashtable pick: parent pick: parent attr: parent attr: child call assign: new_obj 
    push: str pick: str pick: new_obj attr: attr attr_call: set 
-   pick: new_obj return1 ] ns_bind: child 
+   pick: new_obj func_return ] ns_bind: child 
 [ newfunc1 assign: self 
-  pick: self attr: str str_len return1 ] ns_bind: len 
+  pick: self attr: str str_len func_return ] ns_bind: len 
 [ newfunc3 assign: self assign: end assign: start 
-  pick: self attr: str pick: start pick: end sub_str pick: self attr: parent attr_call: child return1 ] ns_bind: slice 
+  pick: self attr: str pick: start pick: end sub_str pick: self attr: parent attr_call: child func_return ] ns_bind: slice 
 [ newfunc2 assign: self assign: index 
-  pick: index pick: index 1 + pick: self attr_call: slice return1 ] ns_bind: get 
-[ check: i return3 ] bind: autogen673 
+  pick: index pick: index 1 + pick: self attr_call: slice func_return ] ns_bind: get 
+[ check: i func_return ] bind: autogen674 
 [ check: i 1 - assign: i 
-  pick: i pick: self attr_call: get attr: str pick: c string_equal pushf: autogen673 if ] bind: autogen674 
+  pick: i pick: self attr_call: get attr: str pick: c string_equal pushf: autogen674 if ] bind: autogen675 
 [ newfunc2 assign: self assign: c 
    pick: self attr_call: len assign: i 
-   pushf: autogen674 repeat_if 
-   None return1 ] ns_bind: index 
-[ pick: index return3 ] bind: autogen675 
+   pushf: autogen675 repeat_if 
+   None func_return ] ns_bind: index 
+[ pick: index func_return ] bind: autogen676 
 [ 
-  pick: index pick: self attr_call: get attr: str pick: c string_equal pushf: autogen675 if ] bind: autogen676 
+  pick: index pick: self attr_call: get attr: str pick: c string_equal pushf: autogen676 if ] bind: autogen677 
 [ newfunc2 assign: self assign: c 
-   pick: self attr_call: len 0 pushf: autogen676 simple_for 
-   None return1 ] ns_bind: index2 
+   pick: self attr_call: len 0 pushf: autogen677 simple_for 
+   None func_return ] ns_bind: index2 
 [ newfunc2 assign: self assign: suffix 
-  pick: suffix pick: self attr: str str_endswith return1 ] ns_bind: endswith 
+  pick: suffix pick: self attr: str str_endswith func_return ] ns_bind: endswith 
 [ newfunc2 assign: class assign: arr 
-  pick: arr pick: arr attr: length str_join pick: class attr_call: child return1 ] ns_bind: join 
+  pick: arr pick: arr attr: length str_join pick: class attr_call: child func_return ] ns_bind: join 
 [ newfunc1 assign: self 
    push: s\q print 
    pick: self attr: str print 
@@ -2342,46 +2351,46 @@ pushi: 100 hashtable bind: current_ns
    push: r pick: filename file.open assign: fd 
    pushi: 100 hashtable pick: parent pick: parent attr: parent attr: child call assign: new_obj 
    push: fd pick: fd pick: new_obj attr: attr attr_call: set 
-   pick: new_obj return1 ] ns_bind: child 
+   pick: new_obj func_return ] ns_bind: child 
 [ newfunc2 assign: class assign: filename 
-  push: r pick: filename file.open pick: class attr_call: child return1 ] ns_bind: open 
+  push: r pick: filename file.open pick: class attr_call: child func_return ] ns_bind: open 
 [ newfunc2 assign: self assign: value 
-  pick: value pick: self attr: fd fd_write return1 ] ns_bind: write 
+  pick: value pick: self attr: fd fd_write func_return ] ns_bind: write 
 [ newfunc1 assign: self 
-  pick: self attr: fd fd_position return1 ] ns_bind: position 
+  pick: self attr: fd fd_position func_return ] ns_bind: position 
 [ newfunc2 assign: self assign: value 
-  pick: self attr: fd fd_position_set return1 ] ns_bind: position_set 
+  pick: self attr: fd fd_position_set func_return ] ns_bind: position_set 
 [ newfunc2 assign: self assign: value 
-  pick: self attr: fd fd_startswith return1 ] ns_bind: startswith 
+  pick: self attr: fd fd_startswith func_return ] ns_bind: startswith 
 [ newfunc1 assign: self 
-  pick: self attr: fd fd_next_token return1 ] ns_bind: next_token 
+  pick: self attr: fd fd_next_token func_return ] ns_bind: next_token 
 [ newfunc1 assign: self 
-  pick: self attr: fd fd_next_char return1 ] ns_bind: next_char 
+  pick: self attr: fd fd_next_char func_return ] ns_bind: next_char 
 [ newfunc1 assign: self 
-  pick: self attr: fd fd_next_line return1 ] ns_bind: next_line 
+  pick: self attr: fd fd_next_line func_return ] ns_bind: next_line 
 [ newfunc1 assign: self 
-  pick: self attr: fd file.close return1 ] ns_bind: close 
+  pick: self attr: fd file.close func_return ] ns_bind: close 
 push: File new_ns_class 
 pushi: 100 hashtable bind: current_ns 
 [ newfunc2 assign: parent assign: str 
    pushi: 100 hashtable pick: parent pick: parent attr: parent attr: child call assign: new_obj 
    push: str pick: str pick: new_obj attr: attr attr_call: set 
    push: pos 0 pick: new_obj attr: attr attr_call: set 
-   pick: new_obj return1 ] ns_bind: child 
+   pick: new_obj func_return ] ns_bind: child 
 [ newfunc1 assign: self 
    pick: self attr: pos pick: self attr: str str_next_token assign: token assign: new_pos 
    push: pos pick: new_pos pick: self attr: attr attr_call: set 
-   pick: token String return1 ] ns_bind: next_token 
+   pick: token String func_return ] ns_bind: next_token 
 [ newfunc1 assign: self 
   push: pos 0 pick: self attr: attr attr_call: set return_no_value ] ns_bind: reset 
-[ pick: new_resizable return3 ] bind: autogen677 
+[ pick: new_resizable func_return ] bind: autogen678 
 [ pick: self attr_call: next_token assign: token 
-  pick: token attr_call: len 0 == pushf: autogen677 if 
-  check: token pick: new_resizable attr_call: append ] bind: autogen678 
+  pick: token attr_call: len 0 == pushf: autogen678 if 
+  check: token pick: new_resizable attr_call: append ] bind: autogen679 
 [ newfunc1 assign: self 
    pick: self attr_call: reset 
    0 resizable assign: new_resizable 
-   pushf: autogen678 repeat return_no_value ] ns_bind: to_res 
+   pushf: autogen679 repeat return_no_value ] ns_bind: to_res 
 push: StringIO new_ns_class 
 [ newfunc0 
    push: hello_world String assign: s 
@@ -2391,21 +2400,25 @@ push: StringIO new_ns_class
    printeol 
    1 pick: s attr_call: get tprint return_no_value ] bind: string_test 
 [ check: handler drop1 
-  debugger ] bind: autogen679 
-[ pick: error pick: handler call assign: result ] bind: autogen680 
+  debugger ] bind: autogen680 
+[ pick: error pick: handler call assign: result ] bind: autogen681 
 [ check: cond drop1 
   pick: error_handler_index push: exception\uhandler all_data_stack_pick assign: handler 
-  pick: handler None == pushf: autogen679 pushf: autogen680 if-else 
+  pick: handler None == pushf: autogen680 pushf: autogen681 if-else 
   pick: result None == assign: cond 
   push: 412 shuffle assign: error_handler_index assign: cond assign: result 
   check: error_handler_index 1 + assign: error_handler_index 
-  s21 assign: cond assign: error_handler_index ] bind: autogen681 
+  s21 assign: cond assign: error_handler_index ] bind: autogen682 
 [ newfunc1 assign: error 
    0 assign: error_handler_index 
    pick: True assign: cond 
-   pushf: autogen681 repeat_if 
-   pick: result return1 ] bind: top_level_exception_handler 
+   pushf: autogen682 repeat_if 
+   pick: result func_return ] bind: top_level_exception_handler 
  pick: top_level_exception_handler error_handler_set 
+[ 
+   pick: Done local_call_stack make_resizable func_return_two ] bind: yield 
+[ pushi: 1 remove_top_names assign: call_stack_copy 
+  pick: call_stack_copy attr: array 1 + pick: call_stack_copy attr: len 1 load_call_stack ] bind: next 
 [ newfunc2 assign: temp_filename assign: filename 
    pick: temp_filename init_g 
    push: autogen\uname push: tempgen pick: g attr_call: set 
@@ -2413,7 +2426,6 @@ push: StringIO new_ns_class
    push: file pick: g attr_call: get file.close return_no_value ] bind: compile_temp 
 [ 
    current_input_file 
-   push: 4123 shuffle 
    switch_input_file 
    continue_from_file ] bind: run_file 
 [ newfunc2 assign: temp_filename assign: filename 
@@ -2444,25 +2456,25 @@ push: StringIO new_ns_class
    stdin.next_line assign: source 
    pick: source push: gen/eval.flpc write_file 
    push: gen/eval.flpc run return_no_value ] bind: eval_one 
-[ return3 ] bind: autogen682 
+[ func_return ] bind: autogen683 
 [ push: >>_ print 
   stdin.next_line assign: source 
-  pick: source None == pick: source push: q string_equal || pushf: autogen682 if 
+  pick: source None == pick: source push: q string_equal || pushf: autogen683 if 
   check: source push: gen/eval.flpc write_file 
-  push: gen/eval.flpc run ] bind: autogen683 
+  push: gen/eval.flpc run ] bind: autogen684 
 [ newfunc0 
-  pushf: autogen683 repeat return_no_value ] bind: eval_repl 
+  pushf: autogen684 repeat return_no_value ] bind: eval_repl 
  push: debug\useparator bind: debug_separator 
 [ check: cond drop1 
   tprint 
   printeol 
-  pick1 pick: debug_separator == not assign: cond ] bind: autogen684 
+  pick1 pick: debug_separator == not assign: cond ] bind: autogen685 
 [ 
    pick1 pick: debug_separator == not assign: cond 
-   pushf: autogen684 repeat_if 
+   pushf: autogen685 repeat_if 
    drop1 ] bind: print_until_sep 
  pushi: 20 hashtable bind: debug_g 
-[ pick: func print ] bind: autogen685 
+[ pick: func print ] bind: autogen686 
 [ pick: func get_mem_hint StringIO attr_call: next_token attr: str assign: class_name 
   pick: class_name print 
   push: _with_keys\n print 
@@ -2470,68 +2482,67 @@ push: StringIO new_ns_class
   printeol 
   push: Type_help( print 
   pick: class_name print 
-  push: _._method)_to_get_help_on_specific_methods_of_this_class. print ] bind: autogen686 
-[ pick: True pushi: 3 pick: func print_frame ] bind: autogen687 
-[ push: instance_creator pick: func get_mem_hint str_endswith pushf: autogen686 pushf: autogen687 if-else ] bind: autogen688 
+  push: _._method)_to_get_help_on_specific_methods_of_this_class. print ] bind: autogen687 
+[ pick: True pushi: 3 pick: func print_frame ] bind: autogen688 
+[ push: instance_creator pick: func get_mem_hint str_endswith pushf: autogen687 pushf: autogen688 if-else ] bind: autogen689 
 [ newfunc1 assign: func 
-   pick: func is_basic pushf: autogen685 pushf: autogen688 if-else 
+   pick: func is_basic pushf: autogen686 pushf: autogen689 if-else 
    printeol return_no_value ] bind: help 
 [ newfunc0 
   pick: False push: context pick: debug_g attr_call: get call_stack.len push: height pick: debug_g attr_call: get - print_frame return_no_value ] bind: look 
 [ 
    current_input_file 
    pick: debug_separator 
-   push: 51234 shuffle 
+   s21 
    switch_input_file 
    push: ----- print 
    printeol 
    print_until_sep 
    continue_from_file ] bind: run_and_print 
-[ newfunc1 
-  return3 ] bind: autogen689 
+[ func_return ] bind: autogen690 
 [ check: source push: gen/eval.flpc write_file 
   push: gen/eval.flpc push: gen/temp.f compile_temp 
-  push: gen/temp.f run_and_print ] bind: autogen690 
-[ pick: True ] bind: autogen691 
-[ drop1 ] bind: autogen692 
-[ pick: source str_len 0 == ] bind: autogen693 
+  push: gen/temp.f run_and_print ] bind: autogen691 
+[ pick: True ] bind: autogen692 
+[ drop1 ] bind: autogen693 
+[ pick: source str_len 0 == ] bind: autogen694 
 [ pick: debug_separator 
   push: gen/eval.flpc push: gen/temp.f compile_temp 
   push: gen/temp.f run_and_print 
-  push: multiline push: multiline pick: debug_g attr_call: get not pick: debug_g attr_call: set ] bind: autogen694 
-[ pick: source push: gen/eval.flpc append_file ] bind: autogen695 
-[ pick: source push: r string_equal pushf: autogen694 pushf: autogen695 if-else ] bind: autogen696 
-[ push: multiline pick: debug_g attr_call: get ] bind: autogen697 
-[ push: gen/temprun.f run_and_print ] bind: autogen698 
-[ pick: source push: f string_equal ] bind: autogen699 
+  push: multiline push: multiline pick: debug_g attr_call: get not pick: debug_g attr_call: set ] bind: autogen695 
+[ pick: source push: gen/eval.flpc append_file ] bind: autogen696 
+[ pick: source push: r string_equal pushf: autogen695 pushf: autogen696 if-else ] bind: autogen697 
+[ push: multiline pick: debug_g attr_call: get ] bind: autogen698 
+[ push: gen/temprun.f run_and_print ] bind: autogen699 
+[ pick: source push: f string_equal ] bind: autogen700 
 [ push: multiline push: multiline pick: debug_g attr_call: get not pick: debug_g attr_call: set 
-  push: #Empty push: gen/eval.flpc write_file ] bind: autogen700 
-[ pick: source push: m string_equal ] bind: autogen701 
+  push: #Empty push: gen/eval.flpc write_file ] bind: autogen701 
+[ pick: source push: m string_equal ] bind: autogen702 
 [ drop1 
   push: context push: context pick: debug_g attr_call: get 1 - pick: debug_g attr_call: set 
-  look ] bind: autogen702 
-[ pick: source push: L string_equal ] bind: autogen703 
+  look ] bind: autogen703 
+[ pick: source push: L string_equal ] bind: autogen704 
 [ drop1 
   push: context push: context pick: debug_g attr_call: get 1 + pick: debug_g attr_call: set 
-  look ] bind: autogen704 
-[ pick: source push: l string_equal ] bind: autogen705 
+  look ] bind: autogen705 
+[ pick: source push: l string_equal ] bind: autogen706 
 [ drop1 
   push: height push: height pick: debug_g attr_call: get 1 - pick: debug_g attr_call: set 
-  look ] bind: autogen706 
-[ pick: source push: d string_equal ] bind: autogen707 
+  look ] bind: autogen707 
+[ pick: source push: d string_equal ] bind: autogen708 
 [ drop1 
   push: height push: height pick: debug_g attr_call: get 1 + pick: debug_g attr_call: set 
-  look ] bind: autogen708 
-[ pick: source push: u string_equal ] bind: autogen709 
+  look ] bind: autogen709 
+[ pick: source push: u string_equal ] bind: autogen710 
 [ push: >>_ print 
   stdin.next_line assign: source 
-   pick: source None == pick: source push: q string_equal || pushf: autogen689 if 
-   pushf: autogen690 pushf: autogen691 pushf: autogen692 pushf: autogen693 pushf: autogen696 pushf: autogen697 pushf: autogen698 pushf: autogen699 pushf: autogen700 pushf: autogen701 pushf: autogen702 pushf: autogen703 pushf: autogen704 pushf: autogen705 pushf: autogen706 pushf: autogen707 pushf: autogen708 pushf: autogen709 pushi: 9 multi-if ] bind: autogen710 
+   pick: source None == pick: source push: q string_equal || pushf: autogen690 if 
+   pushf: autogen691 pushf: autogen692 pushf: autogen693 pushf: autogen694 pushf: autogen697 pushf: autogen698 pushf: autogen699 pushf: autogen700 pushf: autogen701 pushf: autogen702 pushf: autogen703 pushf: autogen704 pushf: autogen705 pushf: autogen706 pushf: autogen707 pushf: autogen708 pushf: autogen709 pushf: autogen710 pushi: 9 multi-if ] bind: autogen711 
 [ 
    push: height pushi: 8 pick: debug_g attr_call: set 
    push: context 2 pick: debug_g attr_call: set 
    push: multiline pick: False pick: debug_g attr_call: set 
-   pushf: autogen710 repeat ] bind: debuggerv2 
+   pushf: autogen711 repeat ] bind: debuggerv2 
  pick: debuggerv2 error_handler_set 
 [ newfunc1 assign: filename 
    0 push: flpcg pick: bootg attr_call: set 
@@ -2539,28 +2550,27 @@ push: StringIO new_ns_class
    push: gen/grammar\utemp.flpc run return_no_value ] bind: grammar_eval_file 
 [ newfunc2 assign: output_prefix assign: filename 
    0 push: flpcg pick: bootg attr_call: set 
-   pick: bootg pick: filename push: .flpc pick: output_prefix 2 str_cat write_parsed_funcs 
-   push: .flpc pick: output_prefix 2 str_cat push: .f pick: output_prefix 2 str_cat run_temp return_no_value ] bind: grammar_eval_file_with_out 
+   pick: bootg pick: filename pick: Done push: .flpc pick: output_prefix str_cat write_parsed_funcs 
+   pick: Done push: .flpc pick: output_prefix str_cat pick: Done push: .f pick: output_prefix str_cat run_temp return_no_value ] bind: grammar_eval_file_with_out 
 [ newfunc0 
    push: autogen\uname push: getter\ugen pick: g attr_call: set 
    push: grammar/getter.grammar push: gen/getter\usyntax grammar_eval_file_with_out return_no_value ] bind: add_getter_syntax 
 [ newfunc2 assign: index assign: obj 
-  pick: index pick: obj attr_call: get return1 ] bind: get 
+  pick: index pick: obj attr_call: get func_return ] bind: get 
  push: ! pick: get names2 attr_call: set 
 [ newfunc1 assign: root 
-  pick: FList_class push: FCall push: ''' forthe push: FStr 0 pick: root attr_call: get forthe push: FCall push: ''' forthe pushi: 3 make_resizable changed_class return1 ] bind: to_forth_conv.TRIPLE_QUOTE 
+  pick: FList_class pick: Done push: FCall push: ''' forthe push: FStr 0 pick: root attr_call: get forthe push: FCall push: ''' forthe make_resizable changed_class func_return ] bind: to_forth_conv.TRIPLE_QUOTE 
 [ newfunc0 
    push: autogen\uname push: triple\uquote\ugen pick: g attr_call: set 
    push: grammar/triple\uquote.grammar push: gen/triple\uquote grammar_eval_file_with_out 
    push: TRIPLE\uQUOTE pick: to_forth_conv.TRIPLE_QUOTE pick: to_forth_conv_hash attr_call: set return_no_value ] bind: add_triple_quote 
-[ pick: elem to_forth ] bind: autogen711 
+[ pick: elem to_forth ] bind: autogen712 
 [ newfunc1 assign: root 
-   pushf: autogen711 pick: root list_comp assign: output 
+   pick: Done push: FStr push: Done forthe push: FCall push: pick: forthe make_resizable assign: output 
+   pushf: autogen712 pick: root list_comp pick: output extend 
    check: output pick: FList_class flatten assign: output 
-   push: FCall push: pushi: forthe pick: output attr_call: append 
-   push: FStr pick: root attr: len int_to_str forthe pick: output attr_call: append 
    push: FCall pick: root attr: name forthe pick: output attr_call: append 
-   pick: FList_class pick: output changed_class return1 ] bind: to_forth_conv.make_resizable 
+   pick: FList_class pick: output changed_class func_return ] bind: to_forth_conv.make_resizable 
 [ newfunc0 
    push: autogen\uname push: resizable\usyntax\ugen pick: g attr_call: set 
    push: grammar/resizable.grammar push: gen/resizable\usyntax grammar_eval_file_with_out 
@@ -2570,16 +2580,16 @@ push: StringIO new_ns_class
    push: grammar/list\ucomp.grammar push: gen/list\ucomp\usyntax grammar_eval_file_with_out 
    push: list\ucomp\uvar pick: to_forth_conv.list_comp_var pick: to_forth_conv_hash attr_call: set return_no_value ] bind: add_list_comp_syntax 
 [ newfunc1 assign: root 
-   2 pick: root attr_call: get to_forth push: FStr 0 1 pick: root attr_call: get attr_call: get forthe push: FCall push: push: forthe push: _ 0 pick: root attr_call: get to_forth FQuote pushi: 4 make_resizable assign: output 
+   pick: Done 2 pick: root attr_call: get to_forth push: FStr 0 1 pick: root attr_call: get attr_call: get forthe push: FCall push: push: forthe push: _ 0 pick: root attr_call: get to_forth FQuote make_resizable assign: output 
    check: output pick: FList_class flatten assign: output 
    push: FCall pick: root attr: name forthe pick: output attr_call: append 
-   pick: FList_class pick: output changed_class return1 ] bind: to_forth_conv.list_comp_var 
+   pick: FList_class pick: output changed_class func_return ] bind: to_forth_conv.list_comp_var 
 [ push: debugger\uv2 print 
   printeol 
   debuggerv2 
-  push: dv2loop\ufile names2 attr_call: get run ] bind: autogen712 
+  push: dv2loop\ufile names2 attr_call: get run ] bind: autogen713 
 [ newfunc0 
-  pushf: autogen712 repeat return_no_value ] bind: dv2loop 
+  pushf: autogen713 repeat return_no_value ] bind: dv2loop 
  push: gen/triple\uquote.f run_file 
  push: TRIPLE\uQUOTE pick: to_forth_conv.TRIPLE_QUOTE pick: to_forth_conv_hash attr_call: set 
  push: gen/resizable\usyntax.f run_file 
@@ -2588,6 +2598,4 @@ push: StringIO new_ns_class
  push: list\ucomp\uvar pick: to_forth_conv.list_comp_var pick: to_forth_conv_hash attr_call: set 
  push: gen/getter\usyntax.f run_file 
  push: lib/stage7b.flpc bind: dv2loop_file 
- push: gen/grammar\utemp.flpc bind: dv2loop_file 
- push: lib/stage7c.flpc bind: dv2loop_file 
  dv2loop 
