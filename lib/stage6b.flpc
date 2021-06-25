@@ -183,6 +183,7 @@ to_forth_conv <- class[]:
     output = to_forth(root . get(1))
     if not(is_instance(output FList_class)):
       output = changed_class(FList_class make_resizable(Done output))
+      output = s21() drop1()
     assignments = resizable(0)
     names = root . get(0)
     i = names . len
@@ -215,12 +216,12 @@ to_forth_conv <- class[]:
                                 forthe("FCall" "newfunc")
                                 forthe("FStr" int_to_str(names . len))
                                 forthe("FCall" "pushi:"))
-      if is_local_fun:
+      elif is_local_fun:
         decl = make_resizable(Done
                               forthe("FCall" "remove_top_names")
                               forthe("FStr" int_to_str(names . len))
                               forthe("FCall" "pushi:"))
-      if is_fast_fun || is_inline:
+      elif is_fast_fun || is_inline:
         decl = resizable(0)
       change_class(decl FList_class)
       if not(is_fast_fun):
@@ -255,7 +256,8 @@ to_forth_conv <- class[]:
           if is_instance(output . get(1) FQuote_class):
             output . get(1) . value . append(forthe("FCall" "return_no_value"))
           else:
-            output . get(1) . append(forthe("FCall" "return_no_value"))  
+            output . get(1) . append(forthe("FCall" "return_no_value"))
+        drop1(`last)
     return(output)
 
   bind <- fun[root]:
@@ -368,6 +370,7 @@ to_forth <- fun[root]:
     error("Unexpected non-node root.")
   converter = to_forth_conv_hash . get(root . name)
   if converter == None():
+    drop1(`converter)
     converter = to_forth_conv_hash . get("default")
   output = call(root converter)
   simple_for(parseg . get("nest") 0 printspace)
@@ -474,7 +477,7 @@ write_blocks <- fun[root depth]:
       # name = str_join(name_array  . array + 1 name_array . len)
       name = str_cat(Done int_to_str(g . get("autogen_count")) g . get("autogen_name"))
       # dprint("name:_" name)
-      root . set_name(name)
+      root . set_name(`name)
       # root . set_name(str_join(make_resizable(Done int_to_str(g . get("autogen_count")) "autogen" 2) . array))
       g . set("autogen_count" g . get("autogen_count") + 1)
     g . set("nesting" 0)

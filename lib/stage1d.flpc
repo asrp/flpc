@@ -93,11 +93,12 @@ make_string <- fun[outputs]:
         return(str_join(outputs . array + 1 length))
     if length == 1:
       return(output)
+    return(outputs)
   else:
     if is_instance(outputs node_class):
       if is_str(outputs . children):
         return(outputs . children)
-  return(outputs)
+    return(outputs)
 
 and <- fun[init_children]:
   saved = source . position()

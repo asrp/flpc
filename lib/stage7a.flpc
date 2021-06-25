@@ -118,8 +118,9 @@ debuggerv2 <- fast_fun[]:
       # Returns too much because this is a fast_fun
       # Could turn the repeat into a repeat_if, but ugly.
       # Need another kind of function that adds func sep but not data sep?
-      return()
-    if string_equal(source "u"):
+      run(names2() . get("dv2loop_file"))
+      # return()
+    elif string_equal(source "u"):
       drop1()
       debug_g . set("height" debug_g . get("height") + 1)
       look()
@@ -241,7 +242,8 @@ to_forth_conv_hash . set("list_comp_var" to_forth_conv.list_comp_var)
 #run_file("gen/split_grammar.f")
 run_file("gen/getter_syntax.f")
 
-dv2loop_file <- "lib/stage7b.flpc"
+#dv2loop_file <- "lib/stage7b.flpc"
 #dv2loop_file <- "gen/grammar_temp.flpc"
-#dv2loop_file <- "lib/stage7c.flpc"
+#dv2loop_file <- "lib/stage7c2.flpc"
+dv2loop_file <- "lib/stage1e.flpc"
 dv2loop()
