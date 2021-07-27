@@ -8,7 +8,11 @@ from algorithm import reversed
 import strformat
 import options
 import macros
-from os import sleep, paramCount, paramStr
+from os import sleep, paramCount, paramStr, fileExists
+import re
+when defined(with_py_opt):
+  import nimpy
+  import nimpy / py_lib
 # import nimprof
 
 macro debugp(args: varargs[untyped]): untyped =
@@ -32,7 +36,7 @@ const
   MAX_CALL_STACK_LEN = 10000
 
 type
-  ElemType* = enum Int, Str, Pointer, Prim, Special, BadData5, BadData6, BadData7
+  ElemType* = enum Int, Str, Pointer, Prim, Special, PyObj, BadData6, BadData7
   #ElemType* = enum Int, Str, Pointer, Prim
   #SpecialValue = enum BadSpecial, None, Sep, UnnamedString, NoValue, FileSep
   Elem = int
@@ -41,11 +45,6 @@ type
     filename*: string
     source_start*: int
     source_end*: int
-  Position = object
-    start*: int
-    endd*: int
-    filename*: string
-    source*: int
   DStackElem = object
     name*: Elem
     data*: Elem
@@ -53,7 +52,7 @@ type
     memory*: seq[Elem]
     memory_hint*: seq[Elem]
     pos_map*: seq[PosMapEntry]
-    positions*: seq[Position]
+    positions*: seq[PosMapEntry]
     call_stack*: seq[int]
     prev_call_stack*: array[0..MAX_CALL_STACK_LEN, int]
     data_stack*: seq[DStackElem]
@@ -61,6 +60,10 @@ type
     #name_stack*: seq[Elem]
     strings*: array[0..MAX_NUM_STRINGS, string]
     strings_raw_length*: int
+    when defined(with_py_opt):
+      py_object*: seq[PyObject]
+    else:
+      py_object*: seq[int]
     files*: seq[File]
     input*: File
     output*: File
@@ -87,6 +90,11 @@ var
   indices*: Table[string, int]
   specials*: Table[int, string]
 
+let NilPos = PosMapEntry(source_start: -1,
+                         source_end: -1,
+                         filename: "",
+                         start: -1)
+
 proc makeElem(ftype: ElemType, value: int): Elem =
   return int(ftype) + (value shl TL)
 
@@ -101,6 +109,9 @@ proc fPrim*(i: int): Elem =
 
 proc fPointer*(i: int): Elem =
   return makeElem(Pointer, i)
+
+proc fPyObj*(i: int): Elem =
+  return makeElem(PyObj, i)
 
 const
   True = fInt(1)
@@ -126,31 +137,38 @@ proc parseElem(s: string): Elem =
     return makeElem(old_type, old_value)
 
 var specials_compile_time{.compiletime.}: Table[int,string]
-proc fSpecial(x:int, y:string):int =
-  specials_compile_time[x] = y
-  x
+proc fSpecial(value:int):Elem =
+  #specials[value] = name
+  makeElem(Special, value)
 #proc fSpecial*(i: int, name: string): Elem =
 #  specials[-i] = name
 #  return makeElem(Special, -i)
 
 const
   AlwaysStop = -1 # debugger_waitlen
-  None = fSpecial(1, "None")
-  Sep = fSpecial(2, "Sep")
-  UnnamedString = fSpecial(3, "UnnamedString")
-  NoValue = fSpecial(4, "NoValue") # No return value, only used internally.
-  FileSep = fSpecial(5, "FileSep")
+  None = fSpecial(-1)
+  Sep = fSpecial(-2)
+  UnnamedString = fSpecial(-3)
+  NoValue = fSpecial(-4) # No return value, only used internally.
+  FileSep = fSpecial(-5)
   DSSep = DStackElem(name: Sep, data: Sep)
+specials_compile_time[-1] = "None"
+specials_compile_time[-2] = "Sep"
+specials_compile_time[-3] = "UnnamedString"
+specials_compile_time[-4] = "NoValue"
+specials_compile_time[-5] = "FileSep"
 specials = specials_compile_time
 #let DSFileSep = DStackElem(name: FileSep, data: FileSep)
 
 proc print_stack*(start: int): Elem
 proc print_stack*(start: BackwardsIndex): Elem
 proc print_state*()
+proc print_full_state*()
 proc print_data_stack*(start: BackwardsIndex)
 proc print_data_stack*(start: int)
 proc print_data_stack*()
 proc print_mem*()
+proc print_mem*(index: int)
 proc mem_str*(frame: int): string
 proc func_call*(elem: Elem)
 
@@ -189,9 +207,13 @@ proc bp*() =
       print_state()
       echo $getStackTrace()
       echo "step ", g.steps
+    elif inp == "full":
+      print_full_state()
+      echo $getStackTrace()
+      echo "step ", g.steps
     elif inp == "cs":
-      echo g.call_stack
-      echo g.prev_call_stack[0..<g.call_stack.len]
+      echo "call_stack: ", g.call_stack
+      echo "prev_call:  ", g.prev_call_stack[0..<g.call_stack.len]
     elif inp == "ds":
       print_data_stack()
     elif inp == "v":
@@ -202,21 +224,23 @@ proc bp*() =
     elif inp == "pr":
       g.profile = not g.profile
     elif inp.startswith("mem "):
-      var index = inp.split()[1].parseInt
-      stdout_write(g.memory[index-10..<index].map(x => x.frepr).join(" "))
-      stdout_write(" \e[91m")
-      stdout_write(g.memory[index].frepr)
-      stdout_write(" \e[0m")
-      stdout_write(g.memory[index+1..index+10].map(x => x.frepr).join(" "))
-      stdout_write("\n")
+      inp.split()[1].parseInt.print_mem
     elif inp == "mem":
       echo "names_get_end ", indices["names_get_end"]
       echo "functions_end ", indices["functions_end"]
       print_mem()
+    elif inp.startswith("pos "):
+      echo g.positions[inp.split()[1].parseInt]
     elif inp == "hello":
       echo "hello"
-    elif inp == "":
+    elif inp == "" or inp == "c":
       break
+    else:
+      echo fmt"Unknown bp command: {inp}"
+
+proc bp*(message: string) =
+  echo message
+  bp()
 
 proc f_bp(): Elem {.defVal} =
   echo "Breakpoint hit"
@@ -255,6 +279,8 @@ proc value*(elem: Elem): int =
   return elem shr TL
 
 proc tvalue*(elem: Elem, t: ElemType): int =
+  #if elem.ftype != t:
+  #   error(fmt"Wrong type {elem.ftype} != {t}")
   assert(elem.ftype == t)
   return elem.value
 
@@ -283,6 +309,8 @@ proc frepr*(elem: Elem): string =
         return fmt"<{specials[elem.value]}>"
       else:
         return fmt"<special {elem.value}>"
+    of PyObj:
+      return fmt"<pyobj {g.py_object[elem.value]}>"
     else:
       return elem.repr
 
@@ -317,6 +345,8 @@ proc fstr*(elem: Elem): string =
       return nim_string(elem)
     of Special:
       return specials.getOrDefault(elem.value, elem.frepr)
+    of PyObj:
+      return $g.py_object[elem.value]
     else:
       return elem.repr
 
@@ -356,15 +386,22 @@ proc next_token*(f: File): string =
     return inner_stdin_next_token()
   let start = getFilePos(f)
   var buffer = newString(2048)
-  var read = f.readChars(buffer, 0, 30)
+  var read: int
+  try:
+    read = f.readChars(buffer, 0, 30)
+  except EOFError:
+    return ""
   var token = buffer[0..<read].strip(trailing=false)
   if not token.anyIt(it.isSpaceAscii):
     setFilePos(f, start)
-    read = f.readChars(buffer, 0, buffer.len)
+    try:
+      read = f.readChars(buffer, 0, buffer.len)
+    except EOFError:
+      return ""
     token = buffer[0..<read].strip(trailing=false)
-  let leading = read - token.len + 1
+  let leading = read - token.len
   token = token.split(maxSplit = 1)[0]
-  setFilePos(f, start + len(token) + leading)
+  setFilePos(f, start + token.len + leading)
   #debugp token
   return token
 
@@ -405,7 +442,7 @@ template input_pos(): int =
 proc input_next_token(): Elem {.defVal} =
   last_pos[0] = input_pos()
   let token = next_token(g.input)
-  # Todo: Check EOF with actual EOF
+  # EOF
   if token == "":
     last_pos[1] = input_pos()
     # Bad because we're effectively assuming only input_loop call this.
@@ -426,13 +463,15 @@ proc search(source: string, c: char, start:int, init_count:int=1, dir:int=1): in
     if source[index] == c:
       count -= 1
 
+# TODO: Replace this with binary search!
 proc pos_map_index(forth_index: int): int =
   for i, pm in g.pos_map.pairs:
     if forth_index < pm.start:
       return i - 1
-  error("Position in source not found. Is this the right pos_map.txt for the input file?")
+  return -1
+  #error("Position in source not found. Is this the right pos_map.txt for the input file?")
 
-proc inner_print_frame(frame: Elem, context: int) =
+proc inner_print_frame(frame: int, context: int) =
   if frame == Sep:
     stdout_write("  ---------\n")
     return
@@ -440,34 +479,22 @@ proc inner_print_frame(frame: Elem, context: int) =
     stdout_write(fmt"Unknown frame {frame}\n")
     return
   var pos = g.positions[frame]
-  if pos.start == None or pos.start < 0:
-    stdout_write("  Unknown position \e[92m")
-    if frame < 4 or ((frame and TL_MAX) > 4) or frame.ftype != Pointer:
-      stdout_write($frame)
-    else:
-      frame.print()
-    stdout_write("\e[0m\n");
-    # _print_mem(frame);}
+  if pos.start == None or pos.start < 0 or pos.source_start < 0 or pos.filename == "":
+    stdout_write("  Unknown position \e[92m" & $frame & "\e[0m\n    ")
+    print_mem(frame)
+    stdout_write("\n")
     return
-  var fpos = if pos.filename == "<boot>":
-    PosMapEntry(start: pos.start,
-                filename: "lib/boot.flpc",
-                source_start: pos.start,
-                source_end: pos.endd)
-    else:
-      g.pos_map[pos_map_index(pos.start + 1)]
-
-  var source = readFile(fpos.filename)
-  let first = search(source, "\n"[0], fpos.source_start, context, -1)
-  let first_line = 0
-  let last = search(source, "\n"[0], fpos.source_end, context - 1, 1)
-  stdout_write("  In file \e[92m" & fpos.filename & "\e[0m line " & $first_line )
+  var source = readFile(pos.filename)
+  let first = search(source, "\n"[0], pos.source_start, context, -1)
+  let first_line = source[0..first].countLines + 1
+  let last = search(source, "\n"[0], pos.source_end, context - 1, 1)
+  stdout_write("  In file \e[92m" & pos.filename & "\e[0m line " & $first_line )
   stdout_write(" function \e[92m(" & g.memory[frame].frepr & ")\e[0m")
-  stdout_write(source[first..<fpos.source_start])
+  stdout_write(source[first..<pos.source_start])
   stdout_write("\e[91m")
-  stdout_write(source[fpos.source_start..<fpos.source_end])
+  stdout_write(source[pos.source_start..<pos.source_end])
   stdout_write("\e[0m")
-  stdout_write(source[fpos.source_end..<last])
+  stdout_write(source[pos.source_end..<last])
   stdout_write("\n")
 
 proc print_stack*(start: int): Elem {.defVal} =
@@ -500,15 +527,12 @@ proc load_all*() =
   #assert(len(raw_line) == line[1].parseInt * 2)
   length = line[1].parseInt
   for i in countup(0, length - 1):
-    g.positions.add(Position(start: raw_line[2*i],
-                             endd: raw_line[2*i+1],
-                             filename: "<boot>",
-                             source: 0))
+    g.positions.add(PosMapEntry(source_start: raw_line[2*i],
+                                source_end: raw_line[2*i+1],
+                                filename: "lib/boot.flpc",
+                                start: 0)) # Wrong value here. Need to change init_mem.dat
   for i in countup(length, g.memory.len - 1):
-    g.positions.add(Position(start: -1,
-                             endd: -1,
-                             filename: "",
-                             source: -1))
+    g.positions.add(NilPos)
 
   for i in countup(0, g.memory.len - 1):
     g.memory_hint.add(None)
@@ -535,20 +559,23 @@ proc load_all*() =
   assert(line[0] == "#names" and line.len == 2)
   entries = line[1].parseInt
   primitive_names = file.readLine().split()
+  indices["init_primitive_names_len"] = primitive_names . len
   primitives = newSeqWith[PrimProc](len(primitive_names), f_error.PrimProc)
 
   echo "indice type ", indices.type, " ", indices["names_get"].type
 
-  # TODO: read pos_map.txt
-  file = open("pos_map.txt")
-  var filenames = file.readLine().split()[1..^1]
-  var sources: seq[string]
-  for filename in filenames:
-    sources.add(readFile(filename))
-  length = file.readLine().parseInt
+# Need multiple pos maps, one per .f file open.
+# Unless we are *sure* all of one file is compiled before the otehrs.
+proc load_pos_map() =
+  if not fileExists(g.input_filename & ".pos_map"):
+    echo "Position map " & g.input_filename & ".pos_map not found. Running file without a map."
+    return
+  let file = open(g.input_filename & ".pos_map")
+  discard file.readLine().split()[1..^1] # var filenames =
+  g.pos_map = @[]
   var buffer: string
   while file.readLine(buffer):
-    line = buffer.split()
+    var line = buffer.split()
     g.pos_map.add(PosMapEntry(start: line[0].parseInt,
                               filename: line[1],
                               source_start: line[2].parseInt,
@@ -618,6 +645,18 @@ proc pushi(): Elem {.defVal} =
   return fInt(next_command().nim_string.parseInt)
 
 proc int_to_str(): Elem {.defVal} = return string_new($ds_pop().value)
+proc to_str(): Elem {.defVal} =
+  var elem = ds_pop()
+  let etype = elem.ftype
+  case etype
+    of Int:
+      return string_new($elem.value)
+    of Str:
+      return elem
+    of Prim:
+      return string_new(primitive_names[elem.value])
+    else:
+      error("Should not call to_str with a pointer.")
 proc newfunc(n: int): Elem {.defVal} =
   g.input_stack.add(fInt(g.call_stack.len))
   g.input_stack.add(Sep)
@@ -662,8 +701,7 @@ proc drop1(): Elem {.defVal} = discard ds_pop()
 proc equal(): Elem {.defVal} =
   return fInt(ds_pop() == ds_pop())
 
-proc pick(): Elem {.defVal} =
-  var name = next_command()
+proc local_pick(name: Elem): Elem =
   for i in countdown(g.data_stack.len - 1, 0):
     #for elem in g.data_stack.reversed():
     let elem = g.data_stack[i]
@@ -687,6 +725,13 @@ proc pick(): Elem {.defVal} =
         g.pick_cache[mem_index] = count
       ]#
       return elem.data
+  return NoValue
+
+proc pick(): Elem {.defVal} =
+  var name = next_command()
+  let res = local_pick(name)
+  if res != NoValue:
+    return res
   ds_add(name)
   when defined(opt_pick):
     if g.call_stack.len != g.from_input:
@@ -747,11 +792,8 @@ proc memory_len(): Elem {.defVal} = return fInt(g.memory.len)
 proc f_Pointer(): Elem {.defVal} = return fPointer(ds_pop().value)
 
 proc mempos_append(): Elem {.defVal} =
-  # TODO: filename should be input filename?
-  g.positions.add(Position(start: last_pos[0].int,
-                           endd: last_pos[1].int,
-                           filename: "",
-                           source: 1))
+  let pm_index = pos_map_index(last_pos[0].int + 1)
+  g.positions.add(if pm_index > -1: g.pos_map[pm_index] else: NilPos)
   g.memory.add(ds_pop())
   g.memory_hint.add(None)
 
@@ -787,7 +829,7 @@ proc s4127(): Elem {.defVal} =
   ds_add(b); ds_add(a); return d
 
 proc memory_get(): Elem {.defVal} =
-  return g.memory[ds_pop().value]
+  return g.memory[tvalue(ds_pop(), Pointer)]
 
 proc memory_set(): Elem {.defVal} =
   var x = ds_pop(); var i = ds_pop().value
@@ -795,20 +837,14 @@ proc memory_set(): Elem {.defVal} =
     g.memory[i] = x
   elif i == g.memory.len:
     g.memory.add(x)
-    g.positions.add(Position(start: -1,
-                             endd: -1,
-                             filename: "",
-                             source: -1))
+    g.positions.add(NilPos)
     g.memory_hint.add(None)
   else:
     error("Setting index greater than memory length")
 
 proc memory_append(): Elem {.defVal} =
   g.memory.add(ds_pop())
-  g.positions.add(Position(start: -1,
-                           endd: -1,
-                           filename: "",
-                           source: -1))
+  g.positions.add(NilPos)
   g.memory_hint.add(None)
   assert(g.memory.len == g.positions.len)
 
@@ -816,13 +852,16 @@ proc functions_end_increase(): Elem {.defVal} = indices["functions_end"] += 1
 proc functions_end_decrease(): Elem {.defVal} = indices["functions_end"] -= 1
 
 const
-  unescape_repl = @[("_", " "), ("\\s", " ")] & "0\0 u_ n\n r\r t\t q\" \\\\ (( ))".split(" ").map(r => ("\\" & $r[0], $r[1]))
-  escape_repl = @[(" ", "_"), ("\0", "\\0")] & "_u \nn \rr \tt \"q \\\\".split(" ").map(r => ($r[0], "\\" & $r[1]))
+  flpcforth_to_flpcpython_repl = @[("\\_", " ")]
+  flpcpython_to_flpcforth_repl = @[(" ", "\\_")]
+  flpcforth_to_nim_repl = @[("\\_", " ")] & "0\0 u_ n\n r\r t\t q\" \\\\ (( ))".split(" ").map(r => ("\\" & $r[0], $r[1]))
+  nim_to_flpcpython_repl = @[("\0", "\\0")] & "\nn \rr \tt \"q \\\\".split(" ").map(r => ($r[0], "\\" & $r[1]))
+  nim_to_flpcforth_repl = @[(" ", "\\_"), ("\0", "\\0")] & "\nn \rr \tt \"q \\\\".split(" ").map(r => ($r[0], "\\" & $r[1]))
 
 proc inner_string_unescape(index: Elem): Elem =
   assert(index.ftype == Str)
   let s = g.strings[index.value]
-  return string_new(s.multiReplace(unescape_repl))
+  return string_new(s.multiReplace(flpcforth_to_nim_repl))
 
 proc string_unescape(): Elem {.defVal} =
   return inner_string_unescape(ds_pop())
@@ -835,8 +874,12 @@ proc f_print(): Elem {.defVal} =
 # Maybe after fixing how escaping works?
 proc printraw(): Elem {.defVal} =
   ds_pop().printstr()
+proc string_repr(s: Elem): string =
+  return nim_string(s)
 proc printrepr(): Elem {.defVal} =
-  ds_pop().print()
+  fout_write("\"")
+  fout_write(nim_string(ds_pop()).multiReplace(nim_to_flpcpython_repl))
+  fout_write("\"")
 proc printspace(): Elem {.defVal} = fout_write(" ")
 proc printeol(): Elem {.defVal} = fout_write("\n")
 
@@ -980,6 +1023,7 @@ proc continue_from_file(): Elem {.defVal} =
 proc run_file(filename: string) =
   g.input_filename = filename
   stdout_write(fmt"Running from file {g.input_filename}" & "\n")
+  load_pos_map()
   g.files.add(open(g.input_filename))
   g.input = g.files[^1]
   g.input_index = g.files.len - 1
@@ -1008,7 +1052,7 @@ proc debugger() =
   if g.debugger_waitlen == AlwaysStop or g.debugger_waitlen >= g.call_stack.len:
     if g.debugger_skip == True:
       g.debugger_skip = False
-      echo fmt"*** new g.debugger_waitlen: {g.debugger_waitlen}"
+      echo fmt"new g.debugger_waitlen: {g.debugger_waitlen}"
       return
     g.debugger_waitlen = 0
     g.prev_call_stack[g.call_stack.len - 1] = g.call_stack[^1]
@@ -1125,7 +1169,10 @@ proc fd_next_char(): Elem {.defVal} =
 
 proc fd_next_line(): Elem {.defVal} =
   var fd = g.files[ds_pop().value]
-  return string_new(fd.readLine())
+  try:
+    return string_new(fd.readLine())
+  except EOFError:
+    return None
 
 # Not strictly needed since we have set_output
 proc fd_write(): Elem {.defVal} =
@@ -1141,7 +1188,7 @@ proc fd_ended(): Elem {.defVal} =
   var fd = g.files[ds_pop().value]
   return fInt(fd.endOfFile)
 
-var mode_table = {"r": fmRead, "w": fmWrite}.toTable
+var mode_table = {"r": fmRead, "w": fmWrite, "a": fmAppend}.toTable
 # TODO: Maybe remove open_at?
 proc inner_file_open_at(index: int): Elem {.defVal} =
   var filename = nim_string(ds_pop())
@@ -1224,8 +1271,6 @@ proc debug_function_set(): Elem {.defVal} =
 proc f_print_state(): Elem {.defVal} =
   print_state()
 
-## Untested
-
 proc msleep(): Elem {.defVal} =
   sleep(ds_pop().value)
 
@@ -1235,10 +1280,11 @@ proc input_next_triple_quote(): Elem {.defVal} =
   var buffer = newString(2048)
   var read = f.readChars(buffer, 0, buffer.len)
   var token = buffer[1..<read]
-  let leading = read - token.len + 1
+  let leading = read - token.len
   token = token.split("'''", 1)[0]
-  setFilePos(f, start + len(token) + leading + 3)
-  return string_new(token)
+  setFilePos(f, start + token.len + leading + 3)
+  # Remove last char for balance ''' foo '''
+  return string_new(token[0..^2])
 
 proc triple_quote(): Elem {.defVal} =
   if g.call_stack.len != g.from_input:
@@ -1251,15 +1297,33 @@ proc print_frame(): Elem {.defVal} =
   var i = ds_pop().value
   var context = ds_pop().value
   # Bad: should probably be a different function.
-  var raw_memory_location = ds_pop().value
+  var raw_memory_location = ds_pop()
   var frame = if raw_memory_location == True:
                 i
               elif g.prev_call_stack[i] != 0:
                 g.prev_call_stack[i]
               else:
                 g.call_stack[i]
-  stdout_write($i)
   inner_print_frame(frame, context)
+
+proc str_next_token(): Elem {.defVal} =
+  # Consumes spaces at the beginning, then returns all characters
+  # up to the next space of end of string.
+  var fs = nim_string(ds_pop())
+  var start = ds_pop().value
+  fs = fs[start..^1].strip(trailing=false)
+  var res = fs.splitWhitespace()[0]
+  ds_add(fInt(res.len))
+  return string_new(res)
+
+proc str_to_int(): Elem {.defVal} =
+  var val = ds_pop()
+  if val.ftype == Str:
+    return fInt(val.nim_string.parseInt)
+  else:
+    error("int() can't handle non-Strings yet.")
+
+## Untested
 
 proc f_print_mem(): Elem {.defVal} =
   var val = ds_pop().tvalue(Pointer)
@@ -1280,7 +1344,7 @@ proc load_call_stack(): Elem {.defVal} =
   #g.local_stack.add(Sep)
   ds_add_sep()
   g.call_stack.add(Sep)
-  for i in countdown(l-1-skip, 0):
+  for i in countup(0, l-1-skip):
     g.call_stack.add(g.memory[arr + i].value)
 
 proc rewind(): Elem {.defVal} =
@@ -1301,27 +1365,10 @@ proc rewind(): Elem {.defVal} =
   # Call function again. Unfortunately, prev_call_stack temporarily has the wrong value.
   g.call_stack[^1] = g.prev_call_stack[g.call_stack.len - 1]
 
-proc str_next_token(): Elem {.defVal} =
-  # Consumes spaces at the beginning, then returns all characters
-  # up to the next space of end of string.
-  var fs = nim_string(ds_pop())
-  var start = ds_pop().value
-  fs = fs[start..^1].strip(trailing=false)
-  var res = fs.splitWhitespace()[0]
-  ds_add(fInt(res.len))
-  return string_new(res)
-
 # Unused?
 proc lookup_error(): Elem {.defVal} =
   print_state()
   error("Lookup_error")
-
-proc str_to_int(): Elem {.defVal} =
-  var val = ds_pop()
-  if val.ftype == Str:
-    return fInt(val.nim_string.parseInt)
-  else:
-    error("int() can't handle non-Strings yet.")
 
 # Unused?
 proc prm(): Elem {.defVal} =
@@ -1345,7 +1392,7 @@ proc prm(): Elem {.defVal} =
 
 proc string_escape(): Elem {.defVal} =
   var s = nim_string(ds_pop())
-  return string_new(s.multiReplace(escape_repl))
+  return string_new(s.multiReplace(flpcpython_to_flpcforth_repl))
 
 proc all_data_stack_pick(): Elem {.defVal} =
   var name = ds_pop()
@@ -1360,10 +1407,110 @@ proc all_data_stack_pick(): Elem {.defVal} =
   bp()
   return None
 
+proc primitive_name(): Elem {.defVal} =
+  #echo "Adding ", primitive_names[g.data_stack[^1].data.value]
+  return string_new(primitive_names[ds_pop().value])
+
+proc f_Prim(): Elem = fPrim(ds_pop().value)
+
+proc primitives_len(): Elem = fInt(primitives.len)
+
+# This doesn't work. Need relative indentation.
+proc replace_indent(s: string, indent: int): string =
+  let bounds = s.findBounds(re"\n(\s*)")
+  let prefix_len = bounds.last - bounds.first
+  bp()
+  return s.replace("\n" & " ".repeat(prefix_len), "\n" & " ".repeat(2 * indent))
+
+proc print_indented(): Elem {.defVal} =
+  echo replace_indent(nim_string(ds_pop()), ds_pop().tvalue(Int))
+
+## Optimization
+
+# Should maybe just rename this "repeat_if5" or something?
+#proc opt_simple_for(): Elem {.defVal} =
+proc repeat5_if(): Elem {.defVal} =
+  let cond = ds_pop()
+  if cond != False:
+    g.call_stack[^1] -= 5
+
+proc opt_incr(): Elem {.defVal} =
+  g.data_stack[^1].data += 1 shl TL
+  #g.data_stack[^1].name = UnnamedString
+  let endd = local_pick(indices["string_end"]).tvalue(Int)
+  return fInt(g.data_stack[^1].data.value < endd)
+
+when not defined(with_py_opt):
+  proc use_py_opt(): Elem {.defVal} =
+    return False
+  proc no_py_opt(): Elem {.defVal} =
+    error("Cannot call this primitive. Python opt disabled.")
+
+  proc py_parse(): Elem {.defVal} = return no_py_opt()
+  proc py_len(): Elem {.defVal} = return no_py_opt()
+  proc py_get(): Elem {.defVal} = return no_py_opt()
+  proc py_convert(): Elem {.defVal} = return no_py_opt()
+  proc py_name(): Elem {.defVal} = return no_py_opt()
+  proc py_pos(): Elem {.defVal} = return no_py_opt()
+
+when defined(with_py_opt):
+  # Need to generalize this line
+  pyInitLibPath("/usr/lib/python2.7/config/libpython2.7.so")
+  let pyos = pyImport("os")
+  let pysys = nimpy.pyImport("sys")
+  discard pysys.path.append(pyos.getcwd())
+  let pymod = nimpy.pyImport("pymod")
+
+  proc use_py_opt(): Elem {.defVal} =
+    return True
+
+  proc pyobj_new(o: PyObject): Elem {.defVal} =
+    g.py_object.add(o)
+    return fPyObj(g.py_object.len - 1)
+
+  proc py_parse(): Elem {.defVal} =
+    let s = ds_pop()
+    return pyobj_new(pymod.parse(nim_string(s)))
+
+  proc py_len(): Elem {.defVal} =
+    let v = g.py_object[ds_pop().tValue(PyObj)]
+    return fInt(pymod.length(v).to(int))
+
+  proc py_get(): Elem {.defVal} =
+    let i = ds_pop().tValue(Int)
+    let v = g.py_object[ds_pop().tValue(PyObj)]
+    return pyobj_new(pymod.get(v, i))
+
+  proc inner_py_convert(elem: PyObject): Elem =
+    let elem_py_type = pymod.pytype(elem).to(string)
+    case elem_py_type
+      of "str": ds_add(string_new(elem.to(string)))
+      of "int": ds_add(fInt(elem.to(int)))
+      of "Node": ds_add(pyobj_new(elem))
+      else:
+        error "Unknown child type " & pymod.pytype(elem).to(string)
+    return string_new(elem_py_type)
+
+  proc py_convert(): Elem {.defVal} =
+    # Pushes type, flpc_value onto the stack
+    let elem = g.py_object[ds_pop().tValue(PyObj)]
+    return inner_py_convert(elem)
+
+  proc py_name(): Elem {.defVal} =
+    let v = g.py_object[ds_pop().tValue(PyObj)]
+    return string_new(pymod.name(v).to(string))
+
+  proc py_pos(): Elem {.defVal} =
+    let v = g.py_object[ds_pop().tValue(PyObj)]
+    let pos = pymod.pos(v)
+    ds_add(fInt(pos[0].to(int)))
+    return fInt(pos[1].to(int))
+
 ## End primitives
 
 proc func_call*(elem: Elem) =
   if g.debug:
+    #if g.call_stack[^1] > indices["functions_end"] or g.call_stack[^1] < indices["names_get"]:
     stdout_write(fmt"*** Running {elem.frepr}" & "\n")
   case elem.ftype
     of Pointer:
@@ -1380,7 +1527,7 @@ proc func_call*(elem: Elem) =
         # g.data_stack.add(DStackElem(name: UnnamedString, data: res))
         ds_add(res)
     else:
-      error("Cannot call " & $elem)
+      error("Cannot call " & elem.frepr)
 
 proc step*() =
   g.steps += 1
@@ -1400,6 +1547,15 @@ proc mem_str*(frame: int): string =
 
 proc print_mem*() =
   stdout_write(mem_str(g.call_stack[^1]))
+
+proc print_mem*(index: int) =
+  let start = max(0, index-10)
+  stdout_write(g.memory[start..<index].map(x => x.frepr).join(" "))
+  stdout_write(" \e[91m")
+  stdout_write(g.memory[index].frepr)
+  stdout_write(" \e[0m")
+  stdout_write(g.memory[index+1..index+10].map(x => x.frepr).join(" "))
+  stdout_write("\n")
 
 proc print_data_stack*(start: int) =
   echo "\n  " & g.data_stack[start..^1].reversed().map(x => x.frepr).join("\n  ")
@@ -1443,10 +1599,12 @@ proc print_full_state*() =
   echo g.prev_call_stack[0..<g.call_stack.len]
 
 proc add_primitive(name: string, p: PrimProc) =
-  primitives[primitive_names.find(name)] = p
-
-proc get_primitive(name: string, p: PrimProc) =
-  primitives[primitive_names.find(name)] = p
+  let index = primitive_names.find(name)
+  if index == -1:
+    primitive_names.add(name)
+    primitives.add(p)
+  else:
+    primitives[index] = p
 
 macro m_add_primitive(name: untyped): untyped =
   result = nnkStmtList.newTree()
@@ -1480,18 +1638,23 @@ macro m_add_extra_primitives(names: varargs[untyped]): untyped =
                        newDotExpr(newIdentNode(func_name), newIdentNode("PrimProc")))
 
 proc run_once*() =
-  echo "spec.repr ", Sep.frepr, " ", UnnamedString.frepr, " ", Sep.ftype
+  echo specials
+  echo "spec.repr ", Sep.frepr, " ", UnnamedString.frepr, " ", Sep.ftype, " ", None.frepr
   echo "names_get_end ", indices["names_get_end"]
   echo "functions_end ", indices["functions_end"]
   echo "primitives: ", len(primitives)
   echo "primitive_names: ", len(primitive_names)
+  echo "init_primitive_names_len ", indices["init_primitive_names_len"]
   debugp(primitives.filter(x => x != f_error).len)
   for (name, fun) in zip(primitive_names, primitives):
     if fun == f_error:
       echo name
   echo "strings: ", len(g.strings)
-  debugp(unescape_repl)
-  #bp()
+  indices["string_end"] = string_new("end")
+  echo "foo\n  bar".replace(re"\n\s*", "\n" & " ".repeat(10))
+  let found = "foo\n  bar".findBounds(re"\n(\s*)")
+  echo found.last - found.first
+  # bp()
 
 proc init*() =
   g.output = stdout
@@ -1521,7 +1684,7 @@ proc init*() =
     printraw, printspace, printeol, printrepr,
     f_error,
     "pushi:",
-    f_hash, int_to_str,
+    f_hash, int_to_str, to_str,
     "memory_hint.get", "memory_hint.set",
     f_bp,
     shuffle,
@@ -1544,6 +1707,10 @@ proc init*() =
     "call_stack.top2", # f_call_stack_top,
     str_next_token, lookup_error, prm, string_escape,
     all_data_stack_pick,
+    primitive_name, f_Prim, "primitives.len",
+    repeat5_if, "opt.incr",
+    print_indented,
+    use_py_opt, py_get, py_len, py_convert, py_name, py_parse, py_pos,
   )
   m_add_extra_primitives(
     "] func_end", "0 zero", "1 one", "2 two",
@@ -1558,11 +1725,9 @@ proc init*() =
     "_cheat_dict.new unimpl", "_cheat_dict.get unimpl", "_cheat_dict.set unimpl",
     #"repr unimpl"
   )
-  primitive_names.add("opt.pickn")
-  primitives.add(opt_pickn)
+  add_primitive("opt.pickn", opt_pickn)
   indices["opt.pickn"] = primitives.len - 1
-  primitive_names.add("opt.names_get")
-  primitives.add(opt_names_get)
+  add_primitive("opt.names_get", opt_names_get)
   indices["opt.names_get"] = primitives.len - 1
   # ./flpc precompiled/self.f
   if paramCount() > 0:

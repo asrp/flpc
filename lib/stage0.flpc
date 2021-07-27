@@ -1,6 +1,22 @@
 
 F' [ input.next_token functions.add ] input.next_token bind: functions.add 'F
 
+add_non_boot_primitive <- fast_fun[i]:
+  functions.add(Prim(i) primitive_name(i))
+
+add_non_boot_primitives <- fun[]:
+  init_prims = 42
+  total_prims = primitives.len()
+  i = total_prims
+  cond = i > init_prims
+  repeat_if:
+    drop1(`cond)
+    i = `i - 1
+    add_non_boot_primitive()
+    cond = i > init_prims
+
+add_non_boot_primitives()
+
 # Should overwrite position too!
 rebind_colon <- fun[func]:
   location = names.get(input.next_token())
@@ -26,9 +42,9 @@ debugger_inner <- fun[]:
     if string_equal(name "s"):
       return(None())
     if string_equal(name "n"):
-      return(call_stack.len() - 5)
-    if string_equal(name "r"):
       return(call_stack.len() - 6)
+    if string_equal(name "r"):
+      return(call_stack.len() - 7)
     if string_equal(name "c"):
       return(0)
     if string_equal(name "i"):

@@ -34,7 +34,7 @@ simple_for <- fast_fun[end start block]:
 memory.append(None())
 Done <- Pointer(memory.len() - 1)
 
-make_resizable <- fast_fun[num]:
+make_resizable <- fast_fun[]:
   new_resizable = resizable(0)
   new_resizable elem = s21()
   not(pick1() == Done)
@@ -53,9 +53,29 @@ make_resizable_len <- fast_fun[num]:
     new_resizable . append(`elem))
   shuffle("12") # return(new_resizable)
 
+make_resizable_rev <- fast_fun[]:
+  res = make_resizable()
+  # Reverse
+  l = res . len - 1
+  i = (l + 1) / 2
+  repeat_if:
+    i = `i - 1
+    tmp = res . get(i)
+    res . set(i res . get(l - i))
+    res . set(l - i tmp)
+    drop1(`tmp)
+  shuffle("23") # return(res)
+
 str_cat <- fast_fun[]:
   # make_resizable(*args)
   arr = make_resizable()
+  joined = str_join(arr . array + 1 arr . len)
+  # return joined
+  shuffle("13")
+
+str_cat2 <- fast_fun[]:
+  # make_resizable(*args)
+  arr = make_resizable_rev()
   joined = str_join(arr . array + 1 arr . len)
   # return joined
   shuffle("13")
@@ -94,18 +114,6 @@ list_comp_cond <- local_fun[block3 iterable condition]:
   # Leaving list_comp_out unnamed so the calling function can name this
   shuffle("14")
 
-flist <- class[]:
-  foo <- fun[bar]:
-    return(1)
-
-  attrib <- fun[name receiver searcher]:
-    if lookup_print:
-      print("FList looking up ")
-      print(name)
-      printeol()
-    return_if(string_equal(name "pos")      0)
-    return(instance_attrib(name receiver searcher))
-
 FList_class <- boot_obj . subclass(resizable.attrib)
 FList <- closure(FList_class . instance FList_class)
 
@@ -127,6 +135,7 @@ flatten <- fun[in_list class]:
   return(`out_list)
 
 # Wrapper for a single Forth call
+# Subclass of node (via attribs)
 forthe <- class[]:
   print <- fun[self]:
     tprint(memory.get(self + 1))
@@ -142,11 +151,18 @@ forthe <- class[]:
     return_if(string_equal(name "len")      node.len(receiver))
     return_if(string_equal(name "name")     memory.get(receiver))
     return_if(string_equal(name "value")    memory.get(receiver + 1))
+    return_if(string_equal(name "pos")      memory.get(receiver + 2))
+    return_if(string_equal(name "set_pos")  node.set_pos)
     return_if(string_equal(name "type")     "forthe")
     return(instance_attrib(name receiver searcher))
 
 forthe_class <- boot_obj . subclass(forthe.attrib)
 forthe <- closure(forthe_class . instance forthe_class)
+
+forthep <- fun[name value pos]:
+  res = forthe(name value)
+  res . set_pos(pos)
+  return(res)
 
 # Hack where name == "_" means not yet set!
 FQuote <- class[]:
@@ -165,6 +181,8 @@ FQuote <- class[]:
     return_if(string_equal(name "len")      node.len(receiver))
     return_if(string_equal(name "name")     memory.get(receiver))
     return_if(string_equal(name "value")    memory.get(receiver + 1))
+    return_if(string_equal(name "pos")      memory.get(receiver + 2))
+    return_if(string_equal(name "set_pos")  node.set_pos)
     return_if(string_equal(name "type")     "FQuote")
     return(instance_attrib(name receiver searcher))
 
@@ -175,6 +193,11 @@ FQuote.hash <- convert_attr(FQuote_class)
 FQuote.attrib <- fun[name receiver searcher]:
   hash_header()
   call(hashtable.get(name FQuote.hash))
+
+FQuotep <- fun[name value pos]:
+  res = FQuote(name value)
+  res . set_pos(pos)
+  return(res)
 
 to_flist <- fun[array]:
   change_class(array FList_class)

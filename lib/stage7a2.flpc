@@ -154,6 +154,17 @@ File <- ns_class[]:
   next_line <- fun[self]:
     return(fd_next_line(self . fd))
 
+  readlines <- fun[self]:
+    result = resizable(0)
+    cond = True
+    repeat_if:
+      drop1(`cond)
+      elem = self . next_line()
+      cond = not(elem == None())
+      if cond:
+        result . append(elem)
+    return(result)
+
   close <- fun[self]:
     return(file.close(self . fd))
 
@@ -182,6 +193,31 @@ StringIO <- ns_class[]:
       if token . len() == 0:
         return(new_resizable)
       new_resizable . append(`token)
+
+get_class_name <- fun[pointer]:
+  return(StringIO(get_mem_hint(pointer)) . next_token() . str)
+
+set_method <- fun[creator key value]:
+  class_hash = names2() . get(get_class_name(creator)) . attr
+  class_hash . set(key value)
+
+val_to_str <- fun[value]:
+  if is_basic(value):
+    return(to_str(value))
+  else:
+    return(value . str())
+
+map_in_place <- fun[arr f]:
+  simple_for(arr . len 0 fast_fun[index]:
+    arr . set(index call(arr . get(index) f)))
+
+str_cat3 <- fast_fun[]:
+  # make_resizable(*args)
+  arr = make_resizable_rev()
+  map_in_place(arr to_str)
+  joined = str_join(arr . array + 1 arr . len)
+  # return joined
+  shuffle("13")
 
 string_test <- fun[]:
   s = String("hello world")
@@ -214,7 +250,10 @@ error_handler_set(top_level_exception_handler)
 
 yield <- fast_fun[value]:
   # Implicit value already on stack is returned.
-  return_two(make_resizable(Done local_call_stack()))
+  return_two(make_resizable_rev(Done local_call_stack()))
 
 next <- local_fun[call_stack_copy]:
   load_call_stack(call_stack_copy . array + 1 call_stack_copy . len 1)
+
+end_yield <- fast_fun[]:
+  return_two(None() None())

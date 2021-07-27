@@ -1,3 +1,9 @@
+pair <- fun[start end]:
+  pos = resizable(0)
+  pos . append(start)
+  pos . append(end)
+  return(pos)
+
 MatchError <- class[]:
   instance <- fun[message self]:
     new_obj = minobj.instance(boot_obj)
@@ -170,10 +176,11 @@ negation <- fun[child]:
   return(MatchError("Negation is true"))
 
 bound <- fun[child name]:
+  saved = source . position()
   output = call(child)
   if is_instance(output MatchError_class):
     return(output)
-  return(node(name output))
+  return(nodep(name output pair(saved source . position())))
 
 should_make_node <- fun[output]:
   if is_instance(output resizable_class):
@@ -207,6 +214,7 @@ _apply <- fun[name]:
 
 _apply <- fun[name]:
   nesting = parseg . get("nest")
+  saved = source . position()
   if parseg . get("apply_print"):
     i = nesting
     repeat_if:
@@ -246,10 +254,10 @@ _apply <- fun[name]:
     print("Making node ")
     printraw(name)
     printeol()
-    return(node(name output))
+    return(nodep(name output pair(saved source . position())))
   if parseg . get("flagged") . string_index(name) == None():
     return(output)
-  return(node(name output))
+  return(nodep(name output pair(saved source . position())))
 
 # push: foo apply
 apply <- fun[name]:

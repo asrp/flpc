@@ -1,0 +1,18 @@
+string_expr = '{' {exprsp} hspaces '}'
+# Using void to trigger string joining
+f_string_chars_s = ((~'\'' ~'{' anything)* void)=STRING
+f_string_chars_d = ((~'"' ~'{' anything)* void)=STRING
+F_QUOTE_S = ('f' '\'' {f_string_chars_s} {(string_expr f_string_chars_s)*} '\'')=fmt
+F_QUOTE_D = ('f' '"'  {f_string_chars_d} {(string_expr f_string_chars_d)*} '"')=fmt
+F_QUOTE = hspaces ( F_QUOTE_S | F_QUOTE_D )
+
+f_triple_quote_s = ((~single_quotes ~'{' anything)* void)=TRIPLE_QUOTE
+f_triple_quote_d = ((~double_quotes ~'{' anything)* void)=TRIPLE_QUOTE
+F_TRIPLE_QUOTE_S = ('f' single_quotes {f_triple_quote_s} {(string_expr f_triple_quote_s)*} single_quotes)=fmt
+F_TRIPLE_QUOTE_D = ('f' double_quotes {f_triple_quote_d} {(string_expr f_triple_quote_d)*} double_quotes)=fmt
+F_TRIPLE_QUOTE = hspaces (F_TRIPLE_QUOTE_S | F_TRIPLE_QUOTE_D)
+
+non_block_non_infix = F_TRIPLE_QUOTE | F_QUOTE
+                    | list_comp_var | make_dict | make_resizable | forth | func_call
+                    | name_quote | quote | parenthesis
+                    | NUMBER | TRIPLE_QUOTE | STRING | variable

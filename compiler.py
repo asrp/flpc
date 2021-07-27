@@ -4,6 +4,7 @@ from pymetaterp import python_compiled
 from pymetaterp.util import simple_wrap_tree
 from pymetaterp import boot_tree, boot_grammar
 from pdb import set_trace as bp
+import argparse
 
 grammar = open("grammar/flpc.grammar").read()
 grammar += r"""
@@ -28,7 +29,6 @@ def simplify(root):
         output = Node(root[0][0], simplify(root[1]))
     elif root.name == "infix":
         output = root[0]
-        output.pos = root[0].pos
         for i in range(2, len(root), 2):
             output = Node(root[i-1][0], [simplify(output), simplify(root[i])])
             output.pos = root[i].pos
@@ -120,8 +120,8 @@ def flatten(lst):
         else:
             yield elem
 
-def escape_str(s, pos):
-    return s.replace("_", "\\u").replace(" ", "_")
+def escape_str(s):
+    return s.replace(" ", "\\_")
 
 def to_forth(root):
     if not isinstance(root, Node):
@@ -142,7 +142,7 @@ def to_forth(root):
     elif root.name == "name_quote":
         return FList([FCall("check:", root.pos), to_forth(root[0])], root.pos)
     elif root.name == "STRING":
-        return FList([FCall("push:", root.pos), FStr(escape_str(root[0], root.pos), pos=root.pos)], root.pos)
+        return FList([FCall("push:", root.pos), FStr(escape_str(root[0]), pos=root.pos)], root.pos)
     elif root.name == "NUMBER":
         if 0 <= int(root[0]) < 3:
             return FStr(root[0], pos=root.pos)
@@ -210,7 +210,7 @@ def to_forth(root):
             children = [to_forth(child) for child in root[1]] +\
                        [to_forth(root[0]),
                         FCall("attr_call:", root.pos),
-                        FStr(root[1].name, root.pos)]
+                        FStr(escape_str(root[1].name), root.pos)]
         return FList(list(flatten(children)), root.pos)
     elif root.name == "infix":
         bp() # Shouldn't happen anymore
@@ -351,7 +351,6 @@ class Global(object):
 g = Global()
             
 if __name__ == "__main__":
-    output_stream = sys.stdout
     time_log = open("time.log", "w")
     output_stream_pos = 0
     pos_map = {}
@@ -363,12 +362,19 @@ if __name__ == "__main__":
     t2 = match(t1, boot_grammar.bootstrap + boot_grammar.extra + boot_grammar.diff)
     lang_tree = match(t2, grammar + boot_grammar.extra)
 
+    parser = argparse.ArgumentParser()
+    parser.add_argument('inputs', nargs='*')
+    parser.add_argument('-o', '--output')
+    args = parser.parse_args()
+    output_stream = open(args.output, "w") if args.output else sys.stdout
+    pos_map_filename = args.output + ".pos_map" if args.output else "pos_map.txt"
+
     header = "push: Generated_from_" + "_".join(sys.argv[1:]) + " print"
     output_stream.write(header + "\n")
     output_stream_pos += len(header)
     import time
     start_time = time.time()
-    for filename in sys.argv[1:]:
+    for filename in args.inputs:
         # g.filename = filename
         parsed = parse(open(filename).read())
         if python_compiled.g.input.position+1 != len(python_compiled.g.input.source):
@@ -378,8 +384,8 @@ if __name__ == "__main__":
         time_log.write(str((filename, "parse", time.time() - start_time)) + "\n")
         write_suite(to_forth(simplify(parsed)))
         time_log.write(str((filename, "all", time.time() - start_time)) + "\n")
-    open("pos_map.txt", "w").write("%s %s\n" % (len(sys.argv[1:]), " ".join(sys.argv[1:])) +\
-                                   "%s\n" % len(pos_map) +\
+    open(pos_map_filename, "w").write("%s %s\n" % (len(sys.argv[1:]), " ".join(sys.argv[1:])) +\
+                                   # "%s\n" % len(pos_map) +\
         "\n".join(" ".join(map(str, (key[0],) + pos_map[key]))
                   for key in sorted(pos_map.keys())))
 

@@ -71,29 +71,27 @@ For technical reasons, all of the above need to be prepended with the line (this
 
 Run FlpcPython programs precompiled to FlpcForth with
 
-    gcc flpc_all.c -o flpc
+    nim c --gc:orc -d:danger flpc.nim
     ./flpc precompiled/interpreter.f
 
-(or one of `precompiled/self.f`, `precompiled/flpc-gen.f`, `precompiled/compiler.f`, ). Alternatively, run in [tcc](https://bellard.org/tcc/).
-
-    tcc -run -DTCC flpc_all.c precompiled/flpc-all.f
+(or one of `precompiled/self.f`, `precompiled/flpc-gen.f`, `precompiled/compiler.f`, ). Tested with Nim Compiler Version 1.4.6.
 
 Recompile `.f` files with
 
-    python compiler.py <list of sources>
+    python compiler.py <list of sources> -o <output file>
 
 `compiler.py` depends on [pymetaterp](https://github.com/asrp/pymetaterp). Install it with `pip install -r requirements.txt`.
 
 The existing precompiled files were created with
 
-    python compiler.py lib/stage{0,1{a,b,b2,b3,c,d},3{a,b}}.flpc lib/flpc_grammar.flpc lib/stage{6{a,b},7a2,7a}.flpc > precompiled/interpreter.f
-    python compiler.py lib/stage{0,1{a,b,b2,b3,c,d},3{a,b}}.flpc lib/flpc_grammar.flpc lib/stage6{a,b}.flpc > precompiled/compiler.f
-    python compiler.py lib/stage{0,1{a,b,b2,b3,c,d}}.flpc lib/grammar.flpc lib/stage{2,3a}.flpc test/stage3-test.flpc > precompiled/flpc-gen.f
-    python compiler.py lib/stage{0,1{a,b,b2,b3,c,d},3{a,b}}.flpc lib/flpc_grammar.flpc lib/stage6{a,b}.flpc test/self.flpc > precompiled/self.f
+    python compiler.py lib/stage{0,1{a,b,b2,b3,c,d},3{a,b}}.flpc lib/flpc_grammar.flpc lib/stage{6{a,b},7a2,7a}.flpc -o precompiled/interpreter.f
+    python compiler.py lib/stage{0,1{a,b,b2,b3,c,d},3{a,b}}.flpc lib/flpc_grammar.flpc lib/stage6{a,b}.flpc -o precompiled/compiler.f
+    python compiler.py lib/stage{0,1{a,b,b2,b3,c,d}}.flpc lib/grammar.flpc lib/stage{2,3a}.flpc test/stage3-test.flpc -o precompiled/flpc-gen.f
+    python compiler.py lib/stage{0,1{a,b,b2,b3,c,d},3{a,b}}.flpc lib/flpc_grammar.flpc lib/stage6{a,b}.flpc test/self.flpc -o precompiled/self.f
 
 To run tests (in `test/`), compile up to the needed test and append the test.
 
-    python compiler.py lib/stage{0,1{a,b,c}} test/stage1c-test.flpc > precompiled/test.f
+    python compiler.py lib/stage{0,1{a,b,c}} test/stage1c-test.flpc -o precompiled/test.f
 
 See Bootstrapping Sequence to get an idea of combinations that may work.
 

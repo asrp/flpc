@@ -7,8 +7,12 @@
 compile_temp <- fun[filename temp_filename]:
   init_g(temp_filename)
   g . set("autogen_name" "tempgen")
+  set_output(g . get("pos_file"))
+  print(str_cat(Done "\n" temp_filename "1 "))
+  set_output(None())
   compile_file(filename)
   file.close(g . get("file"))
+  file.close(g . get("pos_file"))
 
 run_file <- fast_fun[filename]:
   current_input_file()
@@ -79,7 +83,7 @@ help <- fun[func]:
   else:
     if str_endswith("instance creator" get_mem_hint(func)):
       # Todo get the . attr once all this string stuff is fixed.
-      class_name = StringIO(get_mem_hint(func)) . next_token() . str
+      class_name = get_class_name(func)
       print(class_name)
       print(" with keys\n")
       tprint(names2() . get(class_name) . attr)
@@ -182,9 +186,9 @@ names2() . set("!" get)
 
 to_forth_conv.TRIPLE_QUOTE <- fun[root]:
   return(changed_class(FList_class make_resizable(Done
-                                                  forthe("FCall" "'''")
-                                                  forthe("FStr" root . get(0))
-                                                  forthe("FCall" "'''") )))
+                                                  forthep("FCall" "'''" root . pos)
+                                                  forthep("FStr" root . get(0) root . pos)
+                                                  forthep("FCall" "'''" root . pos) )))
 
 add_triple_quote <- fun[]:
   g . set("autogen_name" "triple_quote_gen")
@@ -192,10 +196,11 @@ add_triple_quote <- fun[]:
   to_forth_conv_hash . set("TRIPLE_QUOTE" to_forth_conv.TRIPLE_QUOTE)
 
 to_forth_conv.make_resizable <- fun[root]:
-  output = make_resizable(Done forthe("FStr" "Done") forthe("FCall" "pick:"))
+  output = make_resizable(Done forthep("FStr" "Done" root . pos)
+                               forthep("FCall" "pick:" root . pos))
   extend(list_comp([to_forth(elem)] root) output)
   output = flatten(`output FList_class)
-  output . append(forthe("FCall" root . name))
+  output . append(forthep("FCall" root . name root . pos))
   return(changed_class(FList_class output))
 
 add_resizable_syntax <- fun[]:
@@ -212,12 +217,80 @@ to_forth_conv.list_comp_var <- fun[root]:
   #output = list_comp([to_forth(elem)] root)
   output = make_resizable(Done
                           to_forth(root . get(2))
-                          forthe("FStr" root . get(1) . get(0))
-                          forthe("FCall" "push:")
-                          FQuote(" " to_forth(root . get(0))) )
+                          forthep("FStr" root . get(1) . get(0) root . get(1) . pos)
+                          forthep("FCall" "push:" root . get(1) . pos)
+                          FQuotep(" " to_forth(root . get(0)) root . get(1) . pos) )
   output = flatten(`output FList_class)
-  output . append(forthe("FCall" root . name))
+  output . append(forthep("FCall" root . name root . pos))
   return(changed_class(FList_class output))
+
+# Assumes index and end are in scope and point to the right things.
+# Now replaced by opt.incr
+simple_for_incr <- fast_fun[]:
+  index = `index + 1
+  index < end
+
+to_forth_conv.opt_simple_for <- fun[root]:
+  # end start block
+  output = make_resizable_rev(Done
+                          to_forth(root . get(0))
+                          forthep("FCall" "assign:") forthep("FStr" "end" root . get(0) . pos)
+                          to_forth(root . get(1))
+                          forthep("FCall" "assign:") forthep("FStr" "index" root . get(1) . pos)
+                          to_forth(root . get(2)) forthep("FCall" "call" root . get(2) . pos)
+                          forthep("FCall" "opt.incr" root . pos)
+                          forthep("FCall" "repeat5_if" root . pos)
+                          )
+  output . print()
+  output = flatten(`output FList_class)
+  return(changed_class(FList_class output))
+
+to_forth_conv.opt_for_in <- fun[root]:
+  # end start block
+  output = make_resizable_rev(Done
+                          to_forth(root . get(0)) forthe("FCall" "attr_call:") forthe("FStr" "len")
+                          forthe("FCall" "assign:") forthe("FStr" "end")
+                          forthe("FCall" "0") forthe("FCall" "assign:") forthe("FStr" "index")
+                          forthe("FCall" "pick:") forthe("FStr" "index")
+                          forthe("FCall" "pick:") forthe("FStr" "iterable")
+                          forthe("FCall" "attr_call:") forthe("FStr" "get")
+                          forthe("FCall" "assign:") forthe("FStr" "elem")
+                          to_forth(root . get(1)) forthe("FCall" "call")
+                          forthe("FCall" "opt.incr")
+                          forthe("FCall" "repeat5_if")
+                          )
+  output = flatten(`output FList_class)
+  return(changed_class(FList_class output))
+
+# String format
+to_forth_conv.fmt <- fun[root]:
+  output = make_resizable(Done forthep("FStr" "Done" root . pos) forthep("FCall" "pick:" root . pos))
+  extend(list_comp([to_forth(elem)] root) output)
+  output = flatten(`output FList_class)
+  output . append(forthep("FCall" "str_cat3" root . pos))
+  return(changed_class(FList_class output))
+
+add_f_string_syntax <- fun[]:
+  g . set("autogen_name" "f_string_gen")
+  grammar_eval_file_with_out("grammar/f_string.grammar" "gen/f_string")
+
+getter <- fun[obj index]:
+  return(obj . get(index))
+
+to_forth_conv.assign_op <- fun[root]:
+  # names operator expressions
+  names = root . get(0)
+  if not(names . len == 1):
+    error("Augmented assignment cannot have more than one target name.")
+  output = make_resizable_rev(Done forthep("FCall" "pick:" names . pos)
+                                   to_forth(names . get(0))
+                                   to_forth(root . get(2))
+                                   forthep("FCall" root . get(1) . get(0) root . get(1) . pos)
+                                   forthep("FCall" "assign:" names . pos)
+                                   to_forth(names . get(0)))
+  return(changed_class(FList_class output))
+
+names2() . set("!" getter)
 
 dv2loop <- fun[]:
   repeat:
@@ -232,6 +305,7 @@ dv2loop <- fun[]:
 #add_resizable_syntax()
 #add_list_comp_syntax()
 #add_getter_syntax()
+#add_f_string_syntax()
 
 run_file("gen/triple_quote.f")
 to_forth_conv_hash . set("TRIPLE_QUOTE" to_forth_conv.TRIPLE_QUOTE)
@@ -239,11 +313,16 @@ run_file("gen/resizable_syntax.f")
 to_forth_conv_hash . set("make_resizable" to_forth_conv.make_resizable)
 run_file("gen/list_comp_syntax.f")
 to_forth_conv_hash . set("list_comp_var" to_forth_conv.list_comp_var)
-#run_file("gen/split_grammar.f")
 run_file("gen/getter_syntax.f")
+to_forth_conv_hash . set("opt_simple_for" to_forth_conv.opt_simple_for)
+to_forth_conv_hash . set("fmt" to_forth_conv.fmt)
+run_file("gen/f_string.f")
+to_forth_conv_hash . set("assign_op" to_forth_conv.assign_op)
 
 #dv2loop_file <- "lib/stage7b.flpc"
 #dv2loop_file <- "gen/grammar_temp.flpc"
 #dv2loop_file <- "lib/stage7c2.flpc"
-dv2loop_file <- "lib/stage1e.flpc"
+#dv2loop_file <- "lib/compiled_parser.flpc"
+#dv2loop_file <- "test/opt_simple_for.flpc"
+dv2loop_file <- "test/formatting.flpc"
 dv2loop()

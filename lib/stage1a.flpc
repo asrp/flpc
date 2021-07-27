@@ -154,7 +154,7 @@ boot_array <- class[]:
       # Need default value here, which is probably 0?
       if string_equal(key boot_array.get(i self)):
         return(`i)
-      if(boot_array.get(i self) == 0):
+      if boot_array.get(i self) == 0:
         return(None())
       i = `i - 1
       if i == 0:

@@ -14,7 +14,7 @@ bootg.rules.escaped_char <- fun[]:
     return(and([[exactly("\\")] [out([or([[exactly("n")] [exactly("r")] [exactly("t")] [exactly("b")] [exactly("f")] [exactly("\q")] [exactly("'")] [exactly("\\")]])])]]))
 
 bootg.rules.apply <- fun[]:
-    return(and([[quantified([or([[exactly("\t")] [exactly("\s")]])] "*")] [out([apply("name")])]]))
+    return(and([[quantified([or([[exactly("\t")] [exactly("\_")]])] "*")] [out([apply("name")])]]))
 
 bootg.rules.parenthesis <- fun[]:
     return(and([[token("(")] [out([apply("or")])] [token(")")]]))
@@ -47,7 +47,7 @@ bootg.rules.comment <- fun[]:
     return(and([[exactly("#")] [quantified([and([[negation([exactly("\n")])] [apply("anything")]])] "*")]]))
 
 bootg.rules.hspace <- fun[]:
-    return(or([[exactly("\s")] [exactly("\t")] [apply("comment")]]))
+    return(or([[exactly("\_")] [exactly("\t")] [apply("comment")]]))
 
 bootg.rules.indentation <- fun[]:
     return(and([[quantified([and([[quantified([apply("hspace")] "*")] [or([[and([[exactly("\r")] [exactly("\n")]])] [exactly("\r")] [exactly("\n")]])]])] "*")] [quantified([apply("hspace")] "+")]]))

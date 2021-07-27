@@ -2,7 +2,7 @@ flpcg.rules.comment <- fun[]:
     return(bound([and([[exactly("#")] [out([quantified([and([[negation([exactly("\n")])] [out([apply("anything")])]])] "*")])]])] "comment"))
 
 flpcg.rules.space <- fun[]:
-    return(or([[exactly("\n")] [exactly("\r")] [exactly("\s")] [exactly("\t")]]))
+    return(or([[exactly("\n")] [exactly("\r")] [exactly("\_")] [exactly("\t")]]))
 
 flpcg.rules.spaces <- fun[]:
     return(quantified([apply("space")] "*"))
@@ -11,10 +11,10 @@ flpcg.rules.spacesp <- fun[]:
     return(quantified([apply("space")] "+"))
 
 flpcg.rules.hspaces <- fun[]:
-    return(quantified([or([[exactly("\s")] [exactly("\t")]])] "*"))
+    return(quantified([or([[exactly("\_")] [exactly("\t")]])] "*"))
 
 flpcg.rules.hspacesp <- fun[]:
-    return(quantified([or([[exactly("\s")] [exactly("\t")]])] "+"))
+    return(quantified([or([[exactly("\_")] [exactly("\t")]])] "+"))
 
 flpcg.rules.EMPTY_LINE <- fun[]:
     return(bound([and([[apply("hspaces")] [quantified([apply("comment")] "?")] [or([[exactly("\n")] [exactly("\r")]])]])] "EMPTY_LINE"))

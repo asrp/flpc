@@ -125,6 +125,7 @@ node <- class[]:
     memory.set(new_obj - 2 self)
     memory.set(new_obj name)
     memory.append(children)
+    memory.append(resizable(2))
     memory.append(names.get("]"))
     # set_mem_hint(new_obj "node instance")
     return(`new_obj)
@@ -157,6 +158,9 @@ node <- class[]:
   set_children <- fun[new_children self]:
     memory.set(self + 1 new_children)
 
+  set_pos <- fun[pos self]:
+    memory.set(self + 2 pos)
+
   attrib <- fun[name receiver searcher]:
     if lookup_print:
       print("Node looking up ")
@@ -167,10 +171,12 @@ node <- class[]:
     return_if(string_equal(name "print")    node.print)
     return_if(string_equal(name "set_name") node.set_name)
     return_if(string_equal(name "set_children") node.set_children)
+    return_if(string_equal(name "set_pos")  node.set_pos)
     # Is @property really this easy?
     return_if(string_equal(name "len")      node.len(receiver))
     return_if(string_equal(name "name")     memory.get(receiver))
     return_if(string_equal(name "children") memory.get(receiver + 1))
+    return_if(string_equal(name "pos")      memory.get(receiver + 2))
     return_if(string_equal(name "type")     "node")
     return(instance_attrib(name receiver searcher))
 
@@ -181,6 +187,11 @@ node.hash <- convert_attr(node_class)
 node.attrib <- fun[name receiver searcher]:
   hash_header()
   call(hashtable.get(name node.hash))
+
+nodep <- fun[name children pos]:
+  res = node(name children)
+  res . set_pos(pos)
+  return(res)
 
 Input <- class[]:
   instance <- fun[filename self]:
