@@ -319,10 +319,5 @@ to_forth_conv_hash . set("fmt" to_forth_conv.fmt)
 run_file("gen/f_string.f")
 to_forth_conv_hash . set("assign_op" to_forth_conv.assign_op)
 
-#dv2loop_file <- "lib/stage7b.flpc"
-#dv2loop_file <- "gen/grammar_temp.flpc"
-#dv2loop_file <- "lib/stage7c2.flpc"
-#dv2loop_file <- "lib/compiled_parser.flpc"
-#dv2loop_file <- "test/opt_simple_for.flpc"
-dv2loop_file <- "test/formatting.flpc"
+dv2loop_file <- "lib/stage7b.flpc"
 dv2loop()

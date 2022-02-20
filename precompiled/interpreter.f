@@ -2760,5 +2760,5 @@ push: StringIO new_ns_class
  push: fmt pick: to_forth_conv.fmt pick: to_forth_conv_hash attr_call: set 
  push: gen/f_string.f run_file 
  push: assign_op pick: to_forth_conv.assign_op pick: to_forth_conv_hash attr_call: set 
- push: test/formatting.flpc bind: dv2loop_file 
+ push: lib/stage7b.flpc bind: dv2loop_file 
  dv2loop 

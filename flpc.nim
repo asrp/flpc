@@ -523,7 +523,7 @@ proc load_all*() =
   assert(line[0] == "#positions" and line.len == 2)
   #assert(length == line[1].parseInt)
   var raw_line = file.readLine().split().map(parseInt)
-  echo len(raw_line), " ", line[1].parseInt * 2
+  # echo len(raw_line), " ", line[1].parseInt * 2
   #assert(len(raw_line) == line[1].parseInt * 2)
   length = line[1].parseInt
   for i in countup(0, length - 1):
@@ -562,7 +562,7 @@ proc load_all*() =
   indices["init_primitive_names_len"] = primitive_names . len
   primitives = newSeqWith[PrimProc](len(primitive_names), f_error.PrimProc)
 
-  echo "indice type ", indices.type, " ", indices["names_get"].type
+  # echo "indice type ", indices.type, " ", indices["names_get"].type
 
 # Need multiple pos maps, one per .f file open.
 # Unless we are *sure* all of one file is compiled before the otehrs.
@@ -1752,7 +1752,7 @@ proc main() =
   running = true
   load_all()
   init()
-  run_once()
+  # run_once()
   print_state()
   main_loop()
   echo "Done executing. Step: ", g.steps
