@@ -560,7 +560,7 @@ proc load_all*() =
   entries = line[1].parseInt
   primitive_names = file.readLine().split()
   indices["init_primitive_names_len"] = primitive_names . len
-  primitives = newSeqWith[PrimProc](len(primitive_names), f_error.PrimProc)
+  primitives = newSeqWith(len(primitive_names), f_error.PrimProc)
 
   # echo "indice type ", indices.type, " ", indices["names_get"].type
 
